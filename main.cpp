@@ -22,7 +22,7 @@ int main() {
             ("balibali.szmdaddr", boost::program_options::value<std::string>(&szmdaddr), "balibali.szmdaddr")
             ("balibali.tdaddr", boost::program_options::value<std::string>(&tdaddr), "balibali.tdaddr")
             ("balibali.tdaccount", boost::program_options::value<std::string>(&tdaccount), "balibali.tdaccount")
-            ("balibali.tdpassowrd", boost::program_options::value<std::string>(&tdpassword), "balibali.tdpassowrd");
+            ("balibali.tdpassword", boost::program_options::value<std::string>(&tdpassword), "balibali.tdpassword");
     boost::program_options::variables_map vm;
 
     std::ifstream ifs;
@@ -40,20 +40,19 @@ int main() {
     LocalConfig::GetMe().SetSHMDAddr(shmdaddr);
     LocalConfig::GetMe().SetSZMDAddr(szmdaddr);
     LocalConfig::GetMe().SetTDAddr(tdaddr);
-    LocalConfig::GetMe().SetTDAddr(tdaccount);
+    LocalConfig::GetMe().SetTDAccount(tdaccount);
     LocalConfig::GetMe().SetTDPassword(tdpassword);
+    LocalConfig::GetMe().SetHttpUrl(httpurl);
     LocalConfig::GetMe().Init();
 
     boost::asio::io_context io_context;
 
+    CApplication app(io_context);
     if (httpurl.length() > 0) {
         http::server4::server(io_context, std::string(httpurl, 0, httpurl.find(':')),
                               httpurl.substr(httpurl.find(':') + 1), http::server4::file_handler("."))();
     }
 
-    std::cout << "main thread is " << std::this_thread::get_id() << std::endl;
-
-    CApplication app(io_context, true, true, false);
     app.Start();
 
     io_context.run();

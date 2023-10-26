@@ -10,11 +10,12 @@
 
 class CApplication {
 public:
-    explicit CApplication(boost::asio::io_context &ioc, bool shopen = true, bool szopen = true, bool tdopen = true);
+    explicit CApplication(boost::asio::io_context& ioc);
 
     ~CApplication();
 
     void Start();
+    void OnTime(const boost::system::error_code& error);
 
     // ÐÐÇé
     void MDOnRspUserLogin(PROMD::TTORATstpExchangeIDType exchangeID);
@@ -46,6 +47,9 @@ public:
 
     void TDOnErrRtnOrderAction(PROTD::CTORATstpInputOrderActionField *pInputOrderActionField);
 
+    boost::asio::io_context& m_ioc;
+
+    boost::asio::deadline_timer m_timer;
 private:
     PROMD::MDL2Impl *GetMDByExchangeID(PROMD::TTORATstpExchangeIDType ExchangeID);
 
@@ -56,7 +60,6 @@ private:
     PROMD::MDL2Impl *m_shMD = nullptr;
     PROMD::MDL2Impl *m_szMD = nullptr;
     PROTD::TDImpl *m_TD = nullptr;
-    boost::asio::io_context &m_ioc;
 
     std::unordered_map<std::string, PROTD::CTORATstpSecurityField *> m_security;
     std::unordered_map<std::string, PROTD::CTORATstpOrderField *> m_order;

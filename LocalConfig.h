@@ -59,6 +59,10 @@ public:
 
     void SetTDPassword(std::string &password) { m_TDPassword = password; }
 
+    std::string GetHttpUrl() const { return m_httpUrl; }
+
+    void SetHttpUrl(std::string& httpurl) { m_httpUrl = httpurl;}
+
 public:
     std::unordered_map<std::string, stSecurity_t> m_mapSecurityID;
 
@@ -69,6 +73,7 @@ private:
     std::string m_TDAddr = "tcp://210.14.72.21:4400";
     std::string m_TDAccount = "00030557";
     std::string m_TDPassword = "17522830";
+    std::string m_httpUrl = "";
     SQLite3::ptr m_db = nullptr;
 };
 

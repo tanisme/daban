@@ -1,8 +1,11 @@
 #include "CApplication.h"
 #include "LocalConfig.h"
+#include <iostream>
+#include <boost/bind/bind.hpp>
 
-CApplication::CApplication(boost::asio::io_context &ioc, bool shopen, bool szopen, bool tdopen)
-        : m_ioc(ioc), m_shMD_open(shopen), m_szMD_open(szopen), m_td_open(tdopen) {
+CApplication::CApplication(boost::asio::io_context& ioc)
+        : m_ioc(ioc)
+        , m_timer(m_ioc, boost::posix_time::milliseconds(1000)) {
 }
 
 CApplication::~CApplication() {
@@ -25,20 +28,30 @@ CApplication::~CApplication() {
 }
 
 void CApplication::Start() {
-    if (m_shMD_open) {
-        m_shMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SSE);
-        m_shMD->Start();
+    m_shMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SSE);
+    m_shMD->Start();
+
+    m_szMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SZSE);
+    m_szMD->Start();
+
+    m_TD = new PROTD::TDImpl(this);
+    m_TD->Start();
+
+    m_timer.expires_from_now(boost::posix_time::milliseconds(1000));
+    m_timer.async_wait(boost::bind(&CApplication::OnTime, this, boost::asio::placeholders::error));
+}
+
+void CApplication::OnTime(const boost::system::error_code& error)
+{
+    if (error) {
+        if (error == boost::asio::error::operation_aborted) {
+            return;
+        }
     }
 
-    if (m_szMD_open) {
-        m_szMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SZSE);
-        m_szMD->Start();
-    }
-
-    if (m_td_open) {
-        m_TD = new PROTD::TDImpl(this);
-        m_TD->Start();
-    }
+    std::cout << "hello" << std::endl;
+    m_timer.expires_from_now(boost::posix_time::milliseconds(1000));
+    m_timer.async_wait(boost::bind(&CApplication::OnTime, this, boost::asio::placeholders::error));
 }
 
 /***************************************MD***************************************/

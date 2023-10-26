@@ -1,6 +1,7 @@
 #include "MDL2Impl.h"
 #include "CApplication.h"
 #include "LocalConfig.h"
+#include <boost/bind.hpp>
 
 namespace PROMD {
 
@@ -53,7 +54,8 @@ namespace PROMD {
         }
 
         m_isLogined = true;
-        m_pApp->MDOnRspUserLogin(m_exchangeID);
+        //m_pApp->MDOnRspUserLogin(m_exchangeID);
+        m_pApp->m_ioc.post(boost::bind(&CApplication::MDOnRspUserLogin, m_pApp, m_exchangeID));
     }
 
     int MDL2Impl::ReqMarketData(TTORATstpSecurityIDType security, TTORATstpExchangeIDType exchangeID,
