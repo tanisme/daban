@@ -50,7 +50,7 @@ int main() {
     CApplication app(io_context);
     if (httpurl.length() > 0) {
         http::server4::server(io_context, std::string(httpurl, 0, httpurl.find(':')),
-                              httpurl.substr(httpurl.find(':') + 1), http::server4::file_handler("."))();
+                              httpurl.substr(httpurl.find(':') + 1), http::server4::file_handler(&app))();
     }
 
     app.Start();

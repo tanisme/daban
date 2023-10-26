@@ -54,6 +54,10 @@ void CApplication::OnTime(const boost::system::error_code& error)
     m_timer.async_wait(boost::bind(&CApplication::OnTime, this, boost::asio::placeholders::error));
 }
 
+void CApplication::OnFileHandle(int ServiceNo) {
+    printf("Onfilehandle\n");
+}
+
 /***************************************MD***************************************/
 void CApplication::MDOnRspUserLogin(PROMD::TTORATstpExchangeIDType exchangeID) {
     PROMD::MDL2Impl *md = GetMDByExchangeID(exchangeID);

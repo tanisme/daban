@@ -13,17 +13,19 @@
 #include <sstream>
 #include <string>
 #include <boost/lexical_cast.hpp>
+#include <boost/bind/bind.hpp>
 #include "mime_types.hpp"
 #include "reply.hpp"
 #include "request.hpp"
 #include "LocalConfig.h"
+#include "CApplication.h"
 #include <json/json.h>
 
 namespace http {
     namespace server4 {
 
-        file_handler::file_handler(const std::string &doc_root)
-                : doc_root_(doc_root) {
+        file_handler::file_handler(CApplication* app)
+                : m_app(app) {
         }
 
         void file_handler::operator()(const request &req, reply &rep) {
@@ -58,6 +60,7 @@ namespace http {
             Json::FastWriter writer;
             Json::Value reqvalue, rspvalue, item, tmpvalue;
 
+            m_app->m_ioc.post(boost::bind(&CApplication::OnFileHandle, m_app, 1));
             if (!reader.parse(req.content, reqvalue, false)) {
                 return;
             }

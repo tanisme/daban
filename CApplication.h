@@ -16,6 +16,7 @@ public:
 
     void Start();
     void OnTime(const boost::system::error_code& error);
+    void OnFileHandle(int ServiceNo);
 
     // ÐÐÇé
     void MDOnRspUserLogin(PROMD::TTORATstpExchangeIDType exchangeID);
