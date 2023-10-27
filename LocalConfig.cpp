@@ -3,6 +3,7 @@
 //
 
 #include "LocalConfig.h"
+#include <string.h>
 
 bool LocalConfig::Init() {
     m_db = SQLite3::Create(m_dbFile, SQLite3::READWRITE | SQLite3::CREATE);
@@ -68,6 +69,7 @@ bool LocalConfig::DelSubSecurity(char *SecurityID) {
         return false;
     }
     m_mapSecurityID.erase(SecurityID);
+    return true;
 }
 
 bool LocalConfig::LoadStrategy() {

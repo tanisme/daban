@@ -1,35 +1,40 @@
 ﻿cmake_minimum_required(VERSION 3.26)
-project(balibali)
+
+project(daban)
 
 set(CMAKE_CXX_STANDARD 11)
 
-if (DEFINED ENV{BOOSTINC})
-    #message("Boost Include Dir is $ENV{BOOSTINC}")
-else ()
-    message(FATAL_ERROR "Boost Include Dir is Null")
+add_compile_definitions(_CRT_SECURE_NO_WARNINGS BOOST_BIND_GLOBAL_PLACEHOLDERS)
+
+if (WIN32)
+    message(STATUS "windows system")
+    SET(BOOST_ROOT I:/tanisme/workspace/cpplib/boost_1_73_0)
+    SET(BOOST_INCLUDEDIR ${BOOST_ROOT})
+    SET(BOOST_LIBRARYDIR ${BOOST_ROOT}/lib64-msvc-14.2)
+    #include_directories(${BOOST_ROOT})
+    #link_directories(${BOOST_ROOT}/lib64-msvc-14.2)
+elseif(UNIX)
+    message(STATUS "linux system")
+    SET(BOOST_ROOT /usr/local/boost)
+    SET(BOOST_INCLUDEDIR ${BOOST_ROOT}/include)
+    SET(BOOST_LIBRARYDIR ${BOOST_ROOT}/lib)
+else()
+    message(FATAL_ERROR "unknow system")
+endif()
+
+find_package(Boost REQUIRED COMPONENTS program_options)
+if (Boost_FOUND)
+    message( STATUS "Boost_INCLUDE_DIRS = ${Boost_INCLUDE_DIRS}")
+    message( STATUS "Boost_LIBRARY_DIRS = ${Boost_LIBRARY_DIRS}")
+    message( STATUS "Boost_LIBRARIES = ${Boost_LIBRARIES}.")
+    message( STATUS "Boost_LIB_VERSION = ${Boost_LIB_VERSION}.")
+    include_directories(${Boost_INCLUDE_DIR})
+    link_directories(${Boost_LIBRARY_DIRS})
 endif ()
-include_directories($ENV{BOOSTINC})
-
-if (DEFINED ENV{BOOSTLIB})
-    #message("Boost Lib Dir is $ENV{BOOSTLIB}")
-else ()
-    message(FATAL_ERROR "Boost Lib Dir is Null")
-endif ()
-link_directories($ENV{BOOSTLIB})
-
-#find_package(boost)
-#if (boost_FOUND)
-#    message(WARNING "dir = ${Boost_INCLUDE_DIR}")
-#endif ()
-
-add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
-
-include_directories($ENV{BINC64})
 include_directories(. include http/server4)
 link_directories(lib)
-link_directories($ENV{BLIB64})
 
-add_executable(balibali
+add_executable(daban
         main.cpp
         CApplication.cpp
         MDL2Impl.cpp
@@ -42,16 +47,12 @@ add_executable(balibali
         http/server4/server.cpp
 )
 
-#add_executable(testsqlite testsqlite.cpp)
-#target_link_libraries(testsqlite sqlite3)
-
+if (WIN32)
 if (CMAKE_BUILD_TYPE STREQUAL Debug)
-    target_link_libraries(balibali PUBLIC
-            lev2mdapi fasttraderapi jsoncppd httplibd tinyxml2d sqlite3d)
+    target_link_libraries(daban PUBLIC lev2mdapi fasttraderapi jsoncppd sqlite3d)
 else ()
-    target_link_libraries(balibali PUBLIC
-            lev2mdapi fasttraderapi jsoncpp httplib tinyxml2 sqlite3)
+    target_link_libraries(daban PUBLIC lev2mdapi fasttraderapi jsoncpp sqlite3)
 endif ()
-
-#target_link_libraries(balibali PUBLIC
-#lev2mdapi fasttraderapi jsoncpp httplib tinyxml2 sqlite3)
+elseif (UNIX)
+    target_link_libraries(daban PUBLIC lev2mdapi fasttraderapi jsoncpp sqlite3 pthread ${CMAKE_DL_LIBS} ${Boost_LIBRARIES})
+endif ()

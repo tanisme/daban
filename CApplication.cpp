@@ -49,7 +49,6 @@ void CApplication::OnTime(const boost::system::error_code& error)
         }
     }
 
-    std::cout << "hello" << std::endl;
     m_timer.expires_from_now(boost::posix_time::milliseconds(1000));
     m_timer.async_wait(boost::bind(&CApplication::OnTime, this, boost::asio::placeholders::error));
 }
@@ -62,15 +61,27 @@ void CApplication::OnFileHandle(int ServiceNo) {
 void CApplication::MDOnRspUserLogin(PROMD::TTORATstpExchangeIDType exchangeID) {
     PROMD::MDL2Impl *md = GetMDByExchangeID(exchangeID);
     if (md == nullptr) return;
-    for (auto &iter: LocalConfig::GetMe().m_mapSecurityID) {
-        if (exchangeID == iter.second.ExchangeID) {
-            PROMD::TTORATstpSecurityIDType Security;
-            strncpy(Security, iter.first.c_str(), sizeof(Security));
-            //md->ReqMarketData(Security, exchangeID, 1);
-            md->ReqMarketData(Security, exchangeID, 2);
-            md->ReqMarketData(Security, exchangeID, 3);
-        }
+    if (exchangeID == PROMD::TORA_TSTP_EXD_SSE) {
+        printf("xxxxxxxxxxxxxxxxxxxxxx\n");
+        char security[] = "600104";
+        md->ReqMarketData(security, PROMD::TORA_TSTP_EXD_SSE, 2);
+        md->ReqMarketData(security, PROMD::TORA_TSTP_EXD_SSE, 3);
     }
+    //else if (exchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
+    //    char security[] = "000001";
+    //    md->ReqMarketData(security, PROMD::TORA_TSTP_EXD_SZSE, 2);
+    //    md->ReqMarketData(security, PROMD::TORA_TSTP_EXD_SZSE, 3);
+    //}
+
+    //for (auto &iter: LocalConfig::GetMe().m_mapSecurityID) {
+    //    if (exchangeID == iter.second.ExchangeID) {
+    //        PROMD::TTORATstpSecurityIDType Security;
+    //        strncpy(Security, iter.first.c_str(), sizeof(Security));
+    //        //md->ReqMarketData(Security, exchangeID, 1);
+    //        md->ReqMarketData(Security, exchangeID, 2);
+    //        md->ReqMarketData(Security, exchangeID, 3);
+    //    }
+    //}
 }
 
 

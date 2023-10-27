@@ -430,13 +430,13 @@ namespace PROMD {
     const char *MDL2Impl::GetSide(TTORATstpLSideType Side) {
         switch (Side) {
             case TORA_TSTP_LSD_Buy:
-                return "买";
+                return "B";
             case TORA_TSTP_LSD_Sell:
-                return "卖";
+                return "S";
             case TORA_TSTP_LSD_Borrow:
-                return "借入";
+                return "R";
             case TORA_TSTP_LSD_Lend:
-                return "借出";
+                return "C";
         }
         return "未知方向";
     }

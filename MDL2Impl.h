@@ -2,6 +2,7 @@
 #define TEST_MDL2IMPL_H
 
 #include <unordered_map>
+#include <vector>
 #include "TORA/TORATstpLev2MdApi.h"
 
 class CApplication;
@@ -39,7 +40,7 @@ namespace PROMD {
         int ReqMarketData(TTORATstpSecurityIDType security, TTORATstpExchangeIDType exchangeID, int type,
                           bool isSub = true);
 
-        // Ω”ø⁄
+        // Êé•Âè£
         void OnFrontConnected() override;
 
         void OnFrontDisconnected(int nReason) override;
