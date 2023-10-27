@@ -1,6 +1,8 @@
-#include "TDImpl.h"
+﻿#include "TDImpl.h"
 #include "CApplication.h"
 #include "LocalConfig.h"
+
+#include <boost/bind/bind.hpp>
 
 namespace PROTD {
 
@@ -17,7 +19,7 @@ namespace PROTD {
 
     bool TDImpl::Start() {
         m_tdApi = CTORATstpTraderApi::CreateTstpTraderApi();
-        if (m_tdApi == nullptr) return false;
+        if (!m_tdApi) return false;
 
         m_tdApi->RegisterSpi(this);
         m_tdApi->RegisterFront((char *) LocalConfig::GetMe().GetTDAddr().c_str());
@@ -28,7 +30,7 @@ namespace PROTD {
     }
 
     void TDImpl::OnFrontConnected() {
-        printf("交易连接成功!!!\n");
+        printf("TDImpl::OnFrontConnected!!!\n");
 
         CTORATstpReqUserLoginField req = {0};
         req.LogInAccountType = TORA_TSTP_LACT_AccountID;
@@ -41,133 +43,85 @@ namespace PROTD {
     }
 
     void TDImpl::OnFrontDisconnected(int nReason) {
-        printf("交易断开连接!!! 原因:%d\n", nReason);
+        printf("TDImpl::OnFrontDisconnected!!! Reason:%d\n", nReason);
         m_isLogined = false;
     }
 
-    void TDImpl::OnRspUserLogin(CTORATstpRspUserLoginField *pRspUserLoginField, CTORATstpRspInfoField *pRspInfo,
-                                int nRequestID) {
+    void TDImpl::OnRspUserLogin(CTORATstpRspUserLoginField *pRspUserLoginField, CTORATstpRspInfoField *pRspInfo, int nRequestID) {
         if (!pRspUserLoginField || !pRspInfo) return;
-
         if (pRspInfo->ErrorID > 0) {
-            printf("交易登陆失败!!! 错误信息:%s\n", pRspInfo->ErrorMsg);
+            printf("TDImpl::OnRspUserLogin Failed!!! ErrMsg:%s\n", pRspInfo->ErrorMsg);
             return;
         }
 
         m_isLogined = true;
-        m_pApp->TDOnRspUserLogin(pRspUserLoginField);
-        printf("交易登陆成功!!!\n");
+        m_pApp->m_ioc.post(boost::bind(&CApplication::TDOnRspUserLogin, m_pApp, *pRspUserLoginField));
 
-        CTORATstpQryShareholderAccountField req = {0};
-        m_tdApi->ReqQryShareholderAccount(&req, ++m_reqID);
+        CTORATstpQrySecurityField Req = {0};
+        m_tdApi->ReqQrySecurity(&Req, ++m_reqID);
     }
 
-    void TDImpl::OnRspQryShareholderAccount(CTORATstpShareholderAccountField *pShareholderAccount,
-                                            CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
-        if (pShareholderAccount) {
-            m_pApp->TDOnRspQryShareholderAccount(pShareholderAccount);
-        }
-
-        if (bIsLast) {
-            printf("交易 查询股东账户结束 开始查询合约!!!\n");
-            CTORATstpQrySecurityField Req = {0};
-            m_tdApi->ReqQrySecurity(&Req, ++m_reqID);
-        }
-    }
-
-    void TDImpl::OnRspQrySecurity(CTORATstpSecurityField *pSecurity, CTORATstpRspInfoField *pRspInfo,
-                                  int nRequestID, bool bIsLast) {
+    void TDImpl::OnRspQrySecurity(CTORATstpSecurityField *pSecurity, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
         if (pSecurity) {
-            m_pApp->TDOnRspQrySecurity(pSecurity);
+            m_pApp->m_ioc.post(boost::bind(&CApplication::TDOnRspQrySecurity, m_pApp, *pSecurity));
         }
 
         if (bIsLast) {
-            printf("交易 查询合约结束 开始查询委托单!!!\n");
+            printf("TDImpl::OnRspQrySecurity Success!!!\n");
             CTORATstpQryOrderField req = {0};
             m_tdApi->ReqQryOrder(&req, 0);
         }
     }
 
-    void TDImpl::OnRspQryOrder(CTORATstpOrderField *pOrder, CTORATstpRspInfoField *pRspInfo,
-                               int nRequestID, bool bIsLast) {
+    void TDImpl::OnRspQryOrder(CTORATstpOrderField *pOrder, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
         if (pOrder) {
-            m_pApp->TDOnRspQryOrder(pOrder);
+            m_pApp->m_ioc.post(boost::bind(&CApplication::TDOnRspQryOrder, m_pApp, *pOrder));
         }
 
         if (bIsLast) {
-            printf("交易 查询委托单结束 开始查询成交单!!!\n");
+            printf("TDImpl::OnRspQryOrder Success!!!\n");
             CTORATstpQryTradeField Req = {0};
             m_tdApi->ReqQryTrade(&Req, 0);
         }
     }
 
-    void TDImpl::OnRspQryTrade(CTORATstpTradeField *pTrade, CTORATstpRspInfoField *pRspInfo,
-                               int nRequestID, bool bIsLast) {
+    void TDImpl::OnRspQryTrade(CTORATstpTradeField *pTrade, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
         if (pTrade) {
-            m_pApp->TDOnRspQryTrade(pTrade);
+            m_pApp->m_ioc.post(boost::bind(&CApplication::TDOnRspQryTrade, m_pApp, *pTrade));
         }
 
         if (bIsLast) {
-            printf("交易 查询成交单结束 开始查询持仓!!!\n");
+            printf("TDImpl::OnRspQryTrade Success!!!\n");
             CTORATstpQryPositionField Req = {0};
             m_tdApi->ReqQryPosition(&Req, 0);
         }
     }
 
-    void TDImpl::OnRspQryPosition(CTORATstpPositionField *pPosition, CTORATstpRspInfoField *pRspInfo,
-                                  int nRequestID, bool bIsLast) {
+    void TDImpl::OnRspQryPosition(CTORATstpPositionField *pPosition, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
         if (pPosition) {
-            m_pApp->TDOnRspQryPosition(pPosition);
+            m_pApp->m_ioc.post(boost::bind(&CApplication::TDOnRspQryPosition, m_pApp, *pPosition));
         }
 
         if (bIsLast) {
-            printf("交易 查询持仓结束 开始查询资金!!!\n");
+            printf("TDImpl::OnRspQryPosition Success!!!\n");
             CTORATstpQryTradingAccountField Req = {0};
             m_tdApi->ReqQryTradingAccount(&Req, 0);
         }
     }
 
-    void TDImpl::OnRspQryTradingAccount(CTORATstpTradingAccountField *pTradingAccount, CTORATstpRspInfoField *pRspInfo,
-                                        int nRequestID, bool bIsLast) {
+    void TDImpl::OnRspQryTradingAccount(CTORATstpTradingAccountField *pTradingAccount, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
         if (pTradingAccount) {
-            m_pApp->TDOnRspQryTradingAccount(pTradingAccount);
+            m_pApp->m_ioc.post(boost::bind(&CApplication::TDOnRspQryTradingAccount, m_pApp, *pTradingAccount));
         }
 
         if (bIsLast) {
-            printf("交易 查询资金结束 交易查询完成!!!\n");
+            printf("TDImpl::OnRspQryTradingAccount Success!!!\n");
         }
     }
 
     int TDImpl::OrderInsert(TTORATstpSecurityIDType SecurityID, TTORATstpDirectionType Direction,
                             TTORATstpVolumeType VolumeTotalOriginal, TTORATstpPriceType LimitPric) {
         CTORATstpInputOrderField req = {0};
-        //req.ExchangeID = TORA_TSTP_EXD_SSE;
-        //strcpy(req.ShareholderID, SH_ShareHolderID);
-        //strcpy(req.SecurityID, "600000");
-        //req.Direction = TORA_TSTP_D_Buy;
-        //req.VolumeTotalOriginal = 200;
-
-        // ????????????????????嵵??????????嵵?????????м???????????????????????????????????????м??????????????????
-        // ???????????????????????????????????????????????????????????????嵵????????м????
-        // ??????????????????????????????????д????????????м??????????д???????
-        // ?????????????????????????????ο????????????????дOrderPriceType??TimeCondition??VolumeCondition???????:
-        //req.LimitPrice = 7.00;
-        //req.OrderPriceType = TORA_TSTP_OPT_LimitPrice;
-        //req.TimeCondition = TORA_TSTP_TC_GFD;
-        //req.VolumeCondition = TORA_TSTP_VC_AV;
-
-        // OrderRef????????????????????????α????????
-        // ??????д?????????????????????????????????
-        // ????д?????豣?????TCP???±???????????????????????????????????????1??????
-        //req.OrderRef = 1;
-        //InvestorID????????д???豣???д???
-        //Operway???з????????????????д?????????????????
-
-        // ??????????Σ?????????????д??????ε????????????????????????????????????????????????
-        //strcpy(req.SInfo, "sinfo");
-        //req.IInfo = 678;
-
-        //??????????
 
         strcpy(req.SecurityID, SecurityID);
         req.Direction = Direction;
@@ -176,54 +130,27 @@ namespace PROTD {
         return m_tdApi->ReqOrderInsert(&req, ++m_reqID);
     }
 
-    void TDImpl::OnRspOrderInsert(CTORATstpInputOrderField *pInputOrderField, CTORATstpRspInfoField *pRspInfoField,
-                                  int nRequestID) {
-        m_pApp->TDOnRspOrderInsert(pInputOrderField);
+    void TDImpl::OnRspOrderInsert(CTORATstpInputOrderField *pInputOrderField, CTORATstpRspInfoField *pRspInfoField, int nRequestID) {
     }
 
-    void TDImpl::OnErrRtnOrderInsert(CTORATstpInputOrderField *pInputOrderField, CTORATstpRspInfoField *pRspInfoField,
-                                     int nRequestID) {
-        m_pApp->TDOnErrRtnOrderInsert(pInputOrderField);
+    void TDImpl::OnErrRtnOrderInsert(CTORATstpInputOrderField *pInputOrderField, CTORATstpRspInfoField *pRspInfoField, int nRequestID) {
     }
 
     void TDImpl::OnRtnOrder(CTORATstpOrderField *pOrder) {
-        m_pApp->TDOnRtnOrder(pOrder);
     }
 
     void TDImpl::OnRtnTrade(CTORATstpTradeField *pTrade) {
-        m_pApp->TDOnRtnTrade(pTrade);
     }
 
     int TDImpl::OrderCancel() {
         CTORATstpInputOrderActionField req = {0};
-        //req.ExchangeID = TORA_TSTP_EXD_SSE;
-        //req.ActionFlag = TORA_TSTP_AF_Delete;
-        // ???????????????????λ????????
-        // ??1?????????÷??
-        //req.OrderRef = 1;
-        //req.FrontID = m_front_id;
-        //req.SessionID = m_session_id;
-        // ??2?????????????
-        //strcpy(req.OrderSysID, "110019400000006");
-        // OrderActionRef??????????????÷??????????????????????
-
-        // ??????????Σ?????????????д??????ε????????????????????????????????????????
-        //strcpy(req.SInfo, "sinfo");
-        //req.IInfo = 678;
-
-        // ??з????θ???????????д?????????????????
-        //Operway
         return m_tdApi->ReqOrderAction(&req, ++m_reqID);
     }
 
-    void TDImpl::OnRspOrderAction(CTORATstpInputOrderActionField *pInputOrderActionField,
-                                  CTORATstpRspInfoField *pRspInfoField, int nRequestID) {
-        m_pApp->TDOnRspOrderAction(pInputOrderActionField);
+    void TDImpl::OnRspOrderAction(CTORATstpInputOrderActionField *pInputOrderActionField, CTORATstpRspInfoField *pRspInfoField, int nRequestID) {
     }
 
-    void TDImpl::OnErrRtnOrderAction(CTORATstpInputOrderActionField *pInputOrderActionField,
-                                     CTORATstpRspInfoField *pRspInfoField, int nRequestID) {
-        m_pApp->TDOnErrRtnOrderAction(pInputOrderActionField);
+    void TDImpl::OnErrRtnOrderAction(CTORATstpInputOrderActionField *pInputOrderActionField, CTORATstpRspInfoField *pRspInfoField, int nRequestID) {
     }
 
 }

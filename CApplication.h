@@ -1,4 +1,4 @@
-#ifndef TEST_BALIBALI_H
+ï»¿#ifndef TEST_BALIBALI_H
 #define TEST_BALIBALI_H
 
 #include <string>
@@ -18,35 +18,22 @@ public:
     void OnTime(const boost::system::error_code& error);
     void OnFileHandle(int ServiceNo);
 
-    // ÐÐÇé
+    // MD
     void MDOnRspUserLogin(PROMD::TTORATstpExchangeIDType exchangeID);
 
-    // ½»Ò×
-    void TDOnRspUserLogin(PROTD::CTORATstpRspUserLoginField *pRspUserLoginField);
-
-    void TDOnRspQryShareholderAccount(PROTD::CTORATstpShareholderAccountField *pShareholderAccount);
-
-    void TDOnRspQrySecurity(PROTD::CTORATstpSecurityField *pSecurity);
-
-    void TDOnRspQryOrder(PROTD::CTORATstpOrderField *pOrder);
-
-    void TDOnRspQryTrade(PROTD::CTORATstpTradeField *pTrade);
-
-    void TDOnRspQryPosition(PROTD::CTORATstpPositionField *pPosition);
-
-    void TDOnRspQryTradingAccount(PROTD::CTORATstpTradingAccountField *pTradingAccount);
-
-    void TDOnRspOrderInsert(PROTD::CTORATstpInputOrderField *pInputOrderField);
-
-    void TDOnErrRtnOrderInsert(PROTD::CTORATstpInputOrderField *pInputOrderField);
-
-    void TDOnRtnOrder(PROTD::CTORATstpOrderField *pOrder);
-
-    void TDOnRtnTrade(PROTD::CTORATstpTradeField *pTrade);
-
-    void TDOnRspOrderAction(PROTD::CTORATstpInputOrderActionField *pInputOrderActionField);
-
-    void TDOnErrRtnOrderAction(PROTD::CTORATstpInputOrderActionField *pInputOrderActionField);
+    // TD
+    void TDOnRspUserLogin(PROTD::CTORATstpRspUserLoginField& pRspUserLoginField);
+    void TDOnRspQrySecurity(PROTD::CTORATstpSecurityField& pSecurity);
+    void TDOnRspQryOrder(PROTD::CTORATstpOrderField& pOrder);
+    void TDOnRspQryTrade(PROTD::CTORATstpTradeField& pTrade);
+    void TDOnRspQryPosition(PROTD::CTORATstpPositionField& pPosition);
+    void TDOnRspQryTradingAccount(PROTD::CTORATstpTradingAccountField& pTradingAccount);
+    void TDOnRspOrderInsert(PROTD::CTORATstpInputOrderField& pInputOrderField);
+    void TDOnErrRtnOrderInsert(PROTD::CTORATstpInputOrderField& pInputOrderField);
+    void TDOnRtnOrder(PROTD::CTORATstpOrderField& pOrder);
+    void TDOnRtnTrade(PROTD::CTORATstpTradeField& pTrade);
+    void TDOnRspOrderAction(PROTD::CTORATstpInputOrderActionField& pInputOrderActionField);
+    void TDOnErrRtnOrderAction(PROTD::CTORATstpInputOrderActionField& pInputOrderActionField);
 
     boost::asio::io_context& m_ioc;
 

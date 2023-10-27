@@ -1,4 +1,4 @@
-#include "CApplication.h"
+﻿#include "CApplication.h"
 #include "LocalConfig.h"
 #include <iostream>
 #include <boost/bind/bind.hpp>
@@ -24,6 +24,12 @@ CApplication::~CApplication() {
         m_TD->GetApi()->Join();
         m_TD->GetApi()->Release();
         delete m_TD;
+    }
+
+    for (auto iter = m_security.begin(); iter != m_security.end(); ++iter) {
+        auto ptr = iter->second;
+        m_security.erase(iter);
+        free(ptr);
     }
 }
 
@@ -59,19 +65,16 @@ void CApplication::OnFileHandle(int ServiceNo) {
 
 /***************************************MD***************************************/
 void CApplication::MDOnRspUserLogin(PROMD::TTORATstpExchangeIDType exchangeID) {
-    PROMD::MDL2Impl *md = GetMDByExchangeID(exchangeID);
-    if (md == nullptr) return;
     if (exchangeID == PROMD::TORA_TSTP_EXD_SSE) {
-        printf("xxxxxxxxxxxxxxxxxxxxxx\n");
-        char security[] = "600104";
-        md->ReqMarketData(security, PROMD::TORA_TSTP_EXD_SSE, 2);
-        md->ReqMarketData(security, PROMD::TORA_TSTP_EXD_SSE, 3);
+        char security[] = "603068";
+        m_shMD->ReqMarketData(security, PROMD::TORA_TSTP_EXD_SSE, 2);
+        m_shMD->ReqMarketData(security, PROMD::TORA_TSTP_EXD_SSE, 3);
     }
-    //else if (exchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
-    //    char security[] = "000001";
-    //    md->ReqMarketData(security, PROMD::TORA_TSTP_EXD_SZSE, 2);
-    //    md->ReqMarketData(security, PROMD::TORA_TSTP_EXD_SZSE, 3);
-    //}
+    else if (exchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
+        char security[] = "002151";
+        m_szMD->ReqMarketData(security, PROMD::TORA_TSTP_EXD_SZSE, 2);
+        m_szMD->ReqMarketData(security, PROMD::TORA_TSTP_EXD_SZSE, 3);
+    }
 
     //for (auto &iter: LocalConfig::GetMe().m_mapSecurityID) {
     //    if (exchangeID == iter.second.ExchangeID) {
@@ -86,93 +89,75 @@ void CApplication::MDOnRspUserLogin(PROMD::TTORATstpExchangeIDType exchangeID) {
 
 
 /***************************************TD***************************************/
-void CApplication::TDOnRspUserLogin(PROTD::CTORATstpRspUserLoginField *pRspUserLoginField) {
-    printf("TD::OnRspUserLogin success!!!\n");
+void CApplication::TDOnRspUserLogin(PROTD::CTORATstpRspUserLoginField& RspUserLoginField) {
+    printf("CApplication::TDOnRspUserLogin Success!!!\n");
 }
 
-void CApplication::TDOnRspQryShareholderAccount(PROTD::CTORATstpShareholderAccountField *pShareholderAccount) {
-    switch (pShareholderAccount->ExchangeID) {
-        case PROTD::TORA_TSTP_EXD_SSE:
-            printf("SSE.ShareholderID=%s\n", pShareholderAccount->ShareholderID);
-            break;
-        case PROTD::TORA_TSTP_EXD_SZSE:
-            printf("SZSE.ShareholderID=%s\n", pShareholderAccount->ShareholderID);
-            break;
-        case PROTD::TORA_TSTP_EXD_BSE:
-            printf("BSE.ShareholderID=%s\n", pShareholderAccount->ShareholderID);
-            break;
-        case PROTD::TORA_TSTP_EXD_HK:
-            printf("HK.ShareholderID=%s\n", pShareholderAccount->ShareholderID);
-            break;
-        default:
-            break;
-    }
-}
+void CApplication::TDOnRspQrySecurity(PROTD::CTORATstpSecurityField& Security) {
+    //printf("SecurityID:%s,SecurityName:%s,UpperLimitPrice:%lf,LowerLimitPrice:%lf\n", Security.SecurityID, Security.SecurityName, Security.UpperLimitPrice, Security.LowerLimitPrice);
+    auto security = (PROTD::CTORATstpSecurityField *) malloc(sizeof(PROTD::CTORATstpSecurityField));
+    if (security) {
+        memcpy(security, &Security, sizeof(PROTD::CTORATstpSecurityField));
 
-void CApplication::TDOnRspQrySecurity(PROTD::CTORATstpSecurityField *pSecurity) {
-    if (pSecurity) {
-        //printf("SecurityID:%s,SecurityName:%s,PriceTick:%lf,PreClosePrice:%lf,MarketID:%c\n", pSecurity->SecurityID, pSecurity->SecurityName, pSecurity->PriceTick, pSecurity->PreClosePrice, pSecurity->MarketID);
-        auto security = (PROTD::CTORATstpSecurityField *) malloc(sizeof(PROTD::CTORATstpSecurityField));
-        if (security) {
-            memcpy(security, pSecurity, sizeof(PROTD::CTORATstpSecurityField));
-            m_security[security->SecurityID] = security;
+        if (m_security.find(Security.SecurityID) != m_security.end()) {
+            PROTD::CTORATstpSecurityField *old = m_security[security->SecurityID];
+            m_security.erase(security->SecurityID);
+            free(old);
         }
+        m_security[security->SecurityID] = security;
     }
 }
 
-void CApplication::TDOnRspQryOrder(PROTD::CTORATstpOrderField *pOrder) {
+void CApplication::TDOnRspQryOrder(PROTD::CTORATstpOrderField& Order) {
     printf("OrderLocalID:%s,SecurityID:%s,Direction:%c,VolumeTotalOriginal:%d,LimitPrice:%lf,VolumeTraded:%d,VolumeCanceled:%d,OrderSysID:%s,FrontID:%d,SessionID:%d,OrderRef:%d,OrderStatus:%c,StatusMsg:%s,InsertTime:%s\n",
-           pOrder->OrderLocalID, pOrder->SecurityID, pOrder->Direction, pOrder->VolumeTotalOriginal, pOrder->LimitPrice,
-           pOrder->VolumeTraded, pOrder->VolumeCanceled, pOrder->OrderSysID, pOrder->FrontID, pOrder->SessionID,
-           pOrder->OrderRef, pOrder->OrderStatus, pOrder->StatusMsg, pOrder->InsertTime);
+           Order.OrderLocalID, Order.SecurityID, Order.Direction, Order.VolumeTotalOriginal, Order.LimitPrice,
+           Order.VolumeTraded, Order.VolumeCanceled, Order.OrderSysID, Order.FrontID, Order.SessionID,
+           Order.OrderRef, Order.OrderStatus, Order.StatusMsg, Order.InsertTime);
 }
 
-void CApplication::TDOnRspQryTrade(PROTD::CTORATstpTradeField *pTrade) {
+void CApplication::TDOnRspQryTrade(PROTD::CTORATstpTradeField& Trade) {
     printf("OrderLocalID:%s,SecurityID:%s,Direction:%c,Volume:%d,Price:%lf,OrderSysID:%s,OrderRef:%d,TradeTime:%s\n",
-           pTrade->OrderLocalID, pTrade->SecurityID, pTrade->Direction, pTrade->Volume, pTrade->Price,
-           pTrade->OrderSysID, pTrade->OrderRef, pTrade->TradeTime);
+           Trade.OrderLocalID, Trade.SecurityID, Trade.Direction, Trade.Volume, Trade.Price,
+           Trade.OrderSysID, Trade.OrderRef, Trade.TradeTime);
 }
 
-void CApplication::TDOnRspQryPosition(PROTD::CTORATstpPositionField *pPosition) {
-    if (!pPosition) return;
-
-    auto pos = (PROTD::CTORATstpPositionField *) malloc(sizeof(PROTD::CTORATstpPositionField));
-    if (pos) {
-        memcpy(pos, pPosition, sizeof(*pos));
-
-    }
+void CApplication::TDOnRspQryPosition(PROTD::CTORATstpPositionField& Position) {
     printf("SecurityID:%s,CurrentPosition:%d,OpenPosCost:%lf,TotalPosCost:%lf,PrePosition:%d,HistoryPosFrozen:%d\n",
-           pPosition->SecurityID, pPosition->CurrentPosition, pPosition->OpenPosCost, pPosition->TotalPosCost,
-           pPosition->PrePosition, pPosition->HistoryPosFrozen);
+           Position.SecurityID, Position.CurrentPosition, Position.OpenPosCost, Position.TotalPosCost,
+           Position.PrePosition, Position.HistoryPosFrozen);
+    //auto pos = (PROTD::CTORATstpPositionField *) malloc(sizeof(PROTD::CTORATstpPositionField));
+    //if (pos) {
+    //    memcpy(pos, pPosition, sizeof(*pos));
+
+    //}
 }
 
-void CApplication::TDOnRspQryTradingAccount(PROTD::CTORATstpTradingAccountField *pTradingAccount) {
+void CApplication::TDOnRspQryTradingAccount(PROTD::CTORATstpTradingAccountField& TradingAccount) {
     printf("AccountID:%s,UsefulMoney:%lf,FrozenCash:%lf,FrozenCommission:%lf\n",
-           pTradingAccount->AccountID, pTradingAccount->UsefulMoney, pTradingAccount->FrozenCash,
-           pTradingAccount->FrozenCommission);
+           TradingAccount.AccountID, TradingAccount.UsefulMoney, TradingAccount.FrozenCash, TradingAccount.FrozenCommission);
 }
 
-void CApplication::TDOnRspOrderInsert(PROTD::CTORATstpInputOrderField *pInputOrderField) {
-
-}
-
-void CApplication::TDOnErrRtnOrderInsert(PROTD::CTORATstpInputOrderField *pInputOrderField) {
+void CApplication::TDOnRspOrderInsert(PROTD::CTORATstpInputOrderField& pInputOrderField) {
 
 }
 
-void CApplication::TDOnRtnOrder(PROTD::CTORATstpOrderField *pOrder) {
+void CApplication::TDOnErrRtnOrderInsert(PROTD::CTORATstpInputOrderField& pInputOrderField) {
 
 }
 
-void CApplication::TDOnRtnTrade(PROTD::CTORATstpTradeField *pTrade) {
+void CApplication::TDOnRtnOrder(PROTD::CTORATstpOrderField& pOrder) {
 
 }
 
-void CApplication::TDOnRspOrderAction(PROTD::CTORATstpInputOrderActionField *pInputOrderActionField) {
+void CApplication::TDOnRtnTrade(PROTD::CTORATstpTradeField& pTrade) {
 
 }
 
-void CApplication::TDOnErrRtnOrderAction(PROTD::CTORATstpInputOrderActionField *pInputOrderActionField) {
+void CApplication::TDOnRspOrderAction(PROTD::CTORATstpInputOrderActionField& pInputOrderActionField) {
+
+}
+
+void CApplication::TDOnErrRtnOrderAction(PROTD::CTORATstpInputOrderActionField& pInputOrderActionField) {
 
 }
 

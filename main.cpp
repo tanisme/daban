@@ -1,4 +1,4 @@
-#include <fstream>
+﻿#include <fstream>
 
 #include "CApplication.h"
 #include <iostream>
@@ -9,7 +9,7 @@
 #include "LocalConfig.h"
 
 int main() {
-    std::string cfgfile = "../../balibali.ini";
+    std::string cfgfile = "../balibali.ini";
     std::string dbfile = "";
     std::string httpurl = "";
     std::string shmdaddr = "", szmdaddr = "";

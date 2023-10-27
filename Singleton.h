@@ -1,4 +1,4 @@
-#ifndef BALIBALI_SINGLETON_H
+﻿#ifndef BALIBALI_SINGLETON_H
 #define BALIBALI_SINGLETON_H
 
 #include <mutex>
