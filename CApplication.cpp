@@ -74,8 +74,13 @@ void CApplication::MDOnRspUserLogin(PROMD::TTORATstpExchangeIDType exchangeID) {
             PROMD::TTORATstpSecurityIDType Security;
             strncpy(Security, iter.first.c_str(), sizeof(Security));
             //md->ReqMarketData(Security, exchangeID, 1);
-            md->ReqMarketData(Security, exchangeID, 2);
-            md->ReqMarketData(Security, exchangeID, 3);
+            if (exchangeID == PROMD::TORA_TSTP_EXD_SSE) {
+                md->ReqMarketData(Security, exchangeID, 4);
+            }
+            else if (exchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
+                md->ReqMarketData(Security, exchangeID, 2);
+                md->ReqMarketData(Security, exchangeID, 3);
+            }
         }
     }
 }

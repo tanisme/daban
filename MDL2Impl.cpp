@@ -80,6 +80,10 @@ namespace PROMD {
                 if (isSub) return m_mdApi->SubscribeOrderDetail(security_arr, 1, exchangeID);
                 return m_mdApi->UnSubscribeOrderDetail(security_arr, 1, exchangeID);
                 break;
+            case 4:
+                if (isSub) return m_mdApi->SubscribeNGTSTick(security_arr, 1, exchangeID);
+                return m_mdApi->UnSubscribeNGTSTick(security_arr, 1, exchangeID);
+                break;
             default:
                 break;
         }
@@ -191,6 +195,47 @@ namespace PROMD {
             }
         } else if (pOrderDetail->ExchangeID == TORA_TSTP_EXD_SZSE) {
             InsertOrder(pOrderDetail->SecurityID, pOrderDetail->OrderNO, pOrderDetail->Price, pOrderDetail->Volume, pOrderDetail->Side);
+        }
+    }
+
+    void MDL2Impl::OnRspSubNGTSTick(CTORATstpSpecificSecurityField *pSpecificSecurity, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
+        if (!pSpecificSecurity || !pRspInfo) return;
+        if (pRspInfo->ErrorID > 0) {
+            printf("%s MDL2Impl::OnRspSubNGTSTick Failed!!! ErrMsg:%s\n", GetExchangeName(m_exchangeID), pRspInfo->ErrorMsg);
+            return;
+        }
+
+        printf("%s MDL2Impl::OnRspSubNGTSTick Success!!! %s\n", GetExchangeName(pSpecificSecurity->ExchangeID), pSpecificSecurity->SecurityID);
+    }
+
+    void MDL2Impl::OnRspUnSubNGTSTick(CTORATstpSpecificSecurityField *pSpecificSecurity, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
+        if (!pSpecificSecurity || !pRspInfo) return;
+        if (pRspInfo->ErrorID > 0) {
+            printf("%s MDL2Impl::OnRspUnSubNGTSTick Failed!!! ErrMsg:%s\n", GetExchangeName(m_exchangeID), pRspInfo->ErrorMsg);
+            return;
+        }
+
+        printf("%s MDL2Impl::OnRspUnSubNGTSTick Success!!! %s\n", GetExchangeName(pSpecificSecurity->ExchangeID), pSpecificSecurity->SecurityID);
+    }
+
+    void MDL2Impl::OnRtnNGTSTick(CTORATstpLev2NGTSTickField *pTick) {
+        if (!pTick) return;
+
+        if (pTick->TickType == TORA_TSTP_LTT_Add) {
+            if (pTick->Side == TORA_TSTP_LSD_Buy) {
+                InsertOrder(pTick->SecurityID, pTick->BuyNo, pTick->Price, pTick->Volume, pTick->Side);
+            } else if (pTick->Side == TORA_TSTP_LSD_Sell){
+                InsertOrder(pTick->SecurityID, pTick->SellNo, pTick->Price, pTick->Volume, pTick->Side);
+            }
+        } else if (pTick->TickType == TORA_TSTP_LTT_Delete) {
+            if (pTick->Side == TORA_TSTP_LSD_Buy) {
+                ModifyOrder(pTick->SecurityID, 0, pTick->BuyNo, TORA_TSTP_LSD_Buy);
+            } else if (pTick->Side == TORA_TSTP_LSD_Sell){
+                ModifyOrder(pTick->SecurityID, 0, pTick->SellNo, TORA_TSTP_LSD_Buy);
+            }
+        } else if (pTick->TickType == TORA_TSTP_LTT_Trade) {
+            ModifyOrder(pTick->SecurityID, pTick->Volume, pTick->BuyNo, TORA_TSTP_LSD_Buy);
+            ModifyOrder(pTick->SecurityID, pTick->Volume, pTick->SellNo, TORA_TSTP_LSD_Sell);
         }
     }
 
