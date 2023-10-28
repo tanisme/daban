@@ -29,40 +29,25 @@ public:
     bool Init();
 
     bool LoadSubSecurity();
-
     bool AddSubSecurity(char *SecurityID, char ExchangeID);
-
     bool DelSubSecurity(char *SecurityID);
-
     bool LoadStrategy();
-
     std::string GetDBFile() const { return m_dbFile; }
-
     void SetDBFile(std::string &dbFile) { m_dbFile = dbFile; }
-
     std::string GetSHMDAddr() const { return m_shMDAddr; }
-
     void SetSHMDAddr(std::string &addr) { m_shMDAddr = addr; }
-
     std::string GetSZMDAddr() const { return m_szMDAddr; }
-
     void SetSZMDAddr(std::string &addr) { m_szMDAddr = addr; }
-
     std::string GetTDAddr() const { return m_TDAddr; }
-
     void SetTDAddr(std::string &addr) { m_TDAddr = addr; }
-
     std::string GetTDAccount() const { return m_TDAccount; }
-
     void SetTDAccount(std::string &account) { m_TDAccount = account; }
-
     std::string GetTDPassword() const { return m_TDPassword; }
-
     void SetTDPassword(std::string &password) { m_TDPassword = password; }
-
     std::string GetHttpUrl() const { return m_httpUrl; }
-
     void SetHttpUrl(std::string& httpurl) { m_httpUrl = httpurl;}
+    bool GetSHMDIsNew() const { return m_shMDNewVersion > 0; }
+    void SetSHMdIsNew(int isNew) { m_shMDNewVersion = isNew; }
 
 public:
     std::unordered_map<std::string, stSecurity_t> m_mapSecurityID;
@@ -76,6 +61,7 @@ private:
     std::string m_TDPassword = "17522830";
     std::string m_httpUrl = "";
     SQLite3::ptr m_db = nullptr;
+    int m_shMDNewVersion = 0;
 };
 
 #endif //BALIBALI_LOCALCONFIG_H

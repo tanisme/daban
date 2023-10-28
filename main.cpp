@@ -14,6 +14,7 @@ int main() {
     std::string httpurl = "";
     std::string shmdaddr = "", szmdaddr = "";
     std::string tdaddr = "", tdaccount = "", tdpassword = "";
+    int shmdnewversion = 0;
     boost::program_options::options_description cfgdesc("Config file options");
     cfgdesc.add_options()
             ("daban.dbfile", boost::program_options::value<std::string>(&dbfile), "daban.dbfile")
@@ -22,7 +23,8 @@ int main() {
             ("daban.szmdaddr", boost::program_options::value<std::string>(&szmdaddr), "daban.szmdaddr")
             ("daban.tdaddr", boost::program_options::value<std::string>(&tdaddr), "daban.tdaddr")
             ("daban.tdaccount", boost::program_options::value<std::string>(&tdaccount), "daban.tdaccount")
-            ("daban.tdpassword", boost::program_options::value<std::string>(&tdpassword), "daban.tdpassword");
+            ("daban.tdpassword", boost::program_options::value<std::string>(&tdpassword), "daban.tdpassword")
+            ("daban.shmdnewversion", boost::program_options::value<int>(&shmdnewversion), "daban.shmdnewversion");
     boost::program_options::variables_map vm;
 
     std::ifstream ifs;
@@ -43,6 +45,7 @@ int main() {
     LocalConfig::GetMe().SetTDAccount(tdaccount);
     LocalConfig::GetMe().SetTDPassword(tdpassword);
     LocalConfig::GetMe().SetHttpUrl(httpurl);
+    LocalConfig::GetMe().SetSHMdIsNew(shmdnewversion);
     LocalConfig::GetMe().Init();
 
     boost::asio::io_context io_context;

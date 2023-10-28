@@ -75,9 +75,13 @@ void CApplication::MDOnRspUserLogin(PROMD::TTORATstpExchangeIDType exchangeID) {
             strncpy(Security, iter.first.c_str(), sizeof(Security));
             //md->ReqMarketData(Security, exchangeID, 1);
             if (exchangeID == PROMD::TORA_TSTP_EXD_SSE) {
-                md->ReqMarketData(Security, exchangeID, 4);
-            }
-            else if (exchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
+                if (LocalConfig::GetMe().GetSHMDIsNew()) {
+                    md->ReqMarketData(Security, exchangeID, 4);
+                } else {
+                    md->ReqMarketData(Security, exchangeID, 2);
+                    md->ReqMarketData(Security, exchangeID, 3);
+                }
+            } else if (exchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
                 md->ReqMarketData(Security, exchangeID, 2);
                 md->ReqMarketData(Security, exchangeID, 3);
             }
