@@ -9,20 +9,20 @@
 #include "LocalConfig.h"
 
 int main() {
-    std::string cfgfile = "../daban.ini";
-    std::string dbfile = "../database.db";
+    std::string cfgfile = "daban.ini";
+    std::string dbfile = "database.db";
     std::string httpurl = "";
     std::string shmdaddr = "", szmdaddr = "";
     std::string tdaddr = "", tdaccount = "", tdpassword = "";
     boost::program_options::options_description cfgdesc("Config file options");
     cfgdesc.add_options()
-            ("balibali.dbfile", boost::program_options::value<std::string>(&dbfile), "balibali.dbfile")
-            ("balibali.httpurl", boost::program_options::value<std::string>(&httpurl), "balibali.httpurl")
-            ("balibali.shmdaddr", boost::program_options::value<std::string>(&shmdaddr), "balibali.shmdaddr")
-            ("balibali.szmdaddr", boost::program_options::value<std::string>(&szmdaddr), "balibali.szmdaddr")
-            ("balibali.tdaddr", boost::program_options::value<std::string>(&tdaddr), "balibali.tdaddr")
-            ("balibali.tdaccount", boost::program_options::value<std::string>(&tdaccount), "balibali.tdaccount")
-            ("balibali.tdpassword", boost::program_options::value<std::string>(&tdpassword), "balibali.tdpassword");
+            ("daban.dbfile", boost::program_options::value<std::string>(&dbfile), "daban.dbfile")
+            ("daban.httpurl", boost::program_options::value<std::string>(&httpurl), "daban.httpurl")
+            ("daban.shmdaddr", boost::program_options::value<std::string>(&shmdaddr), "daban.shmdaddr")
+            ("daban.szmdaddr", boost::program_options::value<std::string>(&szmdaddr), "daban.szmdaddr")
+            ("daban.tdaddr", boost::program_options::value<std::string>(&tdaddr), "daban.tdaddr")
+            ("daban.tdaccount", boost::program_options::value<std::string>(&tdaccount), "daban.tdaccount")
+            ("daban.tdpassword", boost::program_options::value<std::string>(&tdpassword), "daban.tdpassword");
     boost::program_options::variables_map vm;
 
     std::ifstream ifs;
