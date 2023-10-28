@@ -369,7 +369,7 @@ namespace PROMD {
 
         for (auto &iter: m_pApp->m_subSecurityIDs) {
             printf("\n");
-            printf("--------------------- %s ---------------------\n", iter.first.c_str());
+            printf("--------------------- %s %s---------------------\n", iter.first.c_str(), GetExchangeName(iter.second.ExchangeID));
 
             {
                 int showCount = 5;
