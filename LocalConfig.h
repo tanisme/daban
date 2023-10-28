@@ -15,6 +15,7 @@ typedef struct stSecurity_s {
     char SecurityID[31];
     char SecurityName[81];
     char ExchangeID;
+    int Status;
 } stSecurity_t;
 
 typedef struct stStrategy_s {

@@ -9,7 +9,7 @@
 #include "LocalConfig.h"
 
 int main() {
-    std::string cfgfile = "../balibali.ini";
+    std::string cfgfile = "../daban.ini";
     std::string dbfile = "../database.db";
     std::string httpurl = "";
     std::string shmdaddr = "", szmdaddr = "";

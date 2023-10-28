@@ -72,7 +72,9 @@ namespace http {
                 // 查询已经订阅合约
                 for (auto &iter: LocalConfig::GetMe().m_mapSecurityID) {
                     item["SecurityID"] = iter.second.SecurityID;
+                    //item["SecurityName"] = iter.second.SecurityName;
                     item["ExchangeID"] = iter.second.ExchangeID;
+                    item["status"] = iter.second.Status;
                     tmpvalue.append(item);
                 }
                 rspvalue["security"] = tmpvalue;

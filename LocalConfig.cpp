@@ -30,7 +30,7 @@ bool LocalConfig::LoadSubSecurity() {
                                  "status INTEGER NOT NULL DEFAULT 0);";
     m_db->execute(create_tab_sql);
 
-    const char *select_sql = "SELECT security, securityname, exchange FROM subsecurity where status=0;";
+    const char *select_sql = "SELECT security,securityname,exchange,status FROM subsecurity;";
     SQLite3Stmt::ptr query = SQLite3Stmt::Create(m_db, select_sql);
     if (!query) {
         return false;
@@ -43,6 +43,7 @@ bool LocalConfig::LoadSubSecurity() {
         strcpy(security.SecurityID, ds->getText(0));
         strcpy(security.SecurityName, ds->getText(1));
         security.ExchangeID = ds->getText(2)[0];
+        security.Status = ds->getInt(3);
         m_mapSecurityID[security.SecurityID] = security;
     }
 

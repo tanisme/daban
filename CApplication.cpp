@@ -70,7 +70,7 @@ void CApplication::MDOnRspUserLogin(PROMD::TTORATstpExchangeIDType exchangeID) {
     auto md = GetMDByExchangeID(exchangeID);
     if (!md) return;
     for (auto &iter: LocalConfig::GetMe().m_mapSecurityID) {
-        if (exchangeID == iter.second.ExchangeID) {
+        if (exchangeID == iter.second.ExchangeID && iter.second.Status == 0) {
             PROMD::TTORATstpSecurityIDType Security;
             strncpy(Security, iter.first.c_str(), sizeof(Security));
             //md->ReqMarketData(Security, exchangeID, 1);
