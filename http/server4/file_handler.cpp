@@ -59,7 +59,6 @@ namespace http {
             Json::FastWriter writer;
             Json::Value reqvalue, rspvalue, item, tmpvalue;
 
-            m_app->m_ioc.post(boost::bind(&CApplication::OnHttpHandle, m_app, 1));
             if (!reader.parse(req.content, reqvalue, false)) {
                 return;
             }
@@ -67,7 +66,7 @@ namespace http {
             int ServiceNo = reqvalue["ServiceNo"].asInt();
             printf("ServiceNo %d\n", ServiceNo);
 
-            if (ServiceNo == 1) {
+            if (ServiceNo == SERVICE_QRYSUBSECURITYREQ) {
                 // 查询已经订阅合约
                 for (auto &iter: m_app->m_subSecurityIDs) {
                     item["SecurityID"] = iter.second.SecurityID;
@@ -77,12 +76,22 @@ namespace http {
                     tmpvalue.append(item);
                 }
                 rspvalue["security"] = tmpvalue;
-            } else if (ServiceNo == 3) {
-                // 增加订阅合约
-                char Security[31] = {0};
-                char ExchangeID = '0';
-                strcpy(Security, reqvalue["SecurityID"].asString().c_str());
-                ExchangeID = reqvalue["ExchangeID"].asString().c_str()[0];
+            } else if (ServiceNo == SERVICE_ADDSTRATEGYREQ) {
+                stStrategy strategy = {0};
+                strcpy(strategy.SecurityID, reqvalue["SecurityID"].asString().c_str());
+                strategy.type = reqvalue["type"].asInt();
+                strategy.params.p1 = reqvalue["p1"].asDouble();
+                strategy.params.p2 = reqvalue["p2"].asDouble();
+                strategy.params.p3 = reqvalue["p3"].asDouble();
+                strategy.params.p4 = reqvalue["p4"].asDouble();
+                strategy.params.p5 = reqvalue["p5"].asDouble();
+                m_app->m_ioc.post(boost::bind(&CApplication::AddStrategy, m_app, strategy));
+            } else if (ServiceNo == SERVICE_DELSTRATEGYREQ) {
+                int type = reqvalue["idx"].asInt();
+                //m_app->m_ioc.post(boost::bind(&CApplication::AddStrategy, m_app, strategy));
+            } else if (ServiceNo == SERVICE_QRYSTRATEGYREQ) {
+                int type = reqvalue["idx"].asInt();
+                //m_app->m_ioc.post(boost::bind(&CApplication::AddStrategy, m_app, strategy));
             }
 
             rspvalue["ServiceNo"] = ServiceNo + 1;

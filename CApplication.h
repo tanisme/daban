@@ -46,6 +46,7 @@ public:
     bool AddSubSecurity(char *SecurityID, char ExchangeID);
     bool DelSubSecurity(char *SecurityID);
     bool LoadStrategy();
+    bool AddStrategy(stStrategy & strategy);
     std::string GetDBFile() const { return m_dbFile; }
     void SetDBFile(std::string &dbFile) { m_dbFile = dbFile; }
     std::string GetSHMDAddr() const { return m_shMDAddr; }
@@ -78,7 +79,8 @@ private:
     PROTD::TDImpl *m_TD = nullptr;
     SQLite3::ptr m_db = nullptr;
 
-    std::unordered_map<std::string, PROTD::CTORATstpSecurityField *> m_security;
+    std::unordered_map<std::string, std::vector<stStrategy> > m_strategys;
+    std::unordered_map<std::string, PROTD::CTORATstpSecurityField *> m_securityIDs;
     std::unordered_map<std::string, PROTD::CTORATstpOrderField *> m_order;
     std::unordered_map<std::string, PROTD::CTORATstpPositionField *> m_position;
 };

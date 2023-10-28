@@ -4,20 +4,22 @@
 #include "defines.h"
 
 class CApplication;
+
 namespace PROMD {
 
     using namespace TORALEV2API;
 
-    class MDL2Impl : public CTORATstpLev2MdSpi {
+    class MDL2Impl : public CTORATstpLev2MdSpi
+    {
     public:
-        MDL2Impl(CApplication *App, TTORATstpExchangeIDType ExchangeID);
+        MDL2Impl(CApplication *pApp, TTORATstpExchangeIDType exchangeID);
         ~MDL2Impl();
 
         bool Start();
-        CTORATstpLev2MdApi *GetApi() const { return m_Api; }
-        static const char *GetExchangeName(TTORATstpExchangeIDType ExchangeID);
-        static const char *GetSide(TTORATstpLSideType Side);
-        int ReqMarketData(TTORATstpSecurityIDType SecurityID, TTORATstpExchangeIDType ExchangeID, int type, bool isSub = true);
+        CTORATstpLev2MdApi *GetApi() const { return m_pApi; }
+        static const char *GetExchangeName(TTORATstpExchangeIDType exchangeID);
+        static const char *GetSide(TTORATstpLSideType side);
+        int ReqMarketData(TTORATstpSecurityIDType securityID, TTORATstpExchangeIDType exchangeID, int type, bool isSub = true);
         void ShowOrderBook();
         void ShowFixOrderBook(TTORATstpSecurityIDType securityID);
 
@@ -39,23 +41,22 @@ namespace PROMD {
         void OnRtnNGTSTick(CTORATstpLev2NGTSTickField *pTick) override;
 
     private:
-        void InsertOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side);
-        void ModifyOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType TradeVolume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side);
-        void DeleteOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO);
-        void ResetOrder(TTORATstpSecurityIDType SecurityID, TTORATstpTradeBSFlagType Side);
-        void FixOrder(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price);
-        void PostPrice(TTORATstpSecurityIDType SecurityID);
+        void InsertOrder(TTORATstpSecurityIDType securityID, TTORATstpLongSequenceType orderNO, TTORATstpPriceType price, TTORATstpLongVolumeType Volume, TTORATstpLSideType side);
+        void ModifyOrder(TTORATstpSecurityIDType securityID, TTORATstpLongVolumeType tradeVolume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side);
+        void DeleteOrder(TTORATstpSecurityIDType securityID, TTORATstpLongSequenceType orderNO);
+        void ResetOrder(TTORATstpSecurityIDType securityID, TTORATstpTradeBSFlagType side);
+        void FixOrder(TTORATstpSecurityIDType securityID, TTORATstpPriceType price);
+        void PostPrice(TTORATstpSecurityIDType securityID);
 
     private:
         int m_reqID = 1;
         bool m_isLogined = false;
-        CTORATstpLev2MdApi *m_Api = nullptr;
-        CApplication *m_App = nullptr;
-        TTORATstpExchangeIDType m_ExchangeID;
-        MapOrder m_OrderBuy;
-        MapOrder m_OrderSell;
-        std::unordered_map<std::string, int> m_SubSecurityIDs;
-        std::unordered_map<std::string, stPostPrice> m_postPrice;
+        CTORATstpLev2MdApi *m_pApi = nullptr;
+        CApplication *m_pApp = nullptr;
+        TTORATstpExchangeIDType m_exchangeID;
+        MapOrder m_orderBuy;
+        MapOrder m_orderSell;
+        std::unordered_map<std::string, stPostPrice> m_postMDL2;
     };
 
 }

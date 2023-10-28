@@ -1,7 +1,7 @@
 ﻿#ifndef TEST_TDIMPL_H
 #define TEST_TDIMPL_H
 
-#include "TORA/TORATstpTraderApi.h"
+#include "defines.h"
 
 class CApplication;
 namespace PROTD {

@@ -19,15 +19,15 @@ CApplication::~CApplication() {
         delete m_szMD;
     }
 
-    if (m_TD != nullptr) {
-        m_TD->GetApi()->Join();
-        m_TD->GetApi()->Release();
-        delete m_TD;
-    }
+    //if (m_TD != nullptr) {
+    //    m_TD->GetApi()->Join();
+    //    m_TD->GetApi()->Release();
+    //    delete m_TD;
+    //}
 
-    for (auto iter = m_security.begin(); iter != m_security.end(); ++iter) {
+    for (auto iter = m_securityIDs.begin(); iter != m_securityIDs.end(); ++iter) {
         auto ptr = iter->second;
-        m_security.erase(iter);
+        m_securityIDs.erase(iter);
         free(ptr);
     }
 }
@@ -39,8 +39,8 @@ void CApplication::Start() {
     m_szMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SZSE);
     m_szMD->Start();
 
-    m_TD = new PROTD::TDImpl(this);
-    m_TD->Start();
+    //m_TD = new PROTD::TDImpl(this);
+    //m_TD->Start();
 
     m_timer.expires_from_now(boost::posix_time::milliseconds(1000));
     m_timer.async_wait(boost::bind(&CApplication::OnTime, this, boost::asio::placeholders::error));
@@ -54,9 +54,9 @@ void CApplication::OnTime(const boost::system::error_code& error)
         }
     }
 
-    //m_shMD->ShowOrderBook();
-    //m_szMD->ShowOrderBook();
-    m_timer.expires_from_now(boost::posix_time::milliseconds(1000));
+    m_shMD->ShowOrderBook();
+    m_szMD->ShowOrderBook();
+    m_timer.expires_from_now(boost::posix_time::milliseconds(3000));
     m_timer.async_wait(boost::bind(&CApplication::OnTime, this, boost::asio::placeholders::error));
 }
 
@@ -89,16 +89,44 @@ void CApplication::MDOnRspUserLogin(PROMD::TTORATstpExchangeIDType exchangeID) {
 }
 
 void CApplication::MDPostPrice(stPostPrice& postPrice) {
-    printf("MDPostPrice %s %lld %.2f %.2f %lld\n", postPrice.SecurityID, postPrice.AskVolume1, postPrice.AskPrice1, postPrice.BidPrice1, postPrice.BidVolume1);
+    if (true) return;
+    //printf("MDPostPrice %s %lld %.2f %.2f %lld\n", postPrice.SecurityID, postPrice.AskVolume1, postPrice.AskPrice1, postPrice.BidPrice1, postPrice.BidVolume1);
 
-    // 如果价格上涨至快涨停的位置(还差两个点。。)，买入
+    auto iterSecurity = m_securityIDs.find(postPrice.SecurityID);
+    if (iterSecurity == m_securityIDs.end()) {
+        //printf("MDPostPrice Security not found!!!\n");
+        return;
+    }
+    auto iterStrategy = m_strategys.find(postPrice.SecurityID);
+    if (iterStrategy == m_strategys.end()) {
+        return;
+    }
+
+    for (auto iter = iterStrategy->second.begin(); iter != iterStrategy->second.end(); ++iter) {
+        if (iter->status == 1) continue;
+
+        auto rt = -1;
+        if (iter->type == 1) {
+            // 如果价格上涨至快涨停的位置(还差两个点。。)，买入
+            //rt = Insert();
+        } else if (iter->type == 2) {
+            // 如果价格已经触到了涨停价，但是卖一档仍有少量挂单，买入
+            //rt = Insert();
+        } else if (iter->type == 3) {
+            // 如果已经板了(卖档为空，买一档已到涨停价),封单金额>X万元时，买入
+            //rt = Insert();
+        }
+
+        if (rt == 0) {
+            iter->status = 1;
+        }
+    }
+
     //TORASTOCKAPI::CTORATstpInputOrderField InputOrder = { 0 };
     //strncpy(InputOrder.SecurityID, MarketData.SecurityID, sizeof(InputOrder.SecurityID) - 1);
     //OrderInsert(InputOrder);
 
-    // 如果价格已经触到了涨停价，但是卖一档仍有少量挂单，买入
 
-    // 如果已经板了(卖档为空，买一档已到涨停价),封单金额>X万元时，买入
 
     // 买入时，下单手数随机拆碎
 }
@@ -111,14 +139,14 @@ void CApplication::TDOnRspUserLogin(PROTD::CTORATstpRspUserLoginField& RspUserLo
 void CApplication::TDOnRspQrySecurity(PROTD::CTORATstpSecurityField& Security) {
     //printf("SecurityID:%s,SecurityName:%s,UpperLimitPrice:%lf,LowerLimitPrice:%lf\n", Security.SecurityID, Security.SecurityName, Security.UpperLimitPrice, Security.LowerLimitPrice);
 
-    if (m_security.find(Security.SecurityID) != m_security.end()) {
-        auto security = m_security[Security.SecurityID];
+    if (m_securityIDs.find(Security.SecurityID) != m_securityIDs.end()) {
+        auto security = m_securityIDs[Security.SecurityID];
         memcpy(security, &Security, sizeof(PROTD::CTORATstpSecurityField));
     } else {
         auto security = (PROTD::CTORATstpSecurityField *) malloc(sizeof(PROTD::CTORATstpSecurityField));
         if (security) {
             memcpy(security, &Security, sizeof(PROTD::CTORATstpSecurityField));
-            m_security[security->SecurityID] = security;
+            m_securityIDs[security->SecurityID] = security;
         }
     }
 }
@@ -246,10 +274,60 @@ bool CApplication::DelSubSecurity(char *SecurityID) {
 }
 
 bool CApplication::LoadStrategy() {
-    //int i = 0;
-    //const char *create_tab_sql = "CREATE TABLE IF NOT EXISTS subsecurity("
-    //                             "idx INTEGER PRIMARY KEY AUTOINCREMENT,"
-    //                             "security CHAR(32) NOT NULL,"
-    //                             "exchange CHAR NOT NULL);";
+    int i = 0;
+    const char *create_tab_sql = "CREATE TABLE IF NOT EXISTS strategy("
+                                 "idx INTEGER PRIMARY KEY AUTOINCREMENT,"
+                                 "security CHAR(32) NOT NULL,"
+                                 "type INTEGER NOT NULL DEFAULT 0,"
+                                 "status INTEGER NOT NULL DEFAULT 0,"
+                                 "param1 REAL,param2 REAL,param3 REAL,param4 REAL,param5 REAL"
+                                 ");";
+
+    m_db->execute(create_tab_sql);
+
+    const char *select_sql = "SELECT idx,security,type,status,param1,param2,param3,param4,param5 FROM strategy;";
+    SQLite3Stmt::ptr query = SQLite3Stmt::Create(m_db, select_sql);
+    if (!query) return false;
+
+    auto ds = query->query();
+    stStrategy strategy;
+    while (ds->next()) {
+        memset(&strategy, 0, sizeof(strategy));
+        strategy.idx = ds->getInt(0);
+        strcpy(strategy.SecurityID, ds->getText(1));
+        strategy.type = ds->getInt(2);
+        strategy.status = ds->getInt(3);
+        strategy.params.p1 = ds->getDouble(4);
+        strategy.params.p2 = ds->getDouble(5);
+        strategy.params.p3 = ds->getDouble(6);
+        strategy.params.p4 = ds->getDouble(7);
+        strategy.params.p5 = ds->getDouble(8);
+
+        if (m_strategys.find(strategy.SecurityID) == m_strategys.end()) {
+            m_strategys[strategy.SecurityID]  = std::vector<stStrategy>();
+        }
+        m_strategys[strategy.SecurityID].emplace_back(strategy);
+    }
+    return true;
+}
+
+bool CApplication::AddStrategy(stStrategy& strategy) {
+    SQLite3Stmt::ptr stmt = SQLite3Stmt::Create(m_db,"insert into strategy(security,type,param1,param2,param3,param4,param5) values(?,?,?,?,?,?,?)");
+    if(!stmt) {
+        return false;
+    }
+
+    stmt->bind(1, strategy.SecurityID);
+    stmt->bind(2, strategy.type);
+    stmt->bind(3, strategy.params.p1);
+    stmt->bind(4, strategy.params.p2);
+    stmt->bind(5, strategy.params.p3);
+    stmt->bind(6, strategy.params.p4);
+    stmt->bind(7, strategy.params.p5);
+
+    if(stmt->execute() != SQLITE_OK) {
+        return false;
+    }
+    m_strategys[strategy.SecurityID].emplace_back(strategy);
     return true;
 }
