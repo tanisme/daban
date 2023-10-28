@@ -17,7 +17,6 @@
 #include "mime_types.hpp"
 #include "reply.hpp"
 #include "request.hpp"
-#include "LocalConfig.h"
 #include "CApplication.h"
 #include <json/json.h>
 
@@ -60,7 +59,7 @@ namespace http {
             Json::FastWriter writer;
             Json::Value reqvalue, rspvalue, item, tmpvalue;
 
-            m_app->m_ioc.post(boost::bind(&CApplication::OnFileHandle, m_app, 1));
+            m_app->m_ioc.post(boost::bind(&CApplication::OnHttpHandle, m_app, 1));
             if (!reader.parse(req.content, reqvalue, false)) {
                 return;
             }
@@ -70,7 +69,7 @@ namespace http {
 
             if (ServiceNo == 1) {
                 // 查询已经订阅合约
-                for (auto &iter: LocalConfig::GetMe().m_mapSecurityID) {
+                for (auto &iter: m_app->m_subSecurityIDs) {
                     item["SecurityID"] = iter.second.SecurityID;
                     //item["SecurityName"] = iter.second.SecurityName;
                     item["ExchangeID"] = iter.second.ExchangeID;
@@ -84,7 +83,6 @@ namespace http {
                 char ExchangeID = '0';
                 strcpy(Security, reqvalue["SecurityID"].asString().c_str());
                 ExchangeID = reqvalue["ExchangeID"].asString().c_str()[0];
-                LocalConfig::GetMe().AddSubSecurity(Security, ExchangeID);
             }
 
             rspvalue["ServiceNo"] = ServiceNo + 1;

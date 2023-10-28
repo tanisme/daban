@@ -6,7 +6,6 @@
 #include "server.hpp"
 #include "file_handler.hpp"
 #include <boost/program_options.hpp>
-#include "LocalConfig.h"
 
 int main() {
     std::string cfgfile = "daban.ini";
@@ -38,26 +37,19 @@ int main() {
     ifs.close();
     vm.clear();
 
-    LocalConfig::GetMe().SetDBFile(dbfile);
-    LocalConfig::GetMe().SetSHMDAddr(shmdaddr);
-    LocalConfig::GetMe().SetSZMDAddr(szmdaddr);
-    LocalConfig::GetMe().SetTDAddr(tdaddr);
-    LocalConfig::GetMe().SetTDAccount(tdaccount);
-    LocalConfig::GetMe().SetTDPassword(tdpassword);
-    LocalConfig::GetMe().SetHttpUrl(httpurl);
-    LocalConfig::GetMe().SetSHMdIsNew(shmdnewversion);
-    LocalConfig::GetMe().Init();
-
     boost::asio::io_context io_context;
-
     CApplication app(io_context);
-    if (httpurl.length() > 0) {
-        http::server4::server(io_context, std::string(httpurl, 0, httpurl.find(':')),
-                              httpurl.substr(httpurl.find(':') + 1), http::server4::file_handler(&app))();
-    }
+    app.SetDBFile(dbfile);
+    app.SetSHMDAddr(shmdaddr);
+    app.SetSZMDAddr(szmdaddr);
+    app.SetTDAddr(tdaddr);
+    app.SetTDAccount(tdaccount);
+    app.SetTDPassword(tdpassword);
+    app.SetSHMdIsNew(shmdnewversion);
+    app.Init();
 
+    http::server4::server(io_context, std::string(httpurl, 0, httpurl.find(':')), httpurl.substr(httpurl.find(':') + 1), http::server4::file_handler(&app))();
     app.Start();
-
     io_context.run();
 
     return 0;

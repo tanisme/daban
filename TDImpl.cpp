@@ -1,6 +1,5 @@
 ﻿#include "TDImpl.h"
 #include "CApplication.h"
-#include "LocalConfig.h"
 
 #include <boost/bind/bind.hpp>
 
@@ -22,7 +21,7 @@ namespace PROTD {
         if (!m_tdApi) return false;
 
         m_tdApi->RegisterSpi(this);
-        m_tdApi->RegisterFront((char *) LocalConfig::GetMe().GetTDAddr().c_str());
+        m_tdApi->RegisterFront((char *) m_pApp->GetTDAddr().c_str());
         m_tdApi->SubscribePrivateTopic(TORA_TERT_QUICK);
         m_tdApi->SubscribePublicTopic(TORA_TERT_QUICK);
         m_tdApi->Init();
@@ -34,8 +33,8 @@ namespace PROTD {
 
         CTORATstpReqUserLoginField req = {0};
         req.LogInAccountType = TORA_TSTP_LACT_AccountID;
-        strcpy(req.LogInAccount, LocalConfig::GetMe().GetTDAccount().c_str());
-        strcpy(req.Password, LocalConfig::GetMe().GetTDPassword().c_str());
+        strcpy(req.LogInAccount, m_pApp->GetTDAccount().c_str());
+        strcpy(req.Password, m_pApp->GetTDPassword().c_str());
         strcpy(req.UserProductInfo, "notthisone");
         strcpy(req.TerminalInfo,
                "PC;IIP=123.112.154.118;IPORT=50361;LIP=192.168.118.107;MAC=54EE750B1713FCF8AE5CBD58;HD=TF655AY91GHRVL;@notthisone");

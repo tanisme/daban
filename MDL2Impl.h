@@ -1,38 +1,25 @@
 ﻿#ifndef TEST_MDL2IMPL_H
 #define TEST_MDL2IMPL_H
 
-#include <unordered_map>
-#include <vector>
-#include "TORA/TORATstpLev2MdApi.h"
+#include "defines.h"
 
 class CApplication;
 namespace PROMD {
 
     using namespace TORALEV2API;
 
-    struct Order {
-        TTORATstpLongSequenceType OrderNo;
-        TTORATstpLongVolumeType Volume;
-    };
-
-    struct PriceOrders {
-        TTORATstpPriceType Price;
-        std::vector<Order> Orders;
-    };
-
-    typedef std::unordered_map<std::string, std::vector<PriceOrders> > MapOrder;
-
     class MDL2Impl : public CTORATstpLev2MdSpi {
     public:
-        MDL2Impl(CApplication *pApp, TTORATstpExchangeIDType exchangeID);
+        MDL2Impl(CApplication *App, TTORATstpExchangeIDType ExchangeID);
         ~MDL2Impl();
 
         bool Start();
-        CTORATstpLev2MdApi *GetApi() const { return m_mdApi; }
-        static const char *GetExchangeName(TTORATstpExchangeIDType exchangeID);
+        CTORATstpLev2MdApi *GetApi() const { return m_Api; }
+        static const char *GetExchangeName(TTORATstpExchangeIDType ExchangeID);
         static const char *GetSide(TTORATstpLSideType Side);
-        int ReqMarketData(TTORATstpSecurityIDType security, TTORATstpExchangeIDType exchangeID, int type, bool isSub = true);
+        int ReqMarketData(TTORATstpSecurityIDType SecurityID, TTORATstpExchangeIDType ExchangeID, int type, bool isSub = true);
         void ShowOrderBook();
+        void ShowFixOrderBook(TTORATstpSecurityIDType securityID);
 
     public:
         void OnFrontConnected() override;
@@ -57,16 +44,18 @@ namespace PROMD {
         void DeleteOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO);
         void ResetOrder(TTORATstpSecurityIDType SecurityID, TTORATstpTradeBSFlagType Side);
         void FixOrder(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price);
+        void PostPrice(TTORATstpSecurityIDType SecurityID);
 
     private:
         int m_reqID = 1;
         bool m_isLogined = false;
-        CTORATstpLev2MdApi *m_mdApi = nullptr;
-        CApplication *m_pApp = nullptr;
-        TTORATstpExchangeIDType m_exchangeID;
+        CTORATstpLev2MdApi *m_Api = nullptr;
+        CApplication *m_App = nullptr;
+        TTORATstpExchangeIDType m_ExchangeID;
         MapOrder m_OrderBuy;
         MapOrder m_OrderSell;
-        std::unordered_map<std::string, int> m_subSecuritys;
+        std::unordered_map<std::string, int> m_SubSecurityIDs;
+        std::unordered_map<std::string, stPostPrice> m_postPrice;
     };
 
 }
