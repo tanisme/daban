@@ -10,7 +10,7 @@
 
 int main() {
     std::string cfgfile = "../balibali.ini";
-    std::string dbfile = "";
+    std::string dbfile = "../database.db";
     std::string httpurl = "";
     std::string shmdaddr = "", szmdaddr = "";
     std::string tdaddr = "", tdaccount = "", tdpassword = "";

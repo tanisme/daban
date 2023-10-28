@@ -32,6 +32,7 @@ namespace PROMD {
         static const char *GetExchangeName(TTORATstpExchangeIDType exchangeID);
         static const char *GetSide(TTORATstpLSideType Side);
         int ReqMarketData(TTORATstpSecurityIDType security, TTORATstpExchangeIDType exchangeID, int type, bool isSub = true);
+        void ShowOrderBook();
 
     public:
         void OnFrontConnected() override;
@@ -53,7 +54,6 @@ namespace PROMD {
         void DeleteOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO);
         void ResetOrder(TTORATstpSecurityIDType SecurityID, TTORATstpTradeBSFlagType Side);
         void FixOrder(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price);
-        void ShowOrderBook();
 
     private:
         int m_reqID = 1;

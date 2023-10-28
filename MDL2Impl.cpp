@@ -155,7 +155,7 @@ namespace PROMD {
                 if (pTransaction->SellNo > 0) DeleteOrder(pTransaction->SecurityID, pTransaction->SellNo);
             }
         }
-        ShowOrderBook();
+        //ShowOrderBook();
     }
 
     void MDL2Impl::OnRspSubOrderDetail(CTORATstpSpecificSecurityField *pSpecificSecurity, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
@@ -240,13 +240,13 @@ namespace PROMD {
                 }
             }
         }
-        ShowOrderBook();
+        //ShowOrderBook();
     }
 
     void MDL2Impl::DeleteOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO) {
         ModifyOrder(SecurityID, 0, OrderNO, TORA_TSTP_LSD_Buy);
         ModifyOrder(SecurityID, 0, OrderNO, TORA_TSTP_LSD_Sell);
-        ShowOrderBook();
+        //ShowOrderBook();
     }
 
     void MDL2Impl::ModifyOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType TradeVolume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side) {

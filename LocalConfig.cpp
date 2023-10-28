@@ -26,10 +26,11 @@ bool LocalConfig::LoadSubSecurity() {
     const char *create_tab_sql = "CREATE TABLE IF NOT EXISTS subsecurity("
                                  "security CHAR(32) PRIMARY KEY,"
                                  "securityname CHAR(32),"
-                                 "exchange CHAR NOT NULL);";
+                                 "exchange CHAR NOT NULL,"
+                                 "status INTEGER NOT NULL DEFAULT 0);";
     m_db->execute(create_tab_sql);
 
-    const char *select_sql = "SELECT security, securityname, exchange FROM subsecurity;";
+    const char *select_sql = "SELECT security, securityname, exchange FROM subsecurity where status=0;";
     SQLite3Stmt::ptr query = SQLite3Stmt::Create(m_db, select_sql);
     if (!query) {
         return false;
@@ -41,7 +42,7 @@ bool LocalConfig::LoadSubSecurity() {
         memset(&security, 0, sizeof(security));
         strcpy(security.SecurityID, ds->getText(0));
         strcpy(security.SecurityName, ds->getText(1));
-        security.ExchangeID = ds->getText(1)[0];
+        security.ExchangeID = ds->getText(2)[0];
         m_mapSecurityID[security.SecurityID] = security;
     }
 
