@@ -69,16 +69,17 @@ namespace http {
             if (ServiceNo == SERVICE_QRYSUBSECURITYREQ) {
                 // 查询已经订阅合约
                 for (auto &iter: m_app->m_subSecurityIDs) {
-                    item["SecurityID"] = iter.second.SecurityID;
+                    item["securityid"] = iter.second.SecurityID;
                     //item["SecurityName"] = iter.second.SecurityName;
-                    item["ExchangeID"] = iter.second.ExchangeID;
+                    item["exchangeid"] = iter.second.ExchangeID;
                     item["status"] = iter.second.Status;
                     tmpvalue.append(item);
                 }
                 rspvalue["security"] = tmpvalue;
             } else if (ServiceNo == SERVICE_ADDSTRATEGYREQ) {
+                // 增加策略
                 stStrategy strategy = {0};
-                strcpy(strategy.SecurityID, reqvalue["SecurityID"].asString().c_str());
+                strcpy(strategy.SecurityID, reqvalue["securityid"].asString().c_str());
                 strategy.type = reqvalue["type"].asInt();
                 strategy.params.p1 = reqvalue["p1"].asDouble();
                 strategy.params.p2 = reqvalue["p2"].asDouble();
@@ -90,8 +91,22 @@ namespace http {
                 int type = reqvalue["idx"].asInt();
                 //m_app->m_ioc.post(boost::bind(&CApplication::AddStrategy, m_app, strategy));
             } else if (ServiceNo == SERVICE_QRYSTRATEGYREQ) {
-                int type = reqvalue["idx"].asInt();
-                //m_app->m_ioc.post(boost::bind(&CApplication::AddStrategy, m_app, strategy));
+                // 查询策略
+                for (auto& iter : m_app->m_strategys) {
+                    for (auto& iter1 : iter.second) {
+                        item["idx"] = iter1.idx;
+                        item["securityid"] = iter1.SecurityID;
+                        item["type"] = iter1.type;
+                        item["status"] = iter1.status;
+                        item["p1"] = iter1.params.p1;
+                        item["p2"] = iter1.params.p2;
+                        item["p3"] = iter1.params.p3;
+                        item["p4"] = iter1.params.p4;
+                        item["p5"] = iter1.params.p5;
+                        tmpvalue.append(item);
+                    }
+                }
+                rspvalue["strategy"] = tmpvalue;
             }
 
             rspvalue["ServiceNo"] = ServiceNo + 1;

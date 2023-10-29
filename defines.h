@@ -56,6 +56,7 @@ struct stPostPrice {
     TORALEV2API::TTORATstpLongVolumeType AskVolume1;
     TORALEV2API::TTORATstpPriceType BidPrice1;
     TORALEV2API::TTORATstpLongVolumeType BidVolume1;
+    TORALEV2API::TTORATstpPriceType TradePrice;
 };
 
 #endif //DABAN_DEFINES_H

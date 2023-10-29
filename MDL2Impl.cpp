@@ -143,7 +143,7 @@ namespace PROMD {
             }
         }
         //ShowFixOrderBook(pTransaction->SecurityID);
-        PostPrice(pTransaction->SecurityID);
+        PostPrice(pTransaction->SecurityID, pTransaction->TradePrice);
     }
 
     void MDL2Impl::OnRspSubOrderDetail(CTORATstpSpecificSecurityField *pSpecificSecurity, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
@@ -176,7 +176,7 @@ namespace PROMD {
             InsertOrder(pOrderDetail->SecurityID, pOrderDetail->OrderNO, pOrderDetail->Price, pOrderDetail->Volume, pOrderDetail->Side);
         }
         //ShowFixOrderBook(pOrderDetail->SecurityID);
-        PostPrice(pOrderDetail->SecurityID);
+        //PostPrice(pOrderDetail->SecurityID);
     }
 
     void MDL2Impl::OnRspSubNGTSTick(CTORATstpSpecificSecurityField *pSpecificSecurity, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
@@ -216,7 +216,7 @@ namespace PROMD {
             ModifyOrder(pTick->SecurityID, pTick->Volume, pTick->SellNo, TORA_TSTP_LSD_Sell);
         }
         //ShowFixOrderBook(pTick->SecurityID);
-        PostPrice(pTick->SecurityID);
+        PostPrice(pTick->SecurityID, pTick->Price);
     }
 
     void MDL2Impl::InsertOrder(TTORATstpSecurityIDType securityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side) {
@@ -440,11 +440,12 @@ namespace PROMD {
         }
     }
 
-    void MDL2Impl::PostPrice(TTORATstpSecurityIDType securityID) {
+    void MDL2Impl::PostPrice(TTORATstpSecurityIDType securityID, TTORATstpPriceType tradePrice) {
         TTORATstpPriceType BidPrice1 = 0.0;
         TTORATstpLongVolumeType BidVolume1 = 0;
         TTORATstpPriceType AskPrice1 = 0.0;
         TTORATstpLongVolumeType AskVolume1 = 0;
+        TTORATstpPriceType TradePrice = tradePrice;
 
         {
             auto iter = m_orderSell.find(securityID);
@@ -480,11 +481,13 @@ namespace PROMD {
             p.BidPrice1 = BidPrice1;
             p.AskPrice1 = AskPrice1;
             p.AskVolume1 = AskVolume1;
+            p.TradePrice = TradePrice;
             m_postMDL2[securityID] = p;
         } else {
             iter->second.BidVolume1 = BidVolume1;
             iter->second.BidPrice1 = BidPrice1;
             iter->second.AskPrice1 = AskPrice1;
+            iter->second.TradePrice = TradePrice;
             iter->second.AskVolume1 = AskVolume1;
         }
 

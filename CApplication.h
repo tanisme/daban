@@ -63,6 +63,7 @@ public:
     void SetSHMdIsNew(int isNew) { m_shMDNewVersion = isNew; }
 
     std::unordered_map<std::string, stSubSecurity> m_subSecurityIDs;
+    std::unordered_map<std::string, std::vector<stStrategy> > m_strategys;
 private:
     PROMD::MDL2Impl *GetMDByExchangeID(PROMD::TTORATstpExchangeIDType ExchangeID);
 
@@ -79,7 +80,6 @@ private:
     PROTD::TDImpl *m_TD = nullptr;
     SQLite3::ptr m_db = nullptr;
 
-    std::unordered_map<std::string, std::vector<stStrategy> > m_strategys;
     std::unordered_map<std::string, PROTD::CTORATstpSecurityField *> m_securityIDs;
     std::unordered_map<std::string, PROTD::CTORATstpOrderField *> m_order;
     std::unordered_map<std::string, PROTD::CTORATstpPositionField *> m_position;

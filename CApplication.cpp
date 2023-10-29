@@ -19,11 +19,11 @@ CApplication::~CApplication() {
         delete m_szMD;
     }
 
-    //if (m_TD != nullptr) {
-    //    m_TD->GetApi()->Join();
-    //    m_TD->GetApi()->Release();
-    //    delete m_TD;
-    //}
+    if (m_TD != nullptr) {
+        m_TD->GetApi()->Join();
+        m_TD->GetApi()->Release();
+        delete m_TD;
+    }
 
     for (auto iter = m_securityIDs.begin(); iter != m_securityIDs.end(); ++iter) {
         auto ptr = iter->second;
@@ -95,7 +95,7 @@ void CApplication::MDOnRspUserLogin(PROMD::TTORATstpExchangeIDType exchangeID) {
 
 void CApplication::MDPostPrice(stPostPrice& postPrice) {
     if (true) return;
-    //printf("MDPostPrice %s %lld %.2f %.2f %lld\n", postPrice.SecurityID, postPrice.AskVolume1, postPrice.AskPrice1, postPrice.BidPrice1, postPrice.BidVolume1);
+    //printf("MDPostPrice %s %lld %.2f|%.2f|%.2f %lld\n", postPrice.SecurityID, postPrice.AskVolume1, postPrice.AskPrice1, postPrice.TradePrice, postPrice.BidPrice1, postPrice.BidVolume1);
 
     auto iterSecurity = m_securityIDs.find(postPrice.SecurityID);
     if (iterSecurity == m_securityIDs.end()) {
@@ -143,7 +143,7 @@ void CApplication::TDOnRspUserLogin(PROTD::CTORATstpRspUserLoginField& RspUserLo
 
 void CApplication::TDOnRspQrySecurity(PROTD::CTORATstpSecurityField& Security) {
     //printf("SecurityID:%s,SecurityName:%s,UpperLimitPrice:%lf,LowerLimitPrice:%lf\n", Security.SecurityID, Security.SecurityName, Security.UpperLimitPrice, Security.LowerLimitPrice);
-
+    if (true) return;
     if (m_securityIDs.find(Security.SecurityID) != m_securityIDs.end()) {
         auto security = m_securityIDs[Security.SecurityID];
         memcpy(security, &Security, sizeof(PROTD::CTORATstpSecurityField));

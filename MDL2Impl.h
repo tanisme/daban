@@ -46,7 +46,7 @@ namespace PROMD {
         void DeleteOrder(TTORATstpSecurityIDType securityID, TTORATstpLongSequenceType orderNO);
         void ResetOrder(TTORATstpSecurityIDType securityID, TTORATstpTradeBSFlagType side);
         void FixOrder(TTORATstpSecurityIDType securityID, TTORATstpPriceType price);
-        void PostPrice(TTORATstpSecurityIDType securityID);
+        void PostPrice(TTORATstpSecurityIDType securityID, TTORATstpPriceType price);
 
     private:
         int m_reqID = 1;
