@@ -63,11 +63,10 @@ namespace http {
                 return;
             }
 
-            int ServiceNo = reqvalue["ServiceNo"].asInt();
+            int ServiceNo =reqvalue.isMember("Service")?reqvalue["ServiceNo"].asInt():0;
             printf("ServiceNo %d\n", ServiceNo);
 
             if (ServiceNo == SERVICE_QRYSUBSECURITYREQ) {
-                // 查询已经订阅合约
                 for (auto &iter: m_app->m_subSecurityIDs) {
                     item["securityid"] = iter.second.SecurityID;
                     //item["SecurityName"] = iter.second.SecurityName;
@@ -77,15 +76,15 @@ namespace http {
                 }
                 rspvalue["security"] = tmpvalue;
             } else if (ServiceNo == SERVICE_ADDSTRATEGYREQ) {
-                // 增加策略
+                if (!reqvalue.isMember("securityid") || !reqvalue.isMember("type")) return;
                 stStrategy strategy = {0};
                 strcpy(strategy.SecurityID, reqvalue["securityid"].asString().c_str());
                 strategy.type = reqvalue["type"].asInt();
-                strategy.params.p1 = reqvalue["p1"].asDouble();
-                strategy.params.p2 = reqvalue["p2"].asDouble();
-                strategy.params.p3 = reqvalue["p3"].asDouble();
-                strategy.params.p4 = reqvalue["p4"].asDouble();
-                strategy.params.p5 = reqvalue["p5"].asDouble();
+                strategy.params.p1 = reqvalue.isMember("p1")?reqvalue["p1"].asDouble():0.0;
+                strategy.params.p2 = reqvalue.isMember("p2")?reqvalue["p2"].asDouble():0.0;
+                strategy.params.p3 = reqvalue.isMember("p3")?reqvalue["p3"].asDouble():0.0;
+                strategy.params.p4 = reqvalue.isMember("p4")?reqvalue["p4"].asDouble():0.0;
+                strategy.params.p5 = reqvalue.isMember("p5")?reqvalue["p5"].asDouble():0.0;
                 m_app->m_ioc.post(boost::bind(&CApplication::AddStrategy, m_app, strategy));
             } else if (ServiceNo == SERVICE_DELSTRATEGYREQ) {
                 int type = reqvalue["idx"].asInt();

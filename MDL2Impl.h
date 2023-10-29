@@ -15,7 +15,7 @@ namespace PROMD {
         MDL2Impl(CApplication *pApp, TTORATstpExchangeIDType exchangeID);
         ~MDL2Impl();
 
-        bool Start();
+        bool Start(bool useTcp = true);
         CTORATstpLev2MdApi *GetApi() const { return m_pApi; }
         static const char *GetExchangeName(TTORATstpExchangeIDType exchangeID);
         static const char *GetSide(TTORATstpLSideType side);

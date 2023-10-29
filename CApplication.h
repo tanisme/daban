@@ -47,20 +47,18 @@ public:
     bool DelSubSecurity(char *SecurityID);
     bool LoadStrategy();
     bool AddStrategy(stStrategy & strategy);
-    std::string GetDBFile() const { return m_dbFile; }
-    void SetDBFile(std::string &dbFile) { m_dbFile = dbFile; }
-    std::string GetSHMDAddr() const { return m_shMDAddr; }
-    void SetSHMDAddr(std::string &addr) { m_shMDAddr = addr; }
-    std::string GetSZMDAddr() const { return m_szMDAddr; }
-    void SetSZMDAddr(std::string &addr) { m_szMDAddr = addr; }
-    std::string GetTDAddr() const { return m_TDAddr; }
-    void SetTDAddr(std::string &addr) { m_TDAddr = addr; }
-    std::string GetTDAccount() const { return m_TDAccount; }
-    void SetTDAccount(std::string &account) { m_TDAccount = account; }
-    std::string GetTDPassword() const { return m_TDPassword; }
-    void SetTDPassword(std::string &password) { m_TDPassword = password; }
-    bool GetSHMDIsNew() const { return m_shMDNewVersion > 0; }
-    void SetSHMdIsNew(int isNew) { m_shMDNewVersion = isNew; }
+
+public:
+    bool m_useTcp = true;
+    std::string m_dbFile;
+    std::string m_shMDAddr = "tcp://210.14.72.17:16900";
+    std::string m_shMDInterface = "tcp://210.14.72.17:16900";
+    std::string m_szMDAddr = "tcp://210.14.72.17:6900";
+    std::string m_szMDInterface = "tcp://210.14.72.17:16900";
+    std::string m_TDAddr = "tcp://210.14.72.21:4400";
+    std::string m_TDAccount = "00030557";
+    std::string m_TDPassword = "17522830";
+    int m_shMDNewVersion = 0;
 
     std::unordered_map<std::string, stSubSecurity> m_subSecurityIDs;
     std::unordered_map<std::string, std::vector<stStrategy> > m_strategys;
@@ -68,13 +66,6 @@ private:
     PROMD::MDL2Impl *GetMDByExchangeID(PROMD::TTORATstpExchangeIDType ExchangeID);
 
 private:
-    std::string m_dbFile;
-    std::string m_shMDAddr = "tcp://210.14.72.17:16900";
-    std::string m_szMDAddr = "tcp://210.14.72.17:6900";
-    std::string m_TDAddr = "tcp://210.14.72.21:4400";
-    std::string m_TDAccount = "00030557";
-    std::string m_TDPassword = "17522830";
-    int m_shMDNewVersion = 0;
     PROMD::MDL2Impl *m_shMD = nullptr;
     PROMD::MDL2Impl *m_szMD = nullptr;
     PROTD::TDImpl *m_TD = nullptr;

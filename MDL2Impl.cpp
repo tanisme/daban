@@ -15,17 +15,29 @@ namespace PROMD {
         }
     }
 
-    bool MDL2Impl::Start() {
-        m_pApi = CTORATstpLev2MdApi::CreateTstpLev2MdApi();
-        if (!m_pApi) return false;
-
-        m_pApi->RegisterSpi(this);
-        if (m_exchangeID == TORA_TSTP_EXD_SSE) {
-            m_pApi->RegisterFront((char *) m_pApp->GetSHMDAddr().c_str());
-        } else if (m_exchangeID == TORA_TSTP_EXD_SZSE) {
-            m_pApi->RegisterFront((char *) m_pApp->GetSZMDAddr().c_str());
-        } else {
-            return false;
+    bool MDL2Impl::Start(bool useTcp) {
+        if (useTcp) {
+            m_pApi = CTORATstpLev2MdApi::CreateTstpLev2MdApi();
+            if (!m_pApi) return false;
+            m_pApi->RegisterSpi(this);
+            if (m_exchangeID == TORA_TSTP_EXD_SSE) {
+                m_pApi->RegisterFront((char *) m_pApp->m_shMDAddr.c_str());
+            } else if (m_exchangeID == TORA_TSTP_EXD_SZSE) {
+                m_pApi->RegisterFront((char *) m_pApp->m_szMDAddr.c_str());
+            } else {
+                return false;
+            }
+        }
+        else {
+            m_pApi = CTORATstpLev2MdApi::CreateTstpLev2MdApi(TORA_TSTP_MST_MCAST);
+            m_pApi->RegisterSpi(this);
+            if (m_exchangeID == TORA_TSTP_EXD_SSE) {
+                m_pApi->RegisterMulticast((char *) m_pApp->m_shMDAddr.c_str(), (char*)m_pApp->m_shMDInterface.c_str(), nullptr);
+            } else if (m_exchangeID == TORA_TSTP_EXD_SZSE) {
+                m_pApi->RegisterMulticast((char *) m_pApp->m_szMDAddr.c_str(), (char*)m_pApp->m_szMDInterface.c_str(), nullptr);
+            } else {
+                return false;
+            }
         }
         m_pApi->Init();
         return true;

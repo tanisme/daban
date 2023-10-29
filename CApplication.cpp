@@ -34,10 +34,10 @@ CApplication::~CApplication() {
 
 void CApplication::Start() {
     m_shMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SSE);
-    m_shMD->Start();
+    m_shMD->Start(m_useTcp);
 
     m_szMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SZSE);
-    m_szMD->Start();
+    m_szMD->Start(m_useTcp);
 
     //m_TD = new PROTD::TDImpl(this);
     //m_TD->Start();
@@ -80,7 +80,7 @@ void CApplication::MDOnRspUserLogin(PROMD::TTORATstpExchangeIDType exchangeID) {
             strncpy(Security, iter.first.c_str(), sizeof(Security));
             //md->ReqMarketData(Security, exchangeID, 1);
             if (exchangeID == PROMD::TORA_TSTP_EXD_SSE) {
-                if (GetSHMDIsNew()) {
+                if (m_shMDNewVersion > 0) {
                     md->ReqMarketData(Security, exchangeID, 4);
                 } else {
                     md->ReqMarketData(Security, exchangeID, 2);
