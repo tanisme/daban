@@ -49,16 +49,17 @@ public:
     bool AddStrategy(stStrategy & strategy);
 
 public:
+    bool m_isTest = true;
     bool m_useTcp = true;
     std::string m_dbFile;
-    std::string m_shMDAddr = "tcp://210.14.72.17:16900";
-    std::string m_shMDInterface = "tcp://210.14.72.17:16900";
-    std::string m_szMDAddr = "tcp://210.14.72.17:6900";
-    std::string m_szMDInterface = "tcp://210.14.72.17:16900";
     std::string m_TDAddr = "tcp://210.14.72.21:4400";
     std::string m_TDAccount = "00030557";
     std::string m_TDPassword = "17522830";
     int m_shMDNewVersion = 0;
+    std::string m_shMDAddr = "tcp://210.14.72.17:16900";
+    std::string m_szMDAddr = "tcp://210.14.72.17:6900";
+    std::string m_mdAddr = "tcp://210.14.72.17:16900";
+    std::string m_mdInterface = "tcp://210.14.72.17:16900";
 
     std::unordered_map<std::string, stSubSecurity> m_subSecurityIDs;
     std::unordered_map<std::string, std::vector<stStrategy> > m_strategys;

@@ -31,13 +31,7 @@ namespace PROMD {
         else {
             m_pApi = CTORATstpLev2MdApi::CreateTstpLev2MdApi(TORA_TSTP_MST_MCAST);
             m_pApi->RegisterSpi(this);
-            if (m_exchangeID == TORA_TSTP_EXD_SSE) {
-                m_pApi->RegisterMulticast((char *) m_pApp->m_shMDAddr.c_str(), (char*)m_pApp->m_shMDInterface.c_str(), nullptr);
-            } else if (m_exchangeID == TORA_TSTP_EXD_SZSE) {
-                m_pApi->RegisterMulticast((char *) m_pApp->m_szMDAddr.c_str(), (char*)m_pApp->m_szMDInterface.c_str(), nullptr);
-            } else {
-                return false;
-            }
+            m_pApi->RegisterMulticast((char *) m_pApp->m_mdAddr.c_str(), (char*)m_pApp->m_mdInterface.c_str(), nullptr);
         }
         m_pApi->Init();
         return true;

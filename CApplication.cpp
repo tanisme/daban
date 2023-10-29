@@ -33,11 +33,16 @@ CApplication::~CApplication() {
 }
 
 void CApplication::Start() {
-    m_shMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SSE);
-    m_shMD->Start(m_useTcp);
-
-    m_szMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SZSE);
-    m_szMD->Start(m_useTcp);
+    if (m_isTest) {
+        m_shMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SSE);
+        m_shMD->Start(m_useTcp);
+        m_szMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SZSE);
+        m_szMD->Start(m_useTcp);
+    }
+    else {
+        m_shMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_COMM);
+        m_shMD->Start(m_useTcp);
+    }
 
     //m_TD = new PROTD::TDImpl(this);
     //m_TD->Start();
@@ -75,20 +80,21 @@ void CApplication::MDOnRspUserLogin(PROMD::TTORATstpExchangeIDType exchangeID) {
     auto md = GetMDByExchangeID(exchangeID);
     if (!md) return;
     for (auto &iter: m_subSecurityIDs) {
-        if (exchangeID == iter.second.ExchangeID && iter.second.Status == 0) {
+        if (iter.second.Status > 0) continue;
+        if (exchangeID == iter.second.ExchangeID || exchangeID == PROMD::TORA_TSTP_EXD_COMM) {
             PROMD::TTORATstpSecurityIDType Security;
             strncpy(Security, iter.first.c_str(), sizeof(Security));
             //md->ReqMarketData(Security, exchangeID, 1);
-            if (exchangeID == PROMD::TORA_TSTP_EXD_SSE) {
+            if (iter.second.ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
                 if (m_shMDNewVersion > 0) {
-                    md->ReqMarketData(Security, exchangeID, 4);
+                    md->ReqMarketData(Security, iter.second.ExchangeID, 4);
                 } else {
-                    md->ReqMarketData(Security, exchangeID, 2);
-                    md->ReqMarketData(Security, exchangeID, 3);
+                    md->ReqMarketData(Security, iter.second.ExchangeID, 2);
+                    md->ReqMarketData(Security, iter.second.ExchangeID, 3);
                 }
-            } else if (exchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
-                md->ReqMarketData(Security, exchangeID, 2);
-                md->ReqMarketData(Security, exchangeID, 3);
+            } else if (iter.second.ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
+                md->ReqMarketData(Security, iter.second.ExchangeID, 2);
+                md->ReqMarketData(Security, iter.second.ExchangeID, 3);
             }
         }
     }
@@ -211,7 +217,7 @@ void CApplication::TDOnErrRtnOrderAction(PROTD::CTORATstpInputOrderActionField& 
 }
 
 PROMD::MDL2Impl *CApplication::GetMDByExchangeID(PROMD::TTORATstpExchangeIDType ExchangeID) {
-    if (ExchangeID == PROMD::TORA_TSTP_EXD_SSE) return m_shMD;
+    if (ExchangeID == PROMD::TORA_TSTP_EXD_SSE || ExchangeID == PROMD::TORA_TSTP_EXD_COMM) return m_shMD;
     return m_szMD;
 }
 
