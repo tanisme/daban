@@ -330,44 +330,44 @@ namespace PROMD {
     }
 
     void MDL2Impl::ShowFixOrderBook(TTORATstpSecurityIDType securityID) {
-        if (m_orderBuy.empty() && m_orderSell.empty()) return;
+        //if (m_orderBuy.empty() && m_orderSell.empty()) return;
 
-            printf("\n");
-            printf("--------------------- %s ---------------------\n", securityID);
+        printf("\n");
+        printf("--------------------- %s ---------------------\n", securityID);
 
-            {
-                int showCount = 5;
-                auto iter1 = m_orderSell.find(securityID);
-                if (iter1 != m_orderSell.end()) {
-                    auto size = (int) iter1->second.size();
-                    if (showCount < size) size = showCount;
-                    for (auto i = size; i > 0; i--) {
-                        long long int totalVolume = 0;
-                        for (auto iter2: iter1->second.at(i - 1).Orders) {
-                            totalVolume += iter2.Volume;
-                        }
-                        printf("S%d\t%.3f\t\t%d\t\t%lld\n", i, iter1->second.at(i - 1).Price,
-                               (int) iter1->second.at(i - 1).Orders.size(), totalVolume);
+        {
+            int showCount = 5;
+            auto iter1 = m_orderSell.find(securityID);
+            if (iter1 != m_orderSell.end()) {
+                auto size = (int) iter1->second.size();
+                if (showCount < size) size = showCount;
+                for (auto i = size; i > 0; i--) {
+                    long long int totalVolume = 0;
+                    for (auto iter2: iter1->second.at(i - 1).Orders) {
+                        totalVolume += iter2.Volume;
                     }
+                    printf("S%d\t%.3f\t\t%d\t\t%lld\n", i, iter1->second.at(i - 1).Price,
+                           (int) iter1->second.at(i - 1).Orders.size(), totalVolume);
                 }
             }
+        }
 
-            {
-                int showCount = 5;
-                auto iter1 = m_orderBuy.find(securityID);
-                if (iter1 != m_orderBuy.end()) {
-                    auto size = (int) iter1->second.size();
-                    if (showCount < size) size = showCount;
-                    for (auto i = 1; i <= size; i++) {
-                        long long int totalVolume = 0;
-                        for (auto iter2: iter1->second.at(i - 1).Orders) {
-                            totalVolume += iter2.Volume;
-                        }
-                        printf("B%d\t%.3f\t\t%d\t\t%lld\n", i, iter1->second.at(i - 1).Price,
-                               (int) iter1->second.at(i - 1).Orders.size(), totalVolume);
+        {
+            int showCount = 5;
+            auto iter1 = m_orderBuy.find(securityID);
+            if (iter1 != m_orderBuy.end()) {
+                auto size = (int) iter1->second.size();
+                if (showCount < size) size = showCount;
+                for (auto i = 1; i <= size; i++) {
+                    long long int totalVolume = 0;
+                    for (auto iter2: iter1->second.at(i - 1).Orders) {
+                        totalVolume += iter2.Volume;
                     }
+                    printf("B%d\t%.3f\t\t%d\t\t%lld\n", i, iter1->second.at(i - 1).Price,
+                           (int) iter1->second.at(i - 1).Orders.size(), totalVolume);
                 }
             }
+        }
     }
 
     void MDL2Impl::ShowOrderBook() {
