@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD 11)
 
 add_compile_definitions(_CRT_SECURE_NO_WARNINGS BOOST_BIND_GLOBAL_PLACEHOLDERS)
 
+set(Boost_USE_STATIC_LIBS ON)
+
 if (WIN32)
     message(STATUS "windows system")
     #SET(BOOST_ROOT I:/tanisme/workspace/cpplib/boost_1_73_0)

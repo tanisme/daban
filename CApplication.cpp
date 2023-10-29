@@ -101,7 +101,7 @@ void CApplication::MDOnRspUserLogin(PROMD::TTORATstpExchangeIDType exchangeID) {
 }
 
 void CApplication::MDPostPrice(stPostPrice& postPrice) {
-    if (true) return;
+    //if (true) return;
     //printf("MDPostPrice %s %lld %.2f|%.2f|%.2f %lld\n", postPrice.SecurityID, postPrice.AskVolume1, postPrice.AskPrice1, postPrice.TradePrice, postPrice.BidPrice1, postPrice.BidVolume1);
 
     auto iterSecurity = m_securityIDs.find(postPrice.SecurityID);
@@ -114,19 +114,39 @@ void CApplication::MDPostPrice(stPostPrice& postPrice) {
         return;
     }
 
+    auto UpperLimitPrice = iterSecurity->second->UpperLimitPrice;
+    /*
+      1.扫涨停：只使用逐笔成交的成交价判断距离涨停价有多少差距，如果满足则下单。
+      2.触涨停：需要合成实时的订单簿，根据每次计算出的订单簿取卖一价是否涨停和卖一价档位的数量计算卖一档未成交的金额做比较，小于x万元则下单.
+      3.排涨停：需要合成实时的订单簿，排涨停没有卖档，根据每次计算出的订单簿取买一档的数量计算买一档未成交的金额，如果大于x万元，则下单。
+    */
+
     for (auto iter = iterStrategy->second.begin(); iter != iterStrategy->second.end(); ++iter) {
         if (iter->status == 1) continue;
 
         auto rt = -1;
         if (iter->type == 1) {
-            // 如果价格上涨至快涨停的位置(还差两个点。。)，买入
-            //rt = Insert();
+            //1.扫涨停：只使用逐笔成交的成交价判断距离涨停价有多少差距，如果满足则下单。
+            if (UpperLimitPrice - postPrice.TradePrice > iter->params.p1) {
+                //rt = Insert();
+                rt = m_TD->OrderInsert(postPrice.SecurityID, PROMD::TORA_TSTP_LSD_Buy, 100, 323);
+            }
         } else if (iter->type == 2) {
-            // 如果价格已经触到了涨停价，但是卖一档仍有少量挂单，买入
-            //rt = Insert();
+            //2.触涨停：需要合成实时的订单簿，根据每次计算出的订单簿取卖一价是否涨停和卖一价档位的数量计算卖一档未成交的金额做比较，小于x万元则下单.
+            if (postPrice.TradePrice - UpperLimitPrice == 0) {
+                auto amount = postPrice.AskPrice1 * postPrice.AskVolume1;
+                if (amount < iter->params.p1) {
+                    //rt = Insert();
+                }
+            }
         } else if (iter->type == 3) {
-            // 如果已经板了(卖档为空，买一档已到涨停价),封单金额>X万元时，买入
-            //rt = Insert();
+            //3.排涨停：需要合成实时的订单簿，排涨停没有卖档，根据每次计算出的订单簿取买一档的数量计算买一档未成交的金额，如果大于x万元，则下单。
+            if (postPrice.AskPrice1 <= 0.00001 && postPrice.AskVolume1 == 0) {
+                auto amount = postPrice.BidPrice1 * postPrice.BidVolume1;
+                if (amount > iter->params.p1) {
+                    //rt = Insert();
+                }
+            }
         }
 
         if (rt == 0) {
@@ -140,7 +160,6 @@ void CApplication::MDPostPrice(stPostPrice& postPrice) {
 
 
 
-    // 买入时，下单手数随机拆碎
 }
 
 /***************************************TD***************************************/
