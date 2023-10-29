@@ -62,9 +62,9 @@ void CApplication::OnTime(const boost::system::error_code& error)
     for (auto& iter : m_subSecurityIDs) {
         if (iter.second.Status == 1) continue;
         if (iter.second.ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
-            m_shMD->ShowFixOrderBook((char*)iter.first.c_str());
+            if (m_shMD) m_shMD->ShowFixOrderBook((char*)iter.first.c_str());
         } else if (iter.second.ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
-            m_szMD->ShowFixOrderBook((char*)iter.first.c_str());
+            if (m_szMD) m_szMD->ShowFixOrderBook((char*)iter.first.c_str());
         }
     }
     m_timer.expires_from_now(boost::posix_time::milliseconds(3000));
