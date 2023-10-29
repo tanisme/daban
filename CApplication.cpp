@@ -55,6 +55,7 @@ void CApplication::OnTime(const boost::system::error_code& error)
     }
 
     for (auto& iter : m_subSecurityIDs) {
+        if (iter.second.Status == 1) continue;
         if (iter.second.ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
             m_shMD->ShowFixOrderBook((char*)iter.first.c_str());
         } else if (iter.second.ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
