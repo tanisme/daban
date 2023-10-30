@@ -4,23 +4,21 @@
 #include "defines.h"
 
 class CApplication;
-
 namespace PROMD {
 
     using namespace TORALEV2API;
-
-    class MDL2Impl : public CTORATstpLev2MdSpi
-    {
+    class MDL2Impl : public CTORATstpLev2MdSpi {
     public:
-        MDL2Impl(CApplication *pApp, TTORATstpExchangeIDType exchangeID);
+        explicit MDL2Impl(CApplication *pApp, TTORATstpExchangeIDType exchangeID);
         ~MDL2Impl();
 
         bool Start(bool useTcp = true);
+        bool IsLogined() const { return m_isLogined; }
         CTORATstpLev2MdApi *GetApi() const { return m_pApi; }
-        static const char *GetExchangeName(TTORATstpExchangeIDType exchangeID);
-        static const char *GetSide(TTORATstpLSideType side);
+
         int ReqMarketData(TTORATstpSecurityIDType securityID, TTORATstpExchangeIDType exchangeID, int type, bool isSub = true);
         void ShowFixOrderBook(TTORATstpSecurityIDType securityID);
+        static const char *GetExchangeName(TTORATstpExchangeIDType exchangeID);
 
     public:
         void OnFrontConnected() override;

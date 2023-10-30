@@ -36,8 +36,8 @@ void CApplication::Start() {
     if (m_isTest) {
         m_shMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SSE);
         m_shMD->Start(m_useTcp);
-        //m_szMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SZSE);
-        //m_szMD->Start(m_useTcp);
+        m_szMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SZSE);
+        m_szMD->Start(m_useTcp);
     }
     else {
         m_shMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_COMM);
@@ -82,9 +82,8 @@ void CApplication::MDOnRspUserLogin(PROMD::TTORATstpExchangeIDType exchangeID) {
     for (auto &iter: m_subSecurityIDs) {
         if (iter.second.Status > 0) continue;
         if (exchangeID == iter.second.ExchangeID || exchangeID == PROMD::TORA_TSTP_EXD_COMM) {
-            PROMD::TTORATstpSecurityIDType Security;
+            PROMD::TTORATstpSecurityIDType Security = {0};
             strncpy(Security, iter.first.c_str(), sizeof(Security));
-            //md->ReqMarketData(Security, exchangeID, 1);
             if (iter.second.ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
                 if (m_shMDNewVersion > 0) {
                     md->ReqMarketData(Security, iter.second.ExchangeID, 4);
@@ -101,7 +100,7 @@ void CApplication::MDOnRspUserLogin(PROMD::TTORATstpExchangeIDType exchangeID) {
 }
 
 void CApplication::MDPostPrice(stPostPrice& postPrice) {
-    if (true) return;
+    if (!m_TD->IsLogined()) return;
     //printf("MDPostPrice %s %lld %.2f|%.2f|%.2f %lld\n", postPrice.SecurityID, postPrice.AskVolume1, postPrice.AskPrice1, postPrice.TradePrice, postPrice.BidPrice1, postPrice.BidVolume1);
 
     auto iterSecurity = m_securityIDs.find(postPrice.SecurityID);

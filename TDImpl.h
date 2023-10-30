@@ -7,16 +7,17 @@ class CApplication;
 namespace PROTD {
 
     using namespace TORASTOCKAPI;
-
     class TDImpl : public CTORATstpTraderSpi {
     public:
         explicit TDImpl(CApplication *pApp);
         ~TDImpl();
 
         bool Start();
+        bool IsLogined() const { return m_isLogined; }
+        CTORATstpTraderApi *GetApi() const { return m_pApi; }
+
         int OrderInsert(TTORATstpSecurityIDType SecurityID, TTORATstpExchangeIDType ExchangeID, TTORATstpDirectionType Direction, TTORATstpVolumeType VolumeTotalOriginal, TTORATstpPriceType LimitPric);
         int OrderCancel();
-        CTORATstpTraderApi *GetApi() const { return m_tdApi; }
 
     public:
         void OnFrontConnected() override;
@@ -38,7 +39,7 @@ namespace PROTD {
     private:
         int m_reqID = 1;
         bool m_isLogined = false;
-        CTORATstpTraderApi *m_tdApi = nullptr;
+        CTORATstpTraderApi *m_pApi = nullptr;
         CApplication *m_pApp = nullptr;
         CTORATstpRspUserLoginField m_loginField = {0};
         std::unordered_map<TTORATstpExchangeIDType, CTORATstpShareholderAccountField> m_shareHolder;
