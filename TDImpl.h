@@ -14,7 +14,7 @@ namespace PROTD {
         ~TDImpl();
 
         bool Start();
-        int OrderInsert(TTORATstpSecurityIDType SecurityID, TTORATstpDirectionType Direction, TTORATstpVolumeType VolumeTotalOriginal, TTORATstpPriceType LimitPric);
+        int OrderInsert(TTORATstpSecurityIDType SecurityID, TTORATstpExchangeIDType ExchangeID, TTORATstpDirectionType Direction, TTORATstpVolumeType VolumeTotalOriginal, TTORATstpPriceType LimitPric);
         int OrderCancel();
         CTORATstpTraderApi *GetApi() const { return m_tdApi; }
 
@@ -22,6 +22,7 @@ namespace PROTD {
         void OnFrontConnected() override;
         void OnFrontDisconnected(int nReason) override;
         void OnRspUserLogin(CTORATstpRspUserLoginField *pRspUserLoginField, CTORATstpRspInfoField *pRspInfoField, int nRequestID) override;
+        void OnRspQryShareholderAccount(CTORATstpShareholderAccountField *pShareholderAccountField, CTORATstpRspInfoField *pRspInfoField, int nRequestID, bool bIsLast) override;
         void OnRspQrySecurity(CTORATstpSecurityField *pSecurity, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
         void OnRspQryOrder(CTORATstpOrderField *pOrder, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
         void OnRspQryTrade(CTORATstpTradeField *pTrade, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
@@ -40,6 +41,7 @@ namespace PROTD {
         CTORATstpTraderApi *m_tdApi = nullptr;
         CApplication *m_pApp = nullptr;
         CTORATstpRspUserLoginField m_loginField = {0};
+        std::unordered_map<TTORATstpExchangeIDType, CTORATstpShareholderAccountField> m_shareHolder;
     };
 
 }

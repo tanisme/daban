@@ -57,8 +57,21 @@ namespace PROTD {
         m_pApp->m_ioc.post(boost::bind(&CApplication::TDOnRspUserLogin, m_pApp, *pRspUserLoginField));
         memcpy(&m_loginField, pRspUserLoginField, sizeof(m_loginField));
 
-        CTORATstpQrySecurityField Req = {0};
-        m_tdApi->ReqQrySecurity(&Req, ++m_reqID);
+        CTORATstpQryShareholderAccountField Req = {0};
+        m_tdApi->ReqQryShareholderAccount(&Req, ++m_reqID);
+    }
+
+    void TDImpl::OnRspQryShareholderAccount(CTORATstpShareholderAccountField *pShareholderAccountField, CTORATstpRspInfoField *pRspInfoField, int nRequestID, bool bIsLast) {
+        if (pShareholderAccountField) {
+            CTORATstpShareholderAccountField accountField = {0};
+            memcpy(&accountField, pShareholderAccountField, sizeof(accountField));
+            m_shareHolder[pShareholderAccountField->ExchangeID] = accountField;
+        }
+
+        if (bIsLast) {
+            CTORATstpQrySecurityField Req = {0};
+            m_tdApi->ReqQrySecurity(&Req, ++m_reqID);
+        }
     }
 
     void TDImpl::OnRspQrySecurity(CTORATstpSecurityField *pSecurity, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
@@ -119,18 +132,20 @@ namespace PROTD {
         }
     }
 
-    int TDImpl::OrderInsert(TTORATstpSecurityIDType SecurityID, TTORATstpDirectionType Direction,
+    int TDImpl::OrderInsert(TTORATstpSecurityIDType SecurityID, TTORATstpExchangeIDType ExchangeID, TTORATstpDirectionType Direction,
                             TTORATstpVolumeType VolumeTotalOriginal, TTORATstpPriceType LimitPric) {
         CTORATstpInputOrderField req = {0};
 
         strcpy(req.SecurityID, SecurityID);
+        req.ExchangeID = ExchangeID;
+        strcpy(req.ShareholderID, m_shareHolder[ExchangeID].ShareholderID);
         req.Direction = Direction;
         req.VolumeTotalOriginal = VolumeTotalOriginal;
         req.LimitPrice = LimitPric;
         req.OrderPriceType = TORA_TSTP_OPT_LimitPrice;
         req.TimeCondition = TORA_TSTP_TC_GFD;
         req.VolumeCondition = TORA_TSTP_VC_AV;
-        req.OrderRef = 1;
+        req.OrderRef = m_reqID;
         return m_tdApi->ReqOrderInsert(&req, ++m_reqID);
     }
 

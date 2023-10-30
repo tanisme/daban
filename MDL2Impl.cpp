@@ -135,9 +135,12 @@ namespace PROMD {
     void MDL2Impl::OnRtnTransaction(CTORATstpLev2TransactionField *pTransaction) {
         if (!pTransaction) return;
         if (pTransaction->ExchangeID == TORA_TSTP_EXD_SSE) {
-            ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->BuyNo, TORA_TSTP_LSD_Buy);
-            ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell);
-            FixOrder(pTransaction->SecurityID);
+            if (!ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->BuyNo, TORA_TSTP_LSD_Buy)) {
+                AddUnFindTrade(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->BuyNo, TORA_TSTP_LSD_Buy);
+            }
+            if (!ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell)) {
+                AddUnFindTrade(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell);
+            }
         } else if (pTransaction->ExchangeID == TORA_TSTP_EXD_SZSE) {
             if (pTransaction->ExecType == TORA_TSTP_ECT_Fill) {
                 ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->BuyNo, TORA_TSTP_LSD_Buy);
@@ -176,6 +179,7 @@ namespace PROMD {
             } else if (pOrderDetail->OrderStatus == TORA_TSTP_LOS_Delete) {
                 DeleteOrder(pOrderDetail->SecurityID, pOrderDetail->OrderNO);
             }
+            HandleUnFindTrade(pOrderDetail->SecurityID, pOrderDetail->OrderNO, pOrderDetail->Side);
         } else if (pOrderDetail->ExchangeID == TORA_TSTP_EXD_SZSE) {
             InsertOrder(pOrderDetail->SecurityID, pOrderDetail->OrderNO, pOrderDetail->Price, pOrderDetail->Volume, pOrderDetail->Side);
         }
@@ -279,27 +283,27 @@ namespace PROMD {
         MapOrder &mapOrder = Side == TORA_TSTP_LSD_Buy ? m_orderBuy : m_orderSell;
         auto iter = mapOrder.find(securityID);
         if (iter != mapOrder.end()) {
-            auto needReset = false;
+            auto needReset = false,  founded = false;
             for (auto i = 0; i < (int) iter->second.size(); i++) {
                 for (auto j = 0; j < (int) iter->second.at(i).Orders.size(); j++) {
                     if (iter->second.at(i).Orders.at(j).OrderNo == OrderNo) {
                         if (TradeVolume == 0) {
                             iter->second.at(i).Orders.at(j).Volume = 0;
                             needReset = true;
+                            founded = true;
                         } else {
                             iter->second.at(i).Orders.at(j).Volume -= TradeVolume;
-                            needReset = true;
+                            if (iter->second.at(i).Orders.at(j).Volume == 0) {
+                                needReset = true;
+                            }
+                            founded = true;
                         }
                     }
                 }
             }
-            if (needReset) {
-                ResetOrder(securityID, Side);
-                return true;
-            }
+            if (needReset) ResetOrder(securityID, Side);
+            if (founded) return true;
         }
-
-        AddUnFindTrade(securityID, TradeVolume, OrderNo, Side);
         return false;
     }
 
@@ -331,22 +335,55 @@ namespace PROMD {
     }
 
     void MDL2Impl::AddUnFindTrade(TTORATstpSecurityIDType securityID, TTORATstpLongVolumeType tradeVolume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side) {
-        if (side == TORA_TSTP_LSD_Buy) {
-            if (m_unFindBuyTrades.find(securityID) == m_unFindBuyTrades.end()) {
-                m_unFindBuyTrades[securityID] = std::map<TTORATstpLongSequenceType, Order>();
+        Order order = {0};
+        order.Volume = tradeVolume;
+        order.OrderNo = OrderNo;
+
+        auto& unFindTrades = side==TORA_TSTP_LSD_Buy?m_unFindBuyTrades:m_unFindSellTrades;
+        if (unFindTrades.find(securityID) == unFindTrades.end()) {
+            unFindTrades[securityID] = std::map<TTORATstpLongSequenceType, std::vector<Order>>();
+        }
+        if (unFindTrades[securityID].find(OrderNo) == unFindTrades[securityID].end()) {
+            unFindTrades[securityID][OrderNo] = std::vector<Order>();
+        }
+        unFindTrades[securityID][OrderNo].emplace_back(order);
+    }
+
+    void MDL2Impl::HandleUnFindTrade(TTORATstpSecurityIDType securityID, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side) {
+        if (side == TORA_TSTP_LSD_Buy && m_unFindBuyTrades.find(securityID) != m_unFindBuyTrades.end()) {
+            if (m_unFindBuyTrades[securityID].find(OrderNo) != m_unFindBuyTrades[securityID].end()) {
+                for (auto iter = m_unFindBuyTrades[securityID][OrderNo].begin(); iter != m_unFindBuyTrades[securityID][OrderNo].end();) {
+                    if (ModifyOrder(securityID, iter->Volume, OrderNo, TORA_TSTP_LSD_Buy)) {
+                        iter = m_unFindBuyTrades[securityID] [OrderNo].erase(iter);
+                    } else {
+                        ++iter;
+                    }
+                }
+                if (m_unFindBuyTrades[securityID][OrderNo].empty()) {
+                    m_unFindBuyTrades[securityID].erase(OrderNo);
+                }
             }
-            Order order = {0};
-            order.Volume = tradeVolume;
-            order.OrderNo = OrderNo;
-            m_unFindBuyTrades[securityID][OrderNo] = order;
-        } else {
-            if (m_unFindSellTrades.find(securityID) == m_unFindSellTrades.end()) {
-                m_unFindSellTrades[securityID] = std::map<TTORATstpLongSequenceType, Order>();
+            if (m_unFindBuyTrades[securityID].empty()) {
+                m_unFindBuyTrades.erase(securityID);
             }
-            Order order = {0};
-            order.Volume = tradeVolume;
-            order.OrderNo = OrderNo;
-            m_unFindSellTrades[securityID][OrderNo] = order;
+        }
+
+        if (side == TORA_TSTP_LSD_Sell && m_unFindSellTrades.find(securityID) != m_unFindSellTrades.end()) {
+            if (m_unFindSellTrades[securityID].find(OrderNo) != m_unFindSellTrades[securityID].end()) {
+                for (auto iter = m_unFindSellTrades[securityID][OrderNo].begin(); iter != m_unFindSellTrades[securityID][OrderNo].end();) {
+                    if (ModifyOrder(securityID, iter->Volume, OrderNo, TORA_TSTP_LSD_Sell)) {
+                        iter = m_unFindSellTrades[securityID] [OrderNo].erase(iter);
+                    } else {
+                        ++iter;
+                    }
+                }
+                if (m_unFindSellTrades[securityID][OrderNo].empty()) {
+                    m_unFindSellTrades[securityID].erase(OrderNo);
+                }
+            }
+            if (m_unFindSellTrades[securityID].empty()) {
+                m_unFindSellTrades.erase(securityID);
+            }
         }
     }
 
@@ -391,8 +428,6 @@ namespace PROMD {
         }
     }
 
-    void MDL2Impl::FixOrder(TTORATstpSecurityIDType securityID) {
-    }
 
     void MDL2Impl::PostPrice(TTORATstpSecurityIDType securityID, TTORATstpPriceType tradePrice) {
         TTORATstpPriceType BidPrice1 = 0.0;
@@ -445,7 +480,7 @@ namespace PROMD {
             iter->second.AskVolume1 = AskVolume1;
         }
 
-        m_pApp->m_ioc.post(boost::bind(&CApplication::MDPostPrice, m_pApp, m_postMDL2[securityID]));
+        //m_pApp->m_ioc.post(boost::bind(&CApplication::MDPostPrice, m_pApp, m_postMDL2[securityID]));
         //printf("MDPostPrice %s %lld %.3f %.3f %lld\n", SecurityID, AskVolume1, AskPrice1, BidPrice1, BidVolume1);
     }
 
