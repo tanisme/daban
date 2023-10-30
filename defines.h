@@ -7,17 +7,18 @@
 
 #include <vector>
 #include <unordered_map>
+#include <map>
 
 #include "TORA/TORATstpLev2MdApi.h"
 #include "TORA/TORATstpTraderApi.h"
 
-#define SERVICE_QRYSUBSECURITYREQ   1
+#define SERVICE_QRYSUBSECURITYREQ   1   // 查询订阅合约请求
 #define SERVICE_QRYSUBSECURITYRSP   2
-#define SERVICE_ADDSTRATEGYREQ      3
+#define SERVICE_ADDSTRATEGYREQ      3   // 增加策略请求
 #define SERVICE_ADDSTRATEGYRSP      4
-#define SERVICE_DELSTRATEGYREQ      5
+#define SERVICE_DELSTRATEGYREQ      5   // 删除策略请求
 #define SERVICE_DELSTRATEGYRSP      6
-#define SERVICE_QRYSTRATEGYREQ      7
+#define SERVICE_QRYSTRATEGYREQ      7   // 查询策略请求
 #define SERVICE_QRYSTRATEGYRSP      8
 
 typedef struct _stSecurity {

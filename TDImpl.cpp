@@ -135,15 +135,26 @@ namespace PROTD {
     }
 
     void TDImpl::OnRspOrderInsert(CTORATstpInputOrderField *pInputOrderField, CTORATstpRspInfoField *pRspInfoField, int nRequestID) {
+        if (!pInputOrderField || !pRspInfoField) return;
+        if (pRspInfoField->ErrorID > 0) {
+            printf("TDImpl::OnRspOrderInsert Failed!!! ErrMsg:%s\n", pRspInfoField->ErrorMsg);
+            return;
+        }
     }
 
     void TDImpl::OnErrRtnOrderInsert(CTORATstpInputOrderField *pInputOrderField, CTORATstpRspInfoField *pRspInfoField, int nRequestID) {
+        printf("TDImpl::OnErrRtnOrderInsert\n");
     }
 
     void TDImpl::OnRtnOrder(CTORATstpOrderField *pOrder) {
+        if (!pOrder) return;
+
     }
 
     void TDImpl::OnRtnTrade(CTORATstpTradeField *pTrade) {
+        if (!pTrade) return;
+
+
     }
 
     int TDImpl::OrderCancel() {

@@ -20,7 +20,6 @@ namespace PROMD {
         static const char *GetExchangeName(TTORATstpExchangeIDType exchangeID);
         static const char *GetSide(TTORATstpLSideType side);
         int ReqMarketData(TTORATstpSecurityIDType securityID, TTORATstpExchangeIDType exchangeID, int type, bool isSub = true);
-        void ShowOrderBook();
         void ShowFixOrderBook(TTORATstpSecurityIDType securityID);
 
     public:
@@ -42,10 +41,11 @@ namespace PROMD {
 
     private:
         void InsertOrder(TTORATstpSecurityIDType securityID, TTORATstpLongSequenceType orderNO, TTORATstpPriceType price, TTORATstpLongVolumeType Volume, TTORATstpLSideType side);
-        void ModifyOrder(TTORATstpSecurityIDType securityID, TTORATstpLongVolumeType tradeVolume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side);
+        bool ModifyOrder(TTORATstpSecurityIDType securityID, TTORATstpLongVolumeType tradeVolume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side);
         void DeleteOrder(TTORATstpSecurityIDType securityID, TTORATstpLongSequenceType orderNO);
         void ResetOrder(TTORATstpSecurityIDType securityID, TTORATstpTradeBSFlagType side);
-        void FixOrder(TTORATstpSecurityIDType securityID, TTORATstpPriceType price);
+        void AddUnFindTrade(TTORATstpSecurityIDType securityID, TTORATstpLongVolumeType tradeVolume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side);
+        void FixOrder(TTORATstpSecurityIDType securityID);
         void PostPrice(TTORATstpSecurityIDType securityID, TTORATstpPriceType price);
 
     private:
@@ -57,6 +57,8 @@ namespace PROMD {
         MapOrder m_orderBuy;
         MapOrder m_orderSell;
         std::unordered_map<std::string, stPostPrice> m_postMDL2;
+        std::unordered_map<std::string, std::map<TTORATstpLongSequenceType, Order> > m_unFindBuyTrades;
+        std::unordered_map<std::string, std::map<TTORATstpLongSequenceType, Order> > m_unFindSellTrades;
     };
 
 }

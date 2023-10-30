@@ -59,14 +59,14 @@ void CApplication::OnTime(const boost::system::error_code& error)
         }
     }
 
-    for (auto& iter : m_subSecurityIDs) {
-        if (iter.second.Status == 1) continue;
-        if (!m_isTest || iter.second.ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
-            if (m_shMD) m_shMD->ShowFixOrderBook((char*)iter.first.c_str());
-        } else if (iter.second.ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
-            if (m_szMD) m_szMD->ShowFixOrderBook((char*)iter.first.c_str());
-        }
-    }
+    //for (auto& iter : m_subSecurityIDs) {
+    //    if (iter.second.Status == 1) continue;
+    //    if (!m_isTest || iter.second.ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
+    //        if (m_shMD) m_shMD->ShowFixOrderBook((char*)iter.first.c_str());
+    //    } else if (iter.second.ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
+    //        if (m_szMD) m_szMD->ShowFixOrderBook((char*)iter.first.c_str());
+    //    }
+    //}
     m_timer.expires_from_now(boost::posix_time::milliseconds(3000));
     m_timer.async_wait(boost::bind(&CApplication::OnTime, this, boost::asio::placeholders::error));
 }
@@ -127,16 +127,21 @@ void CApplication::MDPostPrice(stPostPrice& postPrice) {
         auto rt = -1;
         if (iter->type == 1) {
             //1.扫涨停：只使用逐笔成交的成交价判断距离涨停价有多少差距，如果满足则下单。
-            if (UpperLimitPrice - postPrice.TradePrice > iter->params.p1) {
-                //rt = Insert();
-                rt = m_TD->OrderInsert(postPrice.SecurityID, PROMD::TORA_TSTP_LSD_Buy, 100, 323);
+            //1.成交价，用逐笔成交中的成交价加上0.01得到最低卖出申报价格x，判断x*(1+设置的值)是否大于等于涨停价，满足就以涨停价下单
+            //eg 设置距离涨停价>=0.02%就是x*1.02   （成交价+0.01）*（1+距涨停价%）>=涨停价，满足就下单 下单价是涨停价，数量用金额除以涨停价
+            // p1-距涨停价 p2-买入的金额
+            auto price = (postPrice.TradePrice + 0.01) * (1 + iter->params.p1);
+            if (price >= UpperLimitPrice + 0.000001) {
+                auto volume = (int)(iter->params.p2 / UpperLimitPrice);
+                rt = m_TD->OrderInsert(postPrice.SecurityID, PROMD::TORA_TSTP_LSD_Buy, volume, UpperLimitPrice);
             }
         } else if (iter->type == 2) {
             //2.触涨停：需要合成实时的订单簿，根据每次计算出的订单簿取卖一价是否涨停和卖一价档位的数量计算卖一档未成交的金额做比较，小于x万元则下单.
-            if (postPrice.TradePrice - UpperLimitPrice == 0) {
+            if (postPrice.AskPrice1 >= UpperLimitPrice) {
                 auto amount = postPrice.AskPrice1 * postPrice.AskVolume1;
                 if (amount < iter->params.p1) {
-                    //rt = Insert();
+                    auto volume = (int)iter->params.p2 / UpperLimitPrice;
+                    rt = m_TD->OrderInsert(postPrice.SecurityID, PROMD::TORA_TSTP_LSD_Buy, volume, UpperLimitPrice);
                 }
             }
         } else if (iter->type == 3) {
@@ -144,7 +149,8 @@ void CApplication::MDPostPrice(stPostPrice& postPrice) {
             if (postPrice.AskPrice1 <= 0.00001 && postPrice.AskVolume1 == 0) {
                 auto amount = postPrice.BidPrice1 * postPrice.BidVolume1;
                 if (amount > iter->params.p1) {
-                    //rt = Insert();
+                    auto volume = (int)iter->params.p2 / UpperLimitPrice;
+                    rt = m_TD->OrderInsert(postPrice.SecurityID, PROMD::TORA_TSTP_LSD_Buy, volume, UpperLimitPrice);
                 }
             }
         }
@@ -153,13 +159,6 @@ void CApplication::MDPostPrice(stPostPrice& postPrice) {
             iter->status = 1;
         }
     }
-
-    //TORASTOCKAPI::CTORATstpInputOrderField InputOrder = { 0 };
-    //strncpy(InputOrder.SecurityID, MarketData.SecurityID, sizeof(InputOrder.SecurityID) - 1);
-    //OrderInsert(InputOrder);
-
-
-
 }
 
 /***************************************TD***************************************/
@@ -169,7 +168,6 @@ void CApplication::TDOnRspUserLogin(PROTD::CTORATstpRspUserLoginField& RspUserLo
 
 void CApplication::TDOnRspQrySecurity(PROTD::CTORATstpSecurityField& Security) {
     //printf("SecurityID:%s,SecurityName:%s,UpperLimitPrice:%lf,LowerLimitPrice:%lf\n", Security.SecurityID, Security.SecurityName, Security.UpperLimitPrice, Security.LowerLimitPrice);
-    if (true) return;
     if (m_securityIDs.find(Security.SecurityID) != m_securityIDs.end()) {
         auto security = m_securityIDs[Security.SecurityID];
         memcpy(security, &Security, sizeof(PROTD::CTORATstpSecurityField));
@@ -209,6 +207,8 @@ void CApplication::TDOnRspQryPosition(PROTD::CTORATstpPositionField& Position) {
 void CApplication::TDOnRspQryTradingAccount(PROTD::CTORATstpTradingAccountField& TradingAccount) {
     printf("AccountID:%s,UsefulMoney:%lf,FrozenCash:%lf,FrozenCommission:%lf\n",
            TradingAccount.AccountID, TradingAccount.UsefulMoney, TradingAccount.FrozenCash, TradingAccount.FrozenCommission);
+
+    //auto rt = m_TD->OrderInsert("688179", PROMD::TORA_TSTP_LSD_Buy, 100, 18.95);
 }
 
 void CApplication::TDOnRspOrderInsert(PROTD::CTORATstpInputOrderField& pInputOrderField) {
