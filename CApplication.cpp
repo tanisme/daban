@@ -44,8 +44,8 @@ void CApplication::Start() {
         m_shMD->Start(m_useTcp);
     }
 
-    //m_TD = new PROTD::TDImpl(this);
-    //m_TD->Start();
+    m_TD = new PROTD::TDImpl(this);
+    m_TD->Start();
 
     m_timer.expires_from_now(boost::posix_time::milliseconds(3000));
     m_timer.async_wait(boost::bind(&CApplication::OnTime, this, boost::asio::placeholders::error));
@@ -359,6 +359,8 @@ bool CApplication::AddStrategy(stStrategy& strategy) {
     if(stmt->execute() != SQLITE_OK) {
         return false;
     }
+    auto idx = m_db->getLastInsertId();
+    strategy.idx = (int)idx;
     m_strategys[strategy.SecurityID].emplace_back(strategy);
     return true;
 }

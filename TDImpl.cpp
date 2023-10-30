@@ -55,6 +55,7 @@ namespace PROTD {
 
         m_isLogined = true;
         m_pApp->m_ioc.post(boost::bind(&CApplication::TDOnRspUserLogin, m_pApp, *pRspUserLoginField));
+        memcpy(&m_loginField, pRspUserLoginField, sizeof(m_loginField));
 
         CTORATstpQrySecurityField Req = {0};
         m_tdApi->ReqQrySecurity(&Req, ++m_reqID);
@@ -126,6 +127,10 @@ namespace PROTD {
         req.Direction = Direction;
         req.VolumeTotalOriginal = VolumeTotalOriginal;
         req.LimitPrice = LimitPric;
+        req.OrderPriceType = TORA_TSTP_OPT_LimitPrice;
+        req.TimeCondition = TORA_TSTP_TC_GFD;
+        req.VolumeCondition = TORA_TSTP_VC_AV;
+        req.OrderRef = 1;
         return m_tdApi->ReqOrderInsert(&req, ++m_reqID);
     }
 
@@ -143,6 +148,7 @@ namespace PROTD {
 
     int TDImpl::OrderCancel() {
         CTORATstpInputOrderActionField req = {0};
+        req.ActionFlag = TORA_TSTP_AF_Delete;
         return m_tdApi->ReqOrderAction(&req, ++m_reqID);
     }
 

@@ -39,6 +39,7 @@ namespace PROTD {
         bool m_isLogined = false;
         CTORATstpTraderApi *m_tdApi = nullptr;
         CApplication *m_pApp = nullptr;
+        CTORATstpRspUserLoginField m_loginField = {0};
     };
 
 }

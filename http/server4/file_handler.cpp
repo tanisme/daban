@@ -63,7 +63,7 @@ namespace http {
                 return;
             }
 
-            int ServiceNo =reqvalue.isMember("Service")?reqvalue["ServiceNo"].asInt():0;
+            int ServiceNo =reqvalue.isMember("ServiceNo")?reqvalue["ServiceNo"].asInt():0;
             printf("ServiceNo %d\n", ServiceNo);
 
             if (ServiceNo == SERVICE_QRYSUBSECURITYREQ) {
