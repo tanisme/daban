@@ -199,8 +199,10 @@ namespace PROMD {
         if (pTick->TickType == TORA_TSTP_LTT_Add) {
             if (pTick->Side == TORA_TSTP_LSD_Buy) {
                 InsertOrder(pTick->SecurityID, pTick->BuyNo, pTick->Price, pTick->Volume, pTick->Side);
+                HandleUnFindTrade(pTick->SecurityID, pTick->BuyNo, TORA_TSTP_LSD_Buy);
             } else if (pTick->Side == TORA_TSTP_LSD_Sell){
                 InsertOrder(pTick->SecurityID, pTick->SellNo, pTick->Price, pTick->Volume, pTick->Side);
+                HandleUnFindTrade(pTick->SecurityID, pTick->SellNo, TORA_TSTP_LSD_Sell);
             }
         } else if (pTick->TickType == TORA_TSTP_LTT_Delete) {
             if (pTick->Side == TORA_TSTP_LSD_Buy) {
@@ -209,8 +211,10 @@ namespace PROMD {
                 ModifyOrder(pTick->SecurityID, 0, pTick->SellNo, TORA_TSTP_LSD_Buy);
             }
         } else if (pTick->TickType == TORA_TSTP_LTT_Trade) {
-            ModifyOrder(pTick->SecurityID, pTick->Volume, pTick->BuyNo, TORA_TSTP_LSD_Buy);
-            ModifyOrder(pTick->SecurityID, pTick->Volume, pTick->SellNo, TORA_TSTP_LSD_Sell);
+            auto b = ModifyOrder(pTick->SecurityID, pTick->Volume, pTick->BuyNo, TORA_TSTP_LSD_Buy);
+            auto s = ModifyOrder(pTick->SecurityID, pTick->Volume, pTick->SellNo, TORA_TSTP_LSD_Sell);
+            if (!b) AddUnFindTrade(pTick->SecurityID, pTick->Volume, pTick->BuyNo, TORA_TSTP_LSD_Buy);
+            if (!s) AddUnFindTrade(pTick->SecurityID, pTick->Volume, pTick->SellNo, TORA_TSTP_LSD_Sell);
         }
         //ShowFixOrderBook(pTick->SecurityID);
         PostPrice(pTick->SecurityID, pTick->Price);
@@ -340,39 +344,24 @@ namespace PROMD {
     }
 
     void MDL2Impl::HandleUnFindTrade(TTORATstpSecurityIDType securityID, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side) {
-        if (side == TORA_TSTP_LSD_Buy && m_unFindBuyTrades.find(securityID) != m_unFindBuyTrades.end()) {
-            if (m_unFindBuyTrades[securityID].find(OrderNo) != m_unFindBuyTrades[securityID].end()) {
-                for (auto iter = m_unFindBuyTrades[securityID][OrderNo].begin(); iter != m_unFindBuyTrades[securityID][OrderNo].end();) {
-                    if (ModifyOrder(securityID, iter->Volume, OrderNo, TORA_TSTP_LSD_Buy)) {
-                        iter = m_unFindBuyTrades[securityID] [OrderNo].erase(iter);
+        auto& unFindTrades = side==TORA_TSTP_LSD_Buy?m_unFindBuyTrades:m_unFindSellTrades;
+        auto iter = unFindTrades.find(securityID);
+        if (iter != unFindTrades.end()) {
+            auto iter1 = iter->second.find(OrderNo);
+            if (iter1 != iter->second.end()) {
+                for (auto iter2 = iter1->second.begin(); iter2 != iter1->second.end();) {
+                    if (ModifyOrder(securityID, iter2->Volume, OrderNo, side)) {
+                        iter2 = iter1->second.erase(iter2);
                     } else {
-                        ++iter;
+                        ++iter2;
                     }
                 }
-                if (m_unFindBuyTrades[securityID][OrderNo].empty()) {
-                    m_unFindBuyTrades[securityID].erase(OrderNo);
+                if (iter1->second.empty()) {
+                    iter->second.erase(iter1);
                 }
             }
-            if (m_unFindBuyTrades[securityID].empty()) {
-                m_unFindBuyTrades.erase(securityID);
-            }
-        }
-
-        if (side == TORA_TSTP_LSD_Sell && m_unFindSellTrades.find(securityID) != m_unFindSellTrades.end()) {
-            if (m_unFindSellTrades[securityID].find(OrderNo) != m_unFindSellTrades[securityID].end()) {
-                for (auto iter = m_unFindSellTrades[securityID][OrderNo].begin(); iter != m_unFindSellTrades[securityID][OrderNo].end();) {
-                    if (ModifyOrder(securityID, iter->Volume, OrderNo, TORA_TSTP_LSD_Sell)) {
-                        iter = m_unFindSellTrades[securityID] [OrderNo].erase(iter);
-                    } else {
-                        ++iter;
-                    }
-                }
-                if (m_unFindSellTrades[securityID][OrderNo].empty()) {
-                    m_unFindSellTrades[securityID].erase(OrderNo);
-                }
-            }
-            if (m_unFindSellTrades[securityID].empty()) {
-                m_unFindSellTrades.erase(securityID);
+            if (iter->second.empty()) {
+                unFindTrades.erase(iter);
             }
         }
     }
