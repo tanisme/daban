@@ -44,8 +44,8 @@ void CApplication::Start() {
         m_shMD->Start(m_useTcp);
     }
 
-    m_TD = new PROTD::TDImpl(this);
-    m_TD->Start();
+    //m_TD = new PROTD::TDImpl(this);
+    //m_TD->Start();
 
     m_timer.expires_from_now(boost::posix_time::milliseconds(3000));
     m_timer.async_wait(boost::bind(&CApplication::OnTime, this, boost::asio::placeholders::error));
@@ -67,7 +67,7 @@ void CApplication::OnTime(const boost::system::error_code& error)
             if (m_szMD) m_szMD->ShowFixOrderBook((char*)iter.first.c_str());
         }
     }
-    m_timer.expires_from_now(boost::posix_time::milliseconds(1000));
+    m_timer.expires_from_now(boost::posix_time::milliseconds(60000));
     m_timer.async_wait(boost::bind(&CApplication::OnTime, this, boost::asio::placeholders::error));
 }
 
@@ -100,6 +100,7 @@ void CApplication::MDOnRspUserLogin(PROMD::TTORATstpExchangeIDType exchangeID) {
 }
 
 void CApplication::MDPostPrice(stPostPrice& postPrice) {
+    if (true) return;
     if (!m_TD->IsLogined()) return;
     //printf("MDPostPrice %s %lld %.2f|%.2f|%.2f %lld\n", postPrice.SecurityID, postPrice.AskVolume1, postPrice.AskPrice1, postPrice.TradePrice, postPrice.BidPrice1, postPrice.BidVolume1);
 
