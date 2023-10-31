@@ -45,6 +45,7 @@ namespace PROMD {
         void AddUnFindTrade(TTORATstpSecurityIDType securityID, TTORATstpLongVolumeType tradeVolume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side);
         void HandleUnFindTrade(TTORATstpSecurityIDType securityID, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side);
         void PostPrice(TTORATstpSecurityIDType securityID, TTORATstpPriceType price);
+        void GenOrderBook(TTORATstpSecurityIDType securityID);
 
     private:
         int m_reqID = 1;
@@ -57,6 +58,8 @@ namespace PROMD {
         std::unordered_map<std::string, stPostPrice> m_postMDL2;
         std::unordered_map<std::string, std::map<TTORATstpLongSequenceType, std::vector<Order>> > m_unFindBuyTrades;
         std::unordered_map<std::string, std::map<TTORATstpLongSequenceType, std::vector<Order>> > m_unFindSellTrades;
+
+        std::unordered_map<std::string, std::string> m_orderBookStr;
     };
 
 }

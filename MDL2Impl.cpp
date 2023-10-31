@@ -2,6 +2,8 @@
 #include "CApplication.h"
 #include <boost/bind.hpp>
 
+#include <sstream>
+
 namespace PROMD {
 
     MDL2Impl::MDL2Impl(CApplication *pApp, TTORATstpExchangeIDType exchangeID)
@@ -144,7 +146,8 @@ namespace PROMD {
                 if (pTransaction->SellNo > 0) DeleteOrder(pTransaction->SecurityID, pTransaction->SellNo);
             }
         }
-        PostPrice(pTransaction->SecurityID, pTransaction->TradePrice);
+        //PostPrice(pTransaction->SecurityID, pTransaction->TradePrice);
+        GenOrderBook(pTransaction->SecurityID);
     }
 
     void MDL2Impl::OnRspSubOrderDetail(CTORATstpSpecificSecurityField *pSpecificSecurity, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
@@ -175,7 +178,8 @@ namespace PROMD {
         } else if (pOrderDetail->ExchangeID == TORA_TSTP_EXD_SZSE) {
             InsertOrder(pOrderDetail->SecurityID, pOrderDetail->OrderNO, pOrderDetail->Price, pOrderDetail->Volume, pOrderDetail->Side);
         }
-        PostPrice(pOrderDetail->SecurityID, 0);
+        //PostPrice(pOrderDetail->SecurityID, 0);
+        GenOrderBook(pOrderDetail->SecurityID);
     }
 
     void MDL2Impl::OnRspSubNGTSTick(CTORATstpSpecificSecurityField *pSpecificSecurity, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
@@ -217,7 +221,7 @@ namespace PROMD {
             if (!s) AddUnFindTrade(pTick->SecurityID, pTick->Volume, pTick->SellNo, TORA_TSTP_LSD_Sell);
         }
         //ShowFixOrderBook(pTick->SecurityID);
-        PostPrice(pTick->SecurityID, pTick->Price);
+        //PostPrice(pTick->SecurityID, pTick->Price);
     }
 
     void MDL2Impl::InsertOrder(TTORATstpSecurityIDType securityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side) {
@@ -368,10 +372,66 @@ namespace PROMD {
 
     void MDL2Impl::ShowFixOrderBook(TTORATstpSecurityIDType securityID) {
         //if (m_orderBuy.empty() && m_orderSell.empty()) return;
+        //auto t = time(nullptr);
+        //auto* now = localtime(&t);
+        //char time[32] = {0};
+        //sprintf(time, "%04d-%02d-%02d %02d:%02d:%02d", now->tm_year+1900, now->tm_mon+1,
+        //        now->tm_mday, now->tm_hour, now->tm_min, now->tm_sec);
 
-        printf("\n");
-        printf("--------------------- %s ---------------------\n", securityID);
+        //printf("\n");
+        //printf("--------- %s %s ---------\n", securityID, time);
 
+        //{
+        //    int showCount = 5;
+        //    auto iter1 = m_orderSell.find(securityID);
+        //    if (iter1 != m_orderSell.end()) {
+        //        auto size = (int) iter1->second.size();
+        //        if (showCount < size) size = showCount;
+        //        for (auto i = size; i > 0; i--) {
+        //            long long int totalVolume = 0;
+        //            for (auto iter2: iter1->second.at(i - 1).Orders) {
+        //                totalVolume += iter2.Volume;
+        //            }
+        //            printf("S%d\t%.3f\t\t%d\t\t%lld\n", i, iter1->second.at(i - 1).Price,
+        //                   (int) iter1->second.at(i - 1).Orders.size(), totalVolume);
+        //        }
+        //    }
+        //}
+
+        //{
+        //    int showCount = 5;
+        //    auto iter1 = m_orderBuy.find(securityID);
+        //    if (iter1 != m_orderBuy.end()) {
+        //        auto size = (int) iter1->second.size();
+        //        if (showCount < size) size = showCount;
+        //        for (auto i = 1; i <= size; i++) {
+        //            long long int totalVolume = 0;
+        //            for (auto iter2: iter1->second.at(i - 1).Orders) {
+        //                totalVolume += iter2.Volume;
+        //            }
+        //            printf("B%d\t%.3f\t\t%d\t\t%lld\n", i, iter1->second.at(i - 1).Price,
+        //                   (int) iter1->second.at(i - 1).Orders.size(), totalVolume);
+        //        }
+        //    }
+        //}
+        if (m_orderBookStr.find(securityID) != m_orderBookStr.end())
+            printf(m_orderBookStr[securityID].c_str());
+    }
+
+    void MDL2Impl::GenOrderBook(TTORATstpSecurityIDType securityID) {
+        if (m_orderBuy.empty() && m_orderSell.empty()) return;
+
+        auto t = time(nullptr);
+        auto* now = localtime(&t);
+        char time[32] = {0};
+        sprintf(time, "%04d-%02d-%02d %02d:%02d:%02d", now->tm_year+1900, now->tm_mon+1,
+                now->tm_mday, now->tm_hour, now->tm_min, now->tm_sec);
+
+        std::stringstream stream;
+        stream << "\n";
+        stream << "--------- " << securityID << " " << time << "---------\n";
+
+        char buffer[4096] = {0};
         {
             int showCount = 5;
             auto iter1 = m_orderSell.find(securityID);
@@ -379,12 +439,14 @@ namespace PROMD {
                 auto size = (int) iter1->second.size();
                 if (showCount < size) size = showCount;
                 for (auto i = size; i > 0; i--) {
+                    memset(buffer, 0, sizeof(buffer));
                     long long int totalVolume = 0;
                     for (auto iter2: iter1->second.at(i - 1).Orders) {
                         totalVolume += iter2.Volume;
                     }
-                    printf("S%d\t%.3f\t\t%d\t\t%lld\n", i, iter1->second.at(i - 1).Price,
+                    sprintf(buffer, "S%d\t%.3f\t\t%d\t\t%lld\n", i, iter1->second.at(i - 1).Price,
                            (int) iter1->second.at(i - 1).Orders.size(), totalVolume);
+                    stream << buffer << "\n";
                 }
             }
         }
@@ -396,17 +458,18 @@ namespace PROMD {
                 auto size = (int) iter1->second.size();
                 if (showCount < size) size = showCount;
                 for (auto i = 1; i <= size; i++) {
+                    memset(buffer, 0, sizeof(buffer));
                     long long int totalVolume = 0;
                     for (auto iter2: iter1->second.at(i - 1).Orders) {
                         totalVolume += iter2.Volume;
                     }
-                    printf("B%d\t%.3f\t\t%d\t\t%lld\n", i, iter1->second.at(i - 1).Price,
+                    sprintf(buffer, "B%d\t%.3f\t\t%d\t\t%lld\n", i, iter1->second.at(i - 1).Price,
                            (int) iter1->second.at(i - 1).Orders.size(), totalVolume);
+                    stream << buffer << "\n";
                 }
             }
         }
     }
-
 
     void MDL2Impl::PostPrice(TTORATstpSecurityIDType securityID, TTORATstpPriceType tradePrice) {
         TTORATstpPriceType BidPrice1 = 0.0;
