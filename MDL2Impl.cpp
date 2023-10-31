@@ -446,7 +446,7 @@ namespace PROMD {
                     }
                     sprintf(buffer, "S%d\t%.3f\t\t%d\t\t%lld\n", i, iter1->second.at(i - 1).Price,
                            (int) iter1->second.at(i - 1).Orders.size(), totalVolume);
-                    stream << buffer << "\n";
+                    stream << buffer;
                 }
             }
         }
@@ -465,10 +465,11 @@ namespace PROMD {
                     }
                     sprintf(buffer, "B%d\t%.3f\t\t%d\t\t%lld\n", i, iter1->second.at(i - 1).Price,
                            (int) iter1->second.at(i - 1).Orders.size(), totalVolume);
-                    stream << buffer << "\n";
+                    stream << buffer;
                 }
             }
         }
+        m_orderBookStr[securityID] = std::move(stream.str());
     }
 
     void MDL2Impl::PostPrice(TTORATstpSecurityIDType securityID, TTORATstpPriceType tradePrice) {
