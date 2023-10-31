@@ -44,8 +44,8 @@ void CApplication::Start() {
         m_shMD->Start(m_useTcp);
     }
 
-    //m_TD = new PROTD::TDImpl(this);
-    //m_TD->Start();
+    m_TD = new PROTD::TDImpl(this);
+    m_TD->Start();
 
     m_timer.expires_from_now(boost::posix_time::milliseconds(3000));
     m_timer.async_wait(boost::bind(&CApplication::OnTime, this, boost::asio::placeholders::error));
@@ -148,6 +148,7 @@ void CApplication::MDPostPrice(stPostPrice& postPrice) {
         }
         if (rt == 0) {
             iter->status = 1;
+            // TODO更新数据库
         }
     }
 }

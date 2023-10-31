@@ -370,6 +370,7 @@ namespace PROMD {
         }
     }
 
+    // 测试打印 实盘屏蔽
     void MDL2Impl::ShowFixOrderBook(TTORATstpSecurityIDType securityID) {
         //if (m_orderBuy.empty() && m_orderSell.empty()) return;
         //auto t = time(nullptr);
@@ -418,6 +419,7 @@ namespace PROMD {
             printf(m_orderBookStr[securityID].c_str());
     }
 
+    // 测试打印 实盘屏蔽
     void MDL2Impl::GenOrderBook(TTORATstpSecurityIDType securityID) {
         if (m_orderBuy.empty() && m_orderSell.empty()) return;
 
@@ -523,7 +525,7 @@ namespace PROMD {
             iter->second.AskVolume1 = AskVolume1;
         }
 
-        //m_pApp->m_ioc.post(boost::bind(&CApplication::MDPostPrice, m_pApp, m_postMDL2[securityID]));
+        m_pApp->m_ioc.post(boost::bind(&CApplication::MDPostPrice, m_pApp, m_postMDL2[securityID]));
         //printf("MDPostPrice %s %lld %.3f %.3f %lld\n", SecurityID, AskVolume1, AskPrice1, BidPrice1, BidVolume1);
     }
 

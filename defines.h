@@ -50,7 +50,7 @@ struct PriceOrders {
     std::vector<Order> Orders;
 };
 
-typedef std::unordered_map<std::string, std::vector<PriceOrders> > MapOrder;
+typedef std::unordered_map<std::string, std::vector<PriceOrders> > MapOrder; // TODO改内存池
 
 struct stPostPrice {
     TORALEV2API::TTORATstpSecurityIDType SecurityID;
