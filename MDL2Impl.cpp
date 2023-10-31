@@ -341,9 +341,9 @@ namespace PROMD {
     void MDL2Impl::HandleUnFindTrade(TTORATstpSecurityIDType securityID, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side) {
         std::unordered_map<std::string, std::map<TTORATstpLongSequenceType, std::vector<Order>> >& unFindTrades = side==TORA_TSTP_LSD_Buy?m_unFindBuyTrades:m_unFindSellTrades;
         auto iter = unFindTrades.find(securityID);
-        if (iter == unFindTrades.end()) return;
+        if (iter == unFindTrades.end() || iter->second.empty()) return;
         auto iter1 = iter->second.find(OrderNo);
-        if (iter1 == iter->second.end()) return;
+        if (iter1 == iter->second.end() || iter1->second.empty()) return;
 
         for (auto iter2 = iter1->second.begin(); iter2 != iter1->second.end();) {
             if (ModifyOrder(securityID, iter2->Volume, OrderNo, side)) {
