@@ -137,10 +137,12 @@ namespace PROMD {
                 AddUnFindTrade(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell);
         } else if (pTransaction->ExchangeID == TORA_TSTP_EXD_SZSE) {
             if (pTransaction->ExecType == TORA_TSTP_ECT_Fill) {
-                if (!ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->BuyNo, TORA_TSTP_LSD_Buy))
-                    AddUnFindTrade(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->BuyNo, TORA_TSTP_LSD_Buy);
-                if (!ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell))
-                    AddUnFindTrade(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell);
+                if (!ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->BuyNo, TORA_TSTP_LSD_Buy)) {
+                    //AddUnFindTrade(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->BuyNo, TORA_TSTP_LSD_Buy);
+                }
+                if (!ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell)) {
+                    //AddUnFindTrade(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell);
+                }
             } else if (pTransaction->ExecType == TORA_TSTP_ECT_Cancel) {
                 if (pTransaction->BuyNo > 0) DeleteOrder(pTransaction->SecurityID, pTransaction->BuyNo);
                 if (pTransaction->SellNo > 0) DeleteOrder(pTransaction->SecurityID, pTransaction->SellNo);
@@ -177,7 +179,7 @@ namespace PROMD {
             }
         } else if (pOrderDetail->ExchangeID == TORA_TSTP_EXD_SZSE) {
             InsertOrder(pOrderDetail->SecurityID, pOrderDetail->OrderNO, pOrderDetail->Price, pOrderDetail->Volume, pOrderDetail->Side);
-            HandleUnFindTrade(pOrderDetail->SecurityID, pOrderDetail->OrderNO, pOrderDetail->Side);
+            //HandleUnFindTrade(pOrderDetail->SecurityID, pOrderDetail->OrderNO, pOrderDetail->Side);
         }
         //PostPrice(pOrderDetail->SecurityID, 0);
         GenOrderBook(pOrderDetail->SecurityID);
