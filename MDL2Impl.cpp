@@ -131,16 +131,16 @@ namespace PROMD {
     void MDL2Impl::OnRtnTransaction(CTORATstpLev2TransactionField *pTransaction) {
         if (!pTransaction) return;
         if (pTransaction->ExchangeID == TORA_TSTP_EXD_SSE) {
-            if (!ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->BuyNo, TORA_TSTP_LSD_Buy)) {
+            if (!ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->BuyNo, TORA_TSTP_LSD_Buy))
                 AddUnFindTrade(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->BuyNo, TORA_TSTP_LSD_Buy);
-            }
-            if (!ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell)) {
+            if (!ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell))
                 AddUnFindTrade(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell);
-            }
         } else if (pTransaction->ExchangeID == TORA_TSTP_EXD_SZSE) {
             if (pTransaction->ExecType == TORA_TSTP_ECT_Fill) {
-                ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->BuyNo, TORA_TSTP_LSD_Buy);
-                ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell);
+                if (!ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->BuyNo, TORA_TSTP_LSD_Buy))
+                    AddUnFindTrade(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->BuyNo, TORA_TSTP_LSD_Buy);
+                if (!ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell))
+                    AddUnFindTrade(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell);
             } else if (pTransaction->ExecType == TORA_TSTP_ECT_Cancel) {
                 if (pTransaction->BuyNo > 0) DeleteOrder(pTransaction->SecurityID, pTransaction->BuyNo);
                 if (pTransaction->SellNo > 0) DeleteOrder(pTransaction->SecurityID, pTransaction->SellNo);
@@ -171,12 +171,13 @@ namespace PROMD {
         if (pOrderDetail->ExchangeID == TORA_TSTP_EXD_SSE) {
             if (pOrderDetail->OrderStatus == TORA_TSTP_LOS_Add) {
                 InsertOrder(pOrderDetail->SecurityID, pOrderDetail->OrderNO, pOrderDetail->Price, pOrderDetail->Volume, pOrderDetail->Side);
+                HandleUnFindTrade(pOrderDetail->SecurityID, pOrderDetail->OrderNO, pOrderDetail->Side);
             } else if (pOrderDetail->OrderStatus == TORA_TSTP_LOS_Delete) {
                 DeleteOrder(pOrderDetail->SecurityID, pOrderDetail->OrderNO);
             }
-            HandleUnFindTrade(pOrderDetail->SecurityID, pOrderDetail->OrderNO, pOrderDetail->Side);
         } else if (pOrderDetail->ExchangeID == TORA_TSTP_EXD_SZSE) {
             InsertOrder(pOrderDetail->SecurityID, pOrderDetail->OrderNO, pOrderDetail->Price, pOrderDetail->Volume, pOrderDetail->Side);
+            HandleUnFindTrade(pOrderDetail->SecurityID, pOrderDetail->OrderNO, pOrderDetail->Side);
         }
         //PostPrice(pOrderDetail->SecurityID, 0);
         GenOrderBook(pOrderDetail->SecurityID);
