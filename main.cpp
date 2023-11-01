@@ -1,38 +1,12 @@
 ﻿#include <fstream>
 
 #include "CApplication.h"
-#include <iostream>
 #include <boost/asio.hpp>
 #include "server.hpp"
 #include "file_handler.hpp"
 #include <boost/program_options.hpp>
 
-#include "memory_pool.h"
-
-struct data {
-    int foo = 0;
-    char data[65535];
-    bool boo = false;
-};
-
 int main() {
-    MemoryPool<data, 2> pool;
-    std::vector<data *> nodes(100);
-    for (int i = 0; i < 100; ++i) {
-        nodes[i] = pool.new_element();
-    }
-
-    for (int i = 0; i < 100; ++i) {
-        pool.delete_element(nodes[i]);
-    }
-
-    nodes.clear();
-
-
-
-
-
-
     std::string cfgfile = "daban.ini";
     std::string dbfile = "database.db";
     std::string httpurl = "";
