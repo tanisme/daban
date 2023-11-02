@@ -9,7 +9,7 @@
 int main() {
     std::string cfgfile = "daban.ini";
     std::string dbfile = "database.db";
-    std::string httpurl = "";
+    std::string httpurl = "", cpucore = "";
     std::string shmdaddr = "", szmdaddr = "", mdaddr = "", mdinterface = "";
     std::string tdaddr = "", tdaccount = "", tdpassword = "";
     int shmdnewversion = 0;
@@ -19,6 +19,7 @@ int main() {
             ("daban.istest", boost::program_options::value<bool>(&isTest), "daban.istest")
             ("daban.usetcp", boost::program_options::value<bool>(&useTcp), "daban.usetcp")
             ("daban.dbfile", boost::program_options::value<std::string>(&dbfile), "daban.dbfile")
+            ("daban.cpucore", boost::program_options::value<std::string>(&cpucore), "daban.cpucore")
             ("daban.httpurl", boost::program_options::value<std::string>(&httpurl), "daban.httpurl")
             ("daban.tdaddr", boost::program_options::value<std::string>(&tdaddr), "daban.tdaddr")
             ("daban.tdaccount", boost::program_options::value<std::string>(&tdaccount), "daban.tdaccount")
@@ -54,12 +55,13 @@ int main() {
     app.m_szMDAddr = szmdaddr;
     app.m_mdAddr = mdaddr;
     app.m_mdInterface = mdinterface;
+    app.m_cpucore = cpucore;
     app.Init();
 
-    if (httpurl.length() > 0) {
-        http::server4::server(io_context, std::string(httpurl, 0, httpurl.find(':')),
-                              httpurl.substr(httpurl.find(':') + 1), http::server4::file_handler(&app))();
-    }
+    //if (httpurl.length() > 0) {
+    //    http::server4::server(io_context, std::string(httpurl, 0, httpurl.find(':')),
+    //                          httpurl.substr(httpurl.find(':') + 1), http::server4::file_handler(&app))();
+    //}
 
     app.Start();
     io_context.run();

@@ -60,6 +60,7 @@ public:
     std::string m_szMDAddr = "tcp://210.14.72.17:6900";
     std::string m_mdAddr = "tcp://210.14.72.17:16900";
     std::string m_mdInterface = "tcp://210.14.72.17:16900";
+    std::string m_cpucore = "";
 
     std::unordered_map<std::string, stSubSecurity> m_subSecurityIDs;
     std::unordered_map<std::string, std::vector<stStrategy> > m_strategys;

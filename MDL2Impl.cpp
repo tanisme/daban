@@ -35,7 +35,7 @@ namespace PROMD {
             m_pApi->RegisterSpi(this);
             m_pApi->RegisterMulticast((char *) m_pApp->m_mdAddr.c_str(), (char*)m_pApp->m_mdInterface.c_str(), nullptr);
         }
-        m_pApi->Init();
+        m_pApi->Init(m_pApp->m_cpucore.c_str());
         return true;
     }
 
@@ -149,7 +149,7 @@ namespace PROMD {
             }
         }
         //PostPrice(pTransaction->SecurityID, pTransaction->TradePrice);
-        GenOrderBook(pTransaction->SecurityID);
+        //GenOrderBook(pTransaction->SecurityID);
     }
 
     void MDL2Impl::OnRspSubOrderDetail(CTORATstpSpecificSecurityField *pSpecificSecurity, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
@@ -182,7 +182,7 @@ namespace PROMD {
             //HandleUnFindTrade(pOrderDetail->SecurityID, pOrderDetail->OrderNO, pOrderDetail->Side);
         }
         //PostPrice(pOrderDetail->SecurityID, 0);
-        GenOrderBook(pOrderDetail->SecurityID);
+        //GenOrderBook(pOrderDetail->SecurityID);
     }
 
     void MDL2Impl::OnRspSubNGTSTick(CTORATstpSpecificSecurityField *pSpecificSecurity, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
@@ -421,7 +421,8 @@ namespace PROMD {
                 }
             }
         }
-        m_orderBookStr[securityID] = std::move(stream.str());
+        printf("%s\n", stream.str().c_str());
+        //m_orderBookStr[securityID] = std::move(stream.str());
     }
 
     void MDL2Impl::PostPrice(TTORATstpSecurityIDType securityID, TTORATstpPriceType tradePrice) {

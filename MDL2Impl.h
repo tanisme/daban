@@ -18,6 +18,7 @@ namespace PROMD {
 
         int ReqMarketData(TTORATstpSecurityIDType securityID, TTORATstpExchangeIDType exchangeID, int type, bool isSub = true);
         void ShowFixOrderBook(TTORATstpSecurityIDType securityID);
+        void GenOrderBook(TTORATstpSecurityIDType securityID);
         static const char *GetExchangeName(TTORATstpExchangeIDType exchangeID);
 
     public:
@@ -45,7 +46,6 @@ namespace PROMD {
         void AddUnFindTrade(TTORATstpSecurityIDType securityID, TTORATstpLongVolumeType tradeVolume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side);
         void HandleUnFindTrade(TTORATstpSecurityIDType securityID, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side);
         void PostPrice(TTORATstpSecurityIDType securityID, TTORATstpPriceType price);
-        void GenOrderBook(TTORATstpSecurityIDType securityID);
 
     private:
         int m_reqID = 1;
