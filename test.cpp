@@ -631,9 +631,8 @@ namespace test {
         std::string dstDataFileName = dstDataDir + "/" + SecurityID;
         if (isOrder) dstDataFileName = dstDataFileName + "_r.txt";
         else dstDataFileName = dstDataFileName + "_t.txt";
-        FILE *pf = nullptr;
-        auto ret = fopen_s(&pf, dstDataFileName.c_str(), "w+");
-        if (ret != 0) {
+        FILE *pf = fopen(dstDataFileName.c_str(), "w+");
+        if (!pf) {
             printf("写入%s文件 打开目标合约文件失败\n", isOrder ? "订单" : "成交");
             return;
         }
@@ -753,7 +752,7 @@ namespace test {
         for (auto iter : Securityes)
         {
             char Security[31] = {0};
-            //strcpy(Security, iter.c_str());
+            strcpy(Security, iter.c_str());
             //SplitSecurityFile(srcDataDir, dstDataDir, true, Security);
             //SplitSecurityFile(srcDataDir, dstDataDir, false, Security);
             //SplitSecurityFileOrderQuot(dstDataDir, Security);
