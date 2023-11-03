@@ -156,22 +156,16 @@ namespace test {
     void OnRtnTransaction(TTORATstpSecurityIDType SecurityID, TTORATstpExchangeIDType ExchangeID,
                           TTORATstpLongVolumeType TradeVolume, TTORATstpExecTypeType ExecType,
                           TTORATstpLongSequenceType BuyNo, TTORATstpLongSequenceType SellNo,
-                          TTORATstpPriceType TradePrice, std::string Time) {
+                          TTORATstpPriceType TradePrice) {
         if (ExchangeID == TORA_TSTP_EXD_SSE) {
             if (!ModifyOrder(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy))
                 AddUnFindTrade(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
             if (!ModifyOrder(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell))
                 AddUnFindTrade(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
-            //if (strncmp(Time.c_str(), "930", 3) >= 0) {
-            //    FixOrder(SecurityID, TradePrice);
-            //}
         } else if (ExchangeID == TORA_TSTP_EXD_SZSE) {
             if (ExecType == TORA_TSTP_ECT_Fill) {
                 ModifyOrder(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
                 ModifyOrder(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
-                //if (strncmp(Time.c_str(), "930", 3) >= 0) {
-                    FixOrder(SecurityID, TradePrice);
-                //}
             } else if (ExecType == TORA_TSTP_ECT_Cancel) {
                 if (BuyNo > 0) ModifyOrder(SecurityID, 0, BuyNo, TORA_TSTP_LSD_Buy);
                 if (SellNo > 0) ModifyOrder(SecurityID, 0, SellNo, TORA_TSTP_LSD_Sell);
@@ -577,8 +571,131 @@ namespace test {
         printf("写成交完成 共 %lld 笔\n", i);
     }
 
+    void BigFileOrderQuot(std::string &srcDataDir, TTORATstpSecurityIDType SecurityID) {
+        std::string file = srcDataDir + "/OrderDetail.csv";
+        std::ifstream ifs(file, std::ios::in);
+        if (!ifs.is_open()) {
+            printf("OrderDetail.csv open failed!!! path%s\n", file.c_str());
+            return;
+        }
 
-    void OrderQuot(std::string &dir, TTORATstpSecurityIDType CalSecurityID) {
+        long long int i = 1;
+        std::string line;
+        std::vector<std::string> res;
+        while (std::getline(ifs, line)) {
+            res.clear();
+            Stringsplit(line, ',', res);
+
+            if ((int) res.size() != 15) {
+                printf("读订单 有错误数据 列数:%d 内容:%s\n", (int) res.size(), line.c_str());
+            } else {
+                //交易所代码
+                std::string ExchangeID = res.at(0);
+                //证券代码
+                //std::string SecurityID = res.at(1);
+                if (strcmp(SecurityID, res.at(1).c_str())) continue;
+                //时间戳
+                std::string OrderTime = res.at(2);
+                //委托价格
+                std::string Price = res.at(3).substr(0, 8);
+                //委托数量
+                std::string Volume = res.at(4);
+                //委托方向
+                std::string Side = res.at(5);
+                //订单类别（只有深圳行情有效）
+                std::string OrderType = res.at(6);
+                //主序号
+                std::string MainSeq = res.at(7);
+                //子序号
+                std::string SubSeq = res.at(8);
+                //附加信息1
+                std::string Info1 = res.at(9);
+                //附加信息2
+                std::string Info2 = res.at(10);
+                //附加信息3
+                std::string Info3 = res.at(11);
+                //委托序号
+                std::string OrderNO = res.at(12);
+                //订单状态
+                std::string OrderStatus = res.at(13);
+                //业务序号（只有上海行情有效）
+                std::string BizIndex = res.at(14);
+
+                OnRtnOrderDetail(SecurityID, Side.c_str()[0], atoll(OrderNO.c_str()), atof(Price.c_str()),
+                                 atoll(Volume.c_str()),
+                                 ExchangeID.c_str()[0],
+                                 OrderStatus.c_str()[0]);
+                if (i++%1000 == 0) {
+                    printf("已处理大文件中 %s %lld 条订单\n", SecurityID, i);
+                    ShowOrderBook(SecurityID);
+                }
+            }
+        }
+        printf("处理完成所有订单 共 %lld 条\n", i);
+    }
+
+    void BigFileTradeQuot(std::string &srcDataDir, TTORATstpSecurityIDType SecurityID) {
+        std::string file = srcDataDir + "/Transaction.csv";
+        std::ifstream ifs(file, std::ios::in);
+        if (!ifs.is_open()) {
+            printf("Transaction.csv open failed!!! path%s\n", file.c_str());
+            return;
+        }
+
+        long long int i = 0;
+        std::string line;
+        std::vector<std::string> res;
+        while (std::getline(ifs, line)) {
+            res.clear();
+            Stringsplit(line, ',', res);
+
+            if ((int) res.size() != 15) {
+                printf("读成交 有错误数据 列数:%d 内容:%s\n", (int) res.size(), line.c_str());
+            } else {
+                //交易所代码
+                std::string ExchangeID = res.at(0);
+                //证券代码
+                //std::string SecurityID = res.at(1);
+                if (strcmp(SecurityID, res.at(1).c_str())) continue;
+                //时间戳
+                std::string TradeTime = res.at(2);
+                //成交价格
+                std::string TradePrice = res.at(3).substr(0, 8);
+                //成交数量
+                std::string TradeVolume = res.at(4);
+                //成交类别（只有深圳行情有效）
+                std::string ExecType = res.at(5);
+                //主序号
+                std::string MainSeq = res.at(6);
+                //子序号
+                std::string SubSeq = res.at(7);
+                //买方委托序号
+                std::string BuyNo = res.at(8);
+                //卖方委托序号
+                std::string SellNo = res.at(9);
+                //附加信息1
+                std::string Info1 = res.at(10);
+                //附加信息2
+                std::string Info2 = res.at(11);
+                //附加信息3
+                std::string Info3 = res.at(12);
+                //内外盘标志（只有上海行情有效）
+                std::string TradeBSFlag = res.at(13);
+                //业务序号（只有上海行情有效）
+                std::string BizIndex = res.at(14);
+
+                OnRtnTransaction(SecurityID, ExchangeID.c_str()[0], atoll(TradeVolume.c_str()), ExecType.c_str()[0],
+                                 atoll(BuyNo.c_str()), atoll(SellNo.c_str()), atof(TradePrice.c_str()));
+                if (i++%1000 == 0) {
+                    printf("已处理大文件中 %s %lld 条成交\n", SecurityID, i);
+                    ShowOrderBook(SecurityID);
+                }
+            }
+        }
+        printf("处理完成所有成交 共 %lld 条\n", i);
+    }
+
+    void SplitSecurityFileOrderQuot(std::string &dir, TTORATstpSecurityIDType CalSecurityID) {
         std::string file = dir + "/order/" + std::string(CalSecurityID) + ".txt";
         std::ifstream ifs(file, std::ios::in);
         if (!ifs.is_open()) {
@@ -638,7 +755,7 @@ namespace test {
         printf("处理完成所有订单 共 %lld 条\n", i);
     }
 
-    void TradeQuot(std::string &dir, TTORATstpSecurityIDType CalSecurityID) {
+    void SplitSecurityFileTradeQuot(std::string &dir, TTORATstpSecurityIDType CalSecurityID) {
         std::string file = dir + "/trade/" + std::string(CalSecurityID) + ".txt";
         std::ifstream ifs(file, std::ios::in);
         if (!ifs.is_open()) {
@@ -798,106 +915,6 @@ namespace test {
         printf("写成交完成 共 %lld 笔\n", i);
     }
 
-    void ParseFileBak(std::string srcDataDir, std::string dstDataDir, bool isOrder) {
-        std::string srcDataFile = srcDataDir;
-        std::string dstDataFileDetailDir = dstDataDir;
-        if (isOrder) {
-            srcDataFile += "/OrderDetail.csv";
-            dstDataFileDetailDir += "/order/";
-        } else {
-            srcDataFile += "/Transaction.csv";
-            dstDataFileDetailDir += "/trade/";
-        }
-
-        std::ifstream ifs(srcDataFile, std::ios::in);
-        if (!ifs.is_open()) {
-            printf("srcDataFile csv open failed!!! path%s\n", srcDataFile.c_str());
-            return;
-        }
-
-        boost::filesystem::path path(dstDataFileDetailDir);
-        if (!boost::filesystem::exists(dstDataFileDetailDir)) {
-            boost::filesystem::create_directories(dstDataFileDetailDir);
-        }
-
-        long long int i = 0;
-        std::string line;
-        std::vector<std::string> res;
-        std::unordered_map<std::string, std::vector<std::string>> buffers;
-
-        while (std::getline(ifs, line)) {
-            if (i == 0) {
-                line.clear();
-                i++;
-                continue;
-            }
-
-            res.clear();
-            Stringsplit(line, ',', res);
-
-            if ((int) res.size() != 15) {
-                printf("读取%s文件 有错误数据 列数:%d 内容:%s\n", isOrder ? "订单" : "成交", (int) res.size(),
-                       line.c_str());
-            } else {
-                std::string SecurityID = res.at(1);
-                auto iter = buffers.find(SecurityID);
-                if (iter == buffers.end()) {
-                    buffers[SecurityID] = std::vector<std::string>();
-                    buffers[SecurityID].emplace_back(line);
-                } else {
-                    if (iter->second.size() < 500) {
-                        iter->second.emplace_back(line);
-                    } else {
-                        std::string dstDataFileName = dstDataFileDetailDir + SecurityID + ".txt";
-                        FILE *pf = nullptr;
-                        auto ret = fopen_s(&pf, dstDataFileName.c_str(), "a+");
-                        if (ret != 0) {
-                            printf("写入%s文件 打开目标合约文件失败\n", isOrder ? "订单" : "成交");
-                            iter->second.emplace_back(line);
-                            continue;
-                        } else {
-                            for (auto &buff: iter->second) {
-                                fputs(buff.c_str(), pf);
-                                fputs("\n", pf);
-                            }
-                            fclose(pf);
-                            iter->second.clear();
-                        }
-                        buffers.erase(SecurityID);
-                    }
-                }
-            }
-
-            line.clear();
-            i++;
-            if (i % 50000 == 0) {
-                printf("读取%s文件 总数%lld\n", isOrder ? "订单" : "成交", i);
-            }
-        }
-
-        for (auto &buff: buffers) {
-            if (buff.second.empty()) continue;
-
-            std::string dstDataFileName = dstDataFileDetailDir + buff.first + ".txt";
-            FILE *pf = nullptr;
-            auto ret = fopen_s(&pf, dstDataFileName.c_str(), "a+");
-            if (ret != 0) {
-                printf("再次写入%s文件 打开目标合约文件失败\n", isOrder ? "订单" : "成交");
-                continue;
-            } else {
-                for (auto &iter: buff.second) {
-                    fputs(iter.c_str(), pf);
-                    fputs("\n", pf);
-                }
-                fclose(pf);
-            }
-            buffers.erase(buff.first);
-        }
-        buffers.clear();
-        printf("写订单完成 共 %lld 笔\n", i);
-    }
-
-    //----------------------new
     void ParseAllSecurityFile(std::string srcDataDir, std::string dstDataDir, bool isOrder) {
         std::string srcDataFile = srcDataDir;
         std::string dstDataFileDetailDir = dstDataDir;
@@ -961,34 +978,31 @@ namespace test {
         printf("写订单完成 共 %lld 笔\n", i);
     }
 
-    void ParseFixSecurityFile(std::string srcDataDir, std::string dstDataDir, bool isOrder,
-                              TTORATstpSecurityIDType CalSecurityID) {
-        std::string srcDataFile = srcDataDir;
-        std::string dstDataFileDetailDir = dstDataDir;
+    void SplitSecurityFile(std::string srcDataDir, std::string dstDataDir, bool isOrder, TTORATstpSecurityIDType SecurityID) {
         if (isOrder) {
-            srcDataFile += "/OrderDetail.csv";
-            dstDataFileDetailDir += "/order/";
+            srcDataDir += "/OrderDetail.csv";
         } else {
-            srcDataFile += "/Transaction.csv";
-            dstDataFileDetailDir += "/trade/";
+            srcDataDir += "/Transaction.csv";
         }
 
-        std::ifstream ifs(srcDataFile, std::ios::in);
+        std::ifstream ifs(srcDataDir, std::ios::in);
         if (!ifs.is_open()) {
-            printf("srcDataFile csv open failed!!! path%s\n", srcDataFile.c_str());
+            printf("srcDataFile csv open failed!!! path%s\n", srcDataDir.c_str());
             return;
         }
 
-        boost::filesystem::path path(dstDataFileDetailDir);
-        if (!boost::filesystem::exists(dstDataFileDetailDir)) {
-            boost::filesystem::create_directories(dstDataFileDetailDir);
+        boost::filesystem::path path(dstDataDir);
+        if (!boost::filesystem::exists(dstDataDir)) {
+            boost::filesystem::create_directories(dstDataDir);
         }
 
         long long int i = 0;
         std::string line;
         std::vector<std::string> res;
 
-        std::string dstDataFileName = dstDataFileDetailDir + CalSecurityID + ".txt";
+        std::string dstDataFileName = dstDataDir + "/" + SecurityID;
+        if (isOrder) dstDataFileName = dstDataFileName + "_r.txt";
+        else dstDataFileName = dstDataFileName + "_t.txt";
         FILE *pf = nullptr;
         auto ret = fopen_s(&pf, dstDataFileName.c_str(), "a+");
         if (ret != 0) {
@@ -1001,19 +1015,16 @@ namespace test {
             Stringsplit(line, ',', res);
 
             if ((int) res.size() != 15) {
-                printf("读取%s文件 有错误数据 列数:%d 内容:%s\n", isOrder ? "订单" : "成交", (int) res.size(),
-                       line.c_str());
+                printf("读取%s文件 有错误数据 列数:%d 内容:%s\n", isOrder ? "订单" : "成交", (int) res.size(), line.c_str());
             } else {
-                if (strcmp(CalSecurityID, res.at(1).c_str())) continue;
+                if (strcmp(SecurityID, res.at(1).c_str())) continue;
                 fputs(line.c_str(), pf);
                 fputs("\n", pf);
             }
-        }
-
-        line.clear();
-        i++;
-        if (i % 500 == 0) {
-            printf("读取%s文件 总数%lld\n", isOrder ? "订单" : "成交", i);
+            line.clear();
+            if (i++ % 500 == 0) {
+                printf("写入%s文件 条数%lld\n", isOrder ? "订单" : "成交", i);
+            }
         }
 
         fclose(pf);
@@ -1092,7 +1103,7 @@ namespace test {
                     //卖方委托序号
                     std::string SellNo = res.at(10);
                     OnRtnTransaction(CalSecurityID, ExchangeID.c_str()[0], atoll(TradeVolume.c_str()), ExecType.c_str()[0],
-                                     atoll(BuyNo.c_str()), atoll(SellNo.c_str()), atof(TradePrice.c_str()), Time);
+                                     atoll(BuyNo.c_str()), atoll(SellNo.c_str()), atof(TradePrice.c_str()));
                 }
                 line.clear();
                 //ShowFixOrderBook(CalSecurityID);
@@ -1103,27 +1114,28 @@ namespace test {
     }
 
     void TestOrderBook() {
-        //std::string src = "I:/tanisme/workspace/gitcode/data";
-        //std::string dst = "I:/tanisme/workspace/gitcode";
+        std::string srcDataDir = "I:/tanisme/workspace/gitcode/data";
+        std::string dstDataDir = "I:/tanisme/workspace/gitcode/result";
 
-        ////std::thread parseFileTh_order(ParseAllSecurityFile, src, dst, true);
-        ////std::thread parseFileTh_trade(ParseAllSecurityFile, src, dst, false);
-        //std::thread parseFixFileTh_order(ParseFixSecurityFile, src, dst, true, Security);
-        //std::thread parseFixFileTh_trade(ParseFixSecurityFile, src, dst, false, Security);
-
-        ////parseFileTh_order.join();
-        ////parseFileTh_trade.join();
-        //parseFixFileTh_order.join();
-        //parseFixFileTh_trade.join();
-
-        //// 测试订单簿
-        //OrderQuot(dst, Security);
-        //TradeQuot(dst, Security);
         {
             char Security[] = "002151";
-            ParseSecurityFile(Security);
-            ShowOrderBook(Security);
+            //SplitSecurityFile(srcDataDir, dstDataDir, true, Security);
+            //SplitSecurityFile(srcDataDir, dstDataDir, false, Security);
+            //SplitSecurityFileOrderQuot(srcDataDir, Security);
+            //SplitSecurityFileTradeQuot(srcDataDir, Security);
         }
+
+        {
+            char Security[] = "002151";
+            BigFileOrderQuot(srcDataDir, Security);
+            BigFileTradeQuot(srcDataDir, Security);
+        }
+
+        //{
+        //    char Security[] = "002151";
+        //    ParseSecurityFile(Security);
+        //    ShowOrderBook(Security);
+        //}
 
     }
 
