@@ -16,7 +16,6 @@ if (WIN32)
     SET(BOOST_LIBRARYDIR ${BOOST_ROOT}/lib64-msvc-14.2)
     #include_directories(${BOOST_ROOT})
     #link_directories(${BOOST_ROOT}/lib64-msvc-14.2)
-    
 elseif(UNIX)
     message(STATUS "linux system")
     SET(BOOST_ROOT /usr/local/boost)
