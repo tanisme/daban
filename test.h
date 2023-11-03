@@ -29,7 +29,9 @@ namespace test {
 
     void OnRtnTransaction(TTORATstpSecurityIDType SecurityID, TTORATstpExchangeIDType ExchangeID,
                           TTORATstpLongVolumeType TradeVolume, TTORATstpExecTypeType ExecType,
-                          TTORATstpLongSequenceType BuyNo, TTORATstpLongSequenceType SellNo);
+                          TTORATstpLongSequenceType BuyNo, TTORATstpLongSequenceType SellNo, std::string Time);
+
+    void FixOrder(TTORATstpSecurityIDType securityID, TTORATstpPriceType TradePrice);
 
     void TestOrderBook();
 }

@@ -135,17 +135,15 @@ namespace PROMD {
                 AddUnFindTrade(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->BuyNo, TORA_TSTP_LSD_Buy);
             if (!ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell))
                 AddUnFindTrade(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell);
+            FixOrder(pTransaction->SecurityID, pTransaction->TradePrice);
         } else if (pTransaction->ExchangeID == TORA_TSTP_EXD_SZSE) {
             if (pTransaction->ExecType == TORA_TSTP_ECT_Fill) {
-                if (!ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->BuyNo, TORA_TSTP_LSD_Buy)) {
-                    //AddUnFindTrade(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->BuyNo, TORA_TSTP_LSD_Buy);
-                }
-                if (!ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell)) {
-                    //AddUnFindTrade(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell);
-                }
+                ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->BuyNo, TORA_TSTP_LSD_Buy);
+                ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell);
+                FixOrder(pTransaction->SecurityID, pTransaction->TradePrice);
             } else if (pTransaction->ExecType == TORA_TSTP_ECT_Cancel) {
-                if (pTransaction->BuyNo > 0) DeleteOrder(pTransaction->SecurityID, pTransaction->BuyNo);
-                if (pTransaction->SellNo > 0) DeleteOrder(pTransaction->SecurityID, pTransaction->SellNo);
+                if (pTransaction->BuyNo > 0) ModifyOrder(pTransaction->SecurityID, 0, pTransaction->BuyNo, TORA_TSTP_LSD_Buy);
+                if (pTransaction->SellNo > 0) ModifyOrder(pTransaction->SecurityID, 0, pTransaction->SellNo, TORA_TSTP_LSD_Sell);
             }
         }
         //PostPrice(pTransaction->SecurityID, pTransaction->TradePrice);
@@ -175,11 +173,10 @@ namespace PROMD {
                 InsertOrder(pOrderDetail->SecurityID, pOrderDetail->OrderNO, pOrderDetail->Price, pOrderDetail->Volume, pOrderDetail->Side);
                 HandleUnFindTrade(pOrderDetail->SecurityID, pOrderDetail->OrderNO, pOrderDetail->Side);
             } else if (pOrderDetail->OrderStatus == TORA_TSTP_LOS_Delete) {
-                DeleteOrder(pOrderDetail->SecurityID, pOrderDetail->OrderNO);
+                ModifyOrder(pOrderDetail->SecurityID, 0, pOrderDetail->OrderNO, pOrderDetail->Side);
             }
         } else if (pOrderDetail->ExchangeID == TORA_TSTP_EXD_SZSE) {
             InsertOrder(pOrderDetail->SecurityID, pOrderDetail->OrderNO, pOrderDetail->Price, pOrderDetail->Volume, pOrderDetail->Side);
-            //HandleUnFindTrade(pOrderDetail->SecurityID, pOrderDetail->OrderNO, pOrderDetail->Side);
         }
         //PostPrice(pOrderDetail->SecurityID, 0);
         //GenOrderBook(pOrderDetail->SecurityID);
@@ -270,9 +267,40 @@ namespace PROMD {
         }
     }
 
-    void MDL2Impl::DeleteOrder(TTORATstpSecurityIDType securityID, TTORATstpLongSequenceType OrderNO) {
-        ModifyOrder(securityID, 0, OrderNO, TORA_TSTP_LSD_Buy);
-        ModifyOrder(securityID, 0, OrderNO, TORA_TSTP_LSD_Sell);
+    void MDL2Impl::FixOrder(TTORATstpSecurityIDType securityID, TTORATstpPriceType TradePrice) {
+        if (TradePrice < 0.000001) return;
+
+        {
+            auto needReset = false;
+            auto iter = m_orderBuy.find(securityID);
+            if (iter != m_orderBuy.end()) {
+                for (auto i = 0; i < (int) iter->second.size(); i++) {
+                    if (iter->second.at(i).Price + 0.000001 < TradePrice) break;
+
+                    for (auto j = 0; j < (int) iter->second.at(i).Orders.size(); j++) {
+                        iter->second.at(i).Orders.at(j).Volume = 0;
+                        needReset = true;
+                    }
+                }
+            }
+            if (needReset) ResetOrder(securityID, TORA_TSTP_LSD_Buy);
+        }
+
+        {
+            auto needReset = false;
+            auto iter = m_orderSell.find(securityID);
+            if (iter != m_orderSell.end()) {
+                for (auto i = 0; i < (int) iter->second.size(); i++) {
+                    if (iter->second.at(i).Price > TradePrice + 0.000001) break;
+
+                    for (auto j = 0; j < (int) iter->second.at(i).Orders.size(); j++) {
+                        iter->second.at(i).Orders.at(j).Volume = 0;
+                        needReset = true;
+                    }
+                }
+            }
+            if (needReset) ResetOrder(securityID, TORA_TSTP_LSD_Sell);
+        }
     }
 
     bool MDL2Impl::ModifyOrder(TTORATstpSecurityIDType securityID, TTORATstpLongVolumeType TradeVolume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side) {

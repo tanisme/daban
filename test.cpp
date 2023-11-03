@@ -27,8 +27,8 @@ namespace test {
     };
 
     typedef std::unordered_map<std::string, std::vector<PriceOrders>> MapOrder;
-    MapOrder m_OrderBuy;
-    MapOrder m_OrderSell;
+    MapOrder m_orderBuy;
+    MapOrder m_orderSell;
     std::unordered_map<std::string, std::map<TTORATstpLongSequenceType, std::vector<Order>> > m_unFindBuyTrades;
     std::unordered_map<std::string, std::map<TTORATstpLongSequenceType, std::vector<Order>> > m_unFindSellTrades;
     std::unordered_map<std::string, std::string> m_orderBookStr;
@@ -98,8 +98,8 @@ namespace test {
         char buffer[4096] = {0};
         {
             int showCount = 5;
-            auto iter1 = m_OrderSell.find(securityID);
-            if (iter1 != m_OrderSell.end()) {
+            auto iter1 = m_orderSell.find(securityID);
+            if (iter1 != m_orderSell.end()) {
                 auto size = (int) iter1->second.size();
                 if (showCount < size) size = showCount;
                 for (auto i = size; i > 0; i--) {
@@ -117,8 +117,8 @@ namespace test {
 
         {
             int showCount = 5;
-            auto iter1 = m_OrderBuy.find(securityID);
-            if (iter1 != m_OrderBuy.end()) {
+            auto iter1 = m_orderBuy.find(securityID);
+            if (iter1 != m_orderBuy.end()) {
                 auto size = (int) iter1->second.size();
                 if (showCount < size) size = showCount;
                 for (auto i = 1; i <= size; i++) {
@@ -146,36 +146,73 @@ namespace test {
                 InsertOrder(SecurityID, OrderNO, Price, Volume, Side);
                 HandleUnFindTrade(SecurityID, OrderNO, Side);
             } else if (OrderStatus == TORA_TSTP_LOS_Delete) {
-                DeleteOrder(SecurityID, OrderNO);
+                ModifyOrder(SecurityID, 0, OrderNO, Side);
             }
         } else if (ExchangeID == TORA_TSTP_EXD_SZSE) {
             InsertOrder(SecurityID, OrderNO, Price, Volume, Side);
-            HandleUnFindTrade(SecurityID, OrderNO, Side);
         }
-        GenOrderBook(SecurityID);
     }
 
     void OnRtnTransaction(TTORATstpSecurityIDType SecurityID, TTORATstpExchangeIDType ExchangeID,
                           TTORATstpLongVolumeType TradeVolume, TTORATstpExecTypeType ExecType,
                           TTORATstpLongSequenceType BuyNo, TTORATstpLongSequenceType SellNo,
-                          TTORATstpPriceType TradePrice) {
+                          TTORATstpPriceType TradePrice, std::string Time) {
         if (ExchangeID == TORA_TSTP_EXD_SSE) {
             if (!ModifyOrder(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy))
                 AddUnFindTrade(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
             if (!ModifyOrder(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell))
                 AddUnFindTrade(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
+            //if (strncmp(Time.c_str(), "930", 3) >= 0) {
+            //    FixOrder(SecurityID, TradePrice);
+            //}
         } else if (ExchangeID == TORA_TSTP_EXD_SZSE) {
             if (ExecType == TORA_TSTP_ECT_Fill) {
-                if (!ModifyOrder(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy))
-                    AddUnFindTrade(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
-                if (!ModifyOrder(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell))
-                    AddUnFindTrade(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
+                ModifyOrder(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
+                ModifyOrder(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
+                //if (strncmp(Time.c_str(), "930", 3) >= 0) {
+                    FixOrder(SecurityID, TradePrice);
+                //}
             } else if (ExecType == TORA_TSTP_ECT_Cancel) {
-                if (BuyNo > 0) DeleteOrder(SecurityID, BuyNo);
-                if (SellNo > 0) DeleteOrder(SecurityID, SellNo);
+                if (BuyNo > 0) ModifyOrder(SecurityID, 0, BuyNo, TORA_TSTP_LSD_Buy);
+                if (SellNo > 0) ModifyOrder(SecurityID, 0, SellNo, TORA_TSTP_LSD_Sell);
             }
         }
-        GenOrderBook(SecurityID);
+    }
+
+    void FixOrder(TTORATstpSecurityIDType securityID, TTORATstpPriceType TradePrice) {
+        if (TradePrice < 0.000001) return;
+
+        {
+            auto needReset = false;
+            auto iter = m_orderBuy.find(securityID);
+            if (iter != m_orderBuy.end()) {
+                for (auto i = 0; i < (int) iter->second.size(); i++) {
+                    if (iter->second.at(i).Price + 0.000001 < TradePrice) break;
+
+                    for (auto j = 0; j < (int) iter->second.at(i).Orders.size(); j++) {
+                        iter->second.at(i).Orders.at(j).Volume = 0;
+                        needReset = true;
+                    }
+                }
+            }
+            if (needReset) ResetOrder(securityID, TORA_TSTP_LSD_Buy);
+        }
+
+        {
+            auto needReset = false;
+            auto iter = m_orderSell.find(securityID);
+            if (iter != m_orderSell.end()) {
+                for (auto i = 0; i < (int) iter->second.size(); i++) {
+                    if (iter->second.at(i).Price > TradePrice + 0.000001) break;
+
+                    for (auto j = 0; j < (int) iter->second.at(i).Orders.size(); j++) {
+                        iter->second.at(i).Orders.at(j).Volume = 0;
+                        needReset = true;
+                    }
+                }
+            }
+            if (needReset) ResetOrder(securityID, TORA_TSTP_LSD_Sell);
+        }
     }
 
     void InsertOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO,
@@ -188,7 +225,7 @@ namespace test {
         priceOrder.Orders.emplace_back(order);
         priceOrder.Price = Price;
 
-        MapOrder &mapOrder = Side == TORA_TSTP_LSD_Buy ? m_OrderBuy : m_OrderSell;
+        MapOrder &mapOrder = Side == TORA_TSTP_LSD_Buy ? m_orderBuy : m_orderSell;
         auto iter = mapOrder.find(SecurityID);
         if (iter == mapOrder.end()) {
             mapOrder[SecurityID] = std::vector<PriceOrders>();
@@ -234,7 +271,7 @@ namespace test {
 
     bool ModifyOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType TradeVolume,
                      TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side) {
-        MapOrder &mapOrder = Side == TORA_TSTP_LSD_Buy ? m_OrderBuy : m_OrderSell;
+        MapOrder &mapOrder = Side == TORA_TSTP_LSD_Buy ? m_orderBuy : m_orderSell;
         auto iter = mapOrder.find(SecurityID);
         if (iter != mapOrder.end()) {
             auto needReset = false;
@@ -259,7 +296,7 @@ namespace test {
     }
 
     void ResetOrder(TTORATstpSecurityIDType SecurityID, TTORATstpTradeBSFlagType Side) {
-        MapOrder &mapOrder = Side == TORA_TSTP_LSD_Buy ? m_OrderBuy : m_OrderSell;
+        MapOrder &mapOrder = Side == TORA_TSTP_LSD_Buy ? m_orderBuy : m_orderSell;
         auto iter = mapOrder.find(SecurityID);
         if (iter == mapOrder.end()) return;
 
@@ -299,16 +336,16 @@ namespace test {
     }
 
     void ShowOrderBook(TTORATstpSecurityIDType SecurityID) {
-        if (m_OrderBuy.empty() && m_OrderSell.empty()) return;
+        if (m_orderBuy.empty() && m_orderSell.empty()) return;
 
         printf("\n");
         printf("---------------------合约号 %s ---------------------\n", SecurityID);
         printf("档位\t价格\t\t委托\t\t总量\n");
 
         {
-            int showCount = 15;
-            auto iter1 = m_OrderSell.find(SecurityID);
-            if (iter1 != m_OrderSell.end()) {
+            int showCount = 5;
+            auto iter1 = m_orderSell.find(SecurityID);
+            if (iter1 != m_orderSell.end()) {
                 auto size = (int) iter1->second.size();
                 if (showCount < size) size = showCount;
                 for (auto i = size; i > 0; i--) {
@@ -323,9 +360,9 @@ namespace test {
         }
 
         {
-            int showCount = 15;
-            auto iter1 = m_OrderBuy.find(SecurityID);
-            if (iter1 != m_OrderBuy.end()) {
+            int showCount = 5;
+            auto iter1 = m_orderBuy.find(SecurityID);
+            if (iter1 != m_orderBuy.end()) {
                 auto size = (int) iter1->second.size();
                 if (showCount < size) size = showCount;
                 for (auto i = 1; i <= size; i++) {
@@ -651,8 +688,8 @@ namespace test {
                 //业务序号（只有上海行情有效）
                 std::string BizIndex = res.at(14);
 
-                OnRtnTransaction(CalSecurityID, ExchangeID.c_str()[0], atoll(TradeVolume.c_str()), ExecType.c_str()[0],
-                                 atoll(BuyNo.c_str()), atoll(SellNo.c_str()), atof(TradePrice.c_str()));
+                //OnRtnTransaction(CalSecurityID, ExchangeID.c_str()[0], atoll(TradeVolume.c_str()), ExecType.c_str()[0],
+                //                 atoll(BuyNo.c_str()), atoll(SellNo.c_str()), atof(TradePrice.c_str()));
             }
             i++;
         }
@@ -1020,6 +1057,7 @@ namespace test {
                 if (strcmp(SecurityID.c_str(), CalSecurityID) != 0) {
                     continue;
                 }
+                std::string Time = res.at(1);
                 //交易所代码
                 std::string ExchangeID = res.at(3);
 
@@ -1054,12 +1092,13 @@ namespace test {
                     //卖方委托序号
                     std::string SellNo = res.at(10);
                     OnRtnTransaction(CalSecurityID, ExchangeID.c_str()[0], atoll(TradeVolume.c_str()), ExecType.c_str()[0],
-                                     atoll(BuyNo.c_str()), atoll(SellNo.c_str()), atof(TradePrice.c_str()));
+                                     atoll(BuyNo.c_str()), atoll(SellNo.c_str()), atof(TradePrice.c_str()), Time);
                 }
                 line.clear();
                 //ShowFixOrderBook(CalSecurityID);
+                ++i;
+                if (i%5000 == 0) printf("已经处理 %lld 条数据\n", i);
             }
-            ++i;
         }
     }
 
@@ -1081,33 +1120,9 @@ namespace test {
         //OrderQuot(dst, Security);
         //TradeQuot(dst, Security);
         {
-            char Security[] = "300709";
+            char Security[] = "002151";
             ParseSecurityFile(Security);
-            ShowFixOrderBook(Security);
-        }
-
-        {
-            char Security[] = "300630";
-            ParseSecurityFile(Security);
-            ShowFixOrderBook(Security);
-        }
-
-        {
-            char Security[] = "603108";
-            ParseSecurityFile(Security);
-            ShowFixOrderBook(Security);
-        }
-
-        {
-            char Security[] = "600129";
-            ParseSecurityFile(Security);
-            ShowFixOrderBook(Security);
-        }
-
-        {
-            char Security[] = "688665";
-            ParseSecurityFile(Security);
-            ShowFixOrderBook(Security);
+            ShowOrderBook(Security);
         }
 
     }

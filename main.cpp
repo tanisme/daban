@@ -6,7 +6,11 @@
 #include "file_handler.hpp"
 #include <boost/program_options.hpp>
 
+#include "test.h"
+
 int main() {
+    test::TestOrderBook();
+    getchar();
     std::string cfgfile = "daban.ini";
     std::string dbfile = "database.db";
     std::string httpurl = "", cpucore = "";
