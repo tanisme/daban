@@ -628,12 +628,12 @@ namespace test {
                                  ExchangeID.c_str()[0],
                                  OrderStatus.c_str()[0]);
                 if (i++%1000 == 0) {
-                    printf("已处理大文件中 %s %lld 条订单\n", SecurityID, i);
-                    ShowOrderBook(SecurityID);
+                    //printf("已处理大文件中 %s %lld 条订单\n", SecurityID, i);
                 }
             }
         }
         printf("处理完成所有订单 共 %lld 条\n", i);
+        ShowOrderBook(SecurityID);
     }
 
     void BigFileTradeQuot(std::string &srcDataDir, TTORATstpSecurityIDType SecurityID) {
@@ -689,12 +689,13 @@ namespace test {
                 OnRtnTransaction(SecurityID, ExchangeID.c_str()[0], atoll(TradeVolume.c_str()), ExecType.c_str()[0],
                                  atoll(BuyNo.c_str()), atoll(SellNo.c_str()), atof(TradePrice.c_str()));
                 if (i++%1000 == 0) {
-                    printf("已处理大文件中 %s %lld 条成交\n", SecurityID, i);
-                    ShowOrderBook(SecurityID);
+                    //printf("已处理大文件中 %s %lld 条成交\n", SecurityID, i);
+                    //ShowOrderBook(SecurityID);
                 }
             }
         }
         printf("处理完成所有成交 共 %lld 条\n", i);
+        ShowOrderBook(SecurityID);
     }
 
     void SplitSecurityFileOrderQuot(std::string &dstDataDir, TTORATstpSecurityIDType SecurityID) {
@@ -752,12 +753,13 @@ namespace test {
                                  ExchangeID.c_str()[0],
                                  OrderStatus.c_str()[0]);
                 if (i++%1000 == 0) {
-                    printf("已处理大文件中 %s %lld 条订单\n", SecurityID, i);
+                    //printf("已处理大文件中 %s %lld 条订单\n", SecurityID, i);
                     ShowOrderBook(SecurityID);
                 }
             }
         }
         printf("处理完成所有订单 共 %lld 条\n", i);
+        ShowOrderBook(SecurityID);
     }
 
     void SplitSecurityFileTradeQuot(std::string &dstDataDir, TTORATstpSecurityIDType SecurityID) {
@@ -813,12 +815,13 @@ namespace test {
                 OnRtnTransaction(SecurityID, ExchangeID.c_str()[0], atoll(TradeVolume.c_str()), ExecType.c_str()[0],
                                  atoll(BuyNo.c_str()), atoll(SellNo.c_str()), atof(TradePrice.c_str()));
                 if (i++%1000 == 0) {
-                    printf("已处理大文件中 %s %lld 条成交\n", SecurityID, i);
+                    //printf("已处理大文件中 %s %lld 条成交\n", SecurityID, i);
                     ShowOrderBook(SecurityID);
                 }
             }
         }
         printf("处理完成所有成交 共 %lld 条\n", i);
+        ShowOrderBook(SecurityID);
     }
 
     void ParseFixSecurityOrder(std::string srcDataDir, std::string dstDataDir, bool isOrder,
@@ -1129,14 +1132,14 @@ namespace test {
             char Security[] = "002151";
             //SplitSecurityFile(srcDataDir, dstDataDir, true, Security);
             //SplitSecurityFile(srcDataDir, dstDataDir, false, Security);
-            SplitSecurityFileOrderQuot(dstDataDir, Security);
-            SplitSecurityFileTradeQuot(dstDataDir, Security);
+            //SplitSecurityFileOrderQuot(dstDataDir, Security);
+            //SplitSecurityFileTradeQuot(dstDataDir, Security);
         }
 
         {
             char Security[] = "002151";
-            //BigFileOrderQuot(srcDataDir, Security);
-            //BigFileTradeQuot(srcDataDir, Security);
+            BigFileOrderQuot(srcDataDir, Security);
+            BigFileTradeQuot(srcDataDir, Security);
         }
 
         //{
