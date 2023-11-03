@@ -11,17 +11,20 @@
 int main() {
     test::TestOrderBook();
     getchar();
+    if (true) return 0;
+
     std::string cfgfile = "daban.ini";
     std::string dbfile = "database.db";
     std::string httpurl = "", cpucore = "";
     std::string shmdaddr = "", szmdaddr = "", mdaddr = "", mdinterface = "";
     std::string tdaddr = "", tdaccount = "", tdpassword = "";
     int shmdnewversion = 0;
-    bool useTcp = true, isTest = true;
+    bool useTcp = true, isTest = true, strategyopen = false;
     boost::program_options::options_description cfgdesc("Config file options");
     cfgdesc.add_options()
             ("daban.istest", boost::program_options::value<bool>(&isTest), "daban.istest")
             ("daban.usetcp", boost::program_options::value<bool>(&useTcp), "daban.usetcp")
+            ("daban.strategyopen", boost::program_options::value<bool>(&strategyopen), "daban.strategyopen")
             ("daban.dbfile", boost::program_options::value<std::string>(&dbfile), "daban.dbfile")
             ("daban.cpucore", boost::program_options::value<std::string>(&cpucore), "daban.cpucore")
             ("daban.httpurl", boost::program_options::value<std::string>(&httpurl), "daban.httpurl")
@@ -60,6 +63,7 @@ int main() {
     app.m_mdAddr = mdaddr;
     app.m_mdInterface = mdinterface;
     app.m_cpucore = cpucore;
+    app.m_strategyOpen = strategyopen;
     app.Init();
 
     //if (httpurl.length() > 0) {

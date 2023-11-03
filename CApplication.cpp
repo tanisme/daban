@@ -51,8 +51,7 @@ void CApplication::Start() {
     m_timer.async_wait(boost::bind(&CApplication::OnTime, this, boost::asio::placeholders::error));
 }
 
-void CApplication::OnTime(const boost::system::error_code& error)
-{
+void CApplication::OnTime(const boost::system::error_code& error) {
     if (error) {
         if (error == boost::asio::error::operation_aborted) {
             return;
@@ -62,11 +61,9 @@ void CApplication::OnTime(const boost::system::error_code& error)
     for (auto& iter : m_subSecurityIDs) {
         if (iter.second.Status == 1) continue;
         if (!m_isTest || iter.second.ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
-            //if (m_shMD) m_shMD->ShowFixOrderBook((char*)iter.first.c_str());
-            if (m_shMD) m_shMD->GenOrderBook((char*)iter.first.c_str());
+            if (m_shMD) m_shMD->ShowOrderBook((char*)iter.first.c_str());
         } else if (iter.second.ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
-            //if (m_szMD) m_szMD->ShowFixOrderBook((char*)iter.first.c_str());
-            if (m_szMD) m_szMD->GenOrderBook((char*)iter.first.c_str());
+            if (m_szMD) m_szMD->ShowOrderBook((char*)iter.first.c_str());
         }
     }
     m_timer.expires_from_now(boost::posix_time::milliseconds(60000));
@@ -74,7 +71,6 @@ void CApplication::OnTime(const boost::system::error_code& error)
 }
 
 void CApplication::OnHttpHandle(int ServiceNo) {
-    printf("Onfilehandle\n");
 }
 
 /***************************************MD***************************************/
@@ -102,8 +98,7 @@ void CApplication::MDOnRspUserLogin(PROMD::TTORATstpExchangeIDType exchangeID) {
 }
 
 void CApplication::MDPostPrice(stPostPrice& postPrice) {
-    if (true) return;
-    if (!m_TD->IsLogined()) return;
+    if (!m_TD || !m_TD->IsLogined() || !m_strategyOpen) return;
     //printf("MDPostPrice %s %lld %.2f|%.2f|%.2f %lld\n", postPrice.SecurityID, postPrice.AskVolume1, postPrice.AskPrice1, postPrice.TradePrice, postPrice.BidPrice1, postPrice.BidVolume1);
 
     auto iterSecurity = m_securityIDs.find(postPrice.SecurityID);
