@@ -144,7 +144,7 @@ namespace test {
         if (ExchangeID == TORA_TSTP_EXD_SSE) {
             if (OrderStatus == TORA_TSTP_LOS_Add) {
                 InsertOrder(SecurityID, OrderNO, Price, Volume, Side);
-                HandleUnFindTrade(SecurityID, OrderNO, Side);
+                //HandleUnFindTrade(SecurityID, OrderNO, Side);
             } else if (OrderStatus == TORA_TSTP_LOS_Delete) {
                 ModifyOrder(SecurityID, 0, OrderNO, Side);
             }
@@ -158,10 +158,12 @@ namespace test {
                           TTORATstpLongSequenceType BuyNo, TTORATstpLongSequenceType SellNo,
                           TTORATstpPriceType TradePrice) {
         if (ExchangeID == TORA_TSTP_EXD_SSE) {
-            if (!ModifyOrder(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy))
+            if (!ModifyOrder(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy)) {
                 AddUnFindTrade(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
-            if (!ModifyOrder(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell))
+            }
+            if (!ModifyOrder(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell)) {
                 AddUnFindTrade(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
+            }
         } else if (ExchangeID == TORA_TSTP_EXD_SZSE) {
             if (ExecType == TORA_TSTP_ECT_Fill) {
                 ModifyOrder(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
@@ -695,11 +697,11 @@ namespace test {
         printf("处理完成所有成交 共 %lld 条\n", i);
     }
 
-    void SplitSecurityFileOrderQuot(std::string &dir, TTORATstpSecurityIDType CalSecurityID) {
-        std::string file = dir + "/order/" + std::string(CalSecurityID) + ".txt";
+    void SplitSecurityFileOrderQuot(std::string &dstDataDir, TTORATstpSecurityIDType SecurityID) {
+        std::string file = dstDataDir +"/"+ SecurityID + "_r.txt";
         std::ifstream ifs(file, std::ios::in);
         if (!ifs.is_open()) {
-            printf("order txt open failed!!! path%s\n", file.c_str());
+            printf("Order open failed!!! path%s\n", file.c_str());
             return;
         }
 
@@ -707,7 +709,6 @@ namespace test {
         std::string line;
         std::vector<std::string> res;
         while (std::getline(ifs, line)) {
-            //std::this_thread::sleep_for(std::chrono::milliseconds(100));
             res.clear();
             Stringsplit(line, ',', res);
 
@@ -717,7 +718,8 @@ namespace test {
                 //交易所代码
                 std::string ExchangeID = res.at(0);
                 //证券代码
-                std::string SecurityID = res.at(1);
+                //std::string SecurityID = res.at(1);
+                if (strcmp(SecurityID, res.at(1).c_str())) continue;
                 //时间戳
                 std::string OrderTime = res.at(2);
                 //委托价格
@@ -745,21 +747,24 @@ namespace test {
                 //业务序号（只有上海行情有效）
                 std::string BizIndex = res.at(14);
 
-                OnRtnOrderDetail(CalSecurityID, Side.c_str()[0], atoll(OrderNO.c_str()), atof(Price.c_str()),
+                OnRtnOrderDetail(SecurityID, Side.c_str()[0], atoll(OrderNO.c_str()), atof(Price.c_str()),
                                  atoll(Volume.c_str()),
                                  ExchangeID.c_str()[0],
                                  OrderStatus.c_str()[0]);
+                if (i++%1000 == 0) {
+                    printf("已处理大文件中 %s %lld 条订单\n", SecurityID, i);
+                    ShowOrderBook(SecurityID);
+                }
             }
-            i++;
         }
         printf("处理完成所有订单 共 %lld 条\n", i);
     }
 
-    void SplitSecurityFileTradeQuot(std::string &dir, TTORATstpSecurityIDType CalSecurityID) {
-        std::string file = dir + "/trade/" + std::string(CalSecurityID) + ".txt";
+    void SplitSecurityFileTradeQuot(std::string &dstDataDir, TTORATstpSecurityIDType SecurityID) {
+        std::string file = dstDataDir +"/"+ SecurityID + "_t.txt";
         std::ifstream ifs(file, std::ios::in);
         if (!ifs.is_open()) {
-            printf("trade txt open failed!!! path%s\n", file.c_str());
+            printf("Transaction.csv open failed!!! path%s\n", file.c_str());
             return;
         }
 
@@ -767,7 +772,6 @@ namespace test {
         std::string line;
         std::vector<std::string> res;
         while (std::getline(ifs, line)) {
-            //std::this_thread::sleep_for(std::chrono::milliseconds(100));
             res.clear();
             Stringsplit(line, ',', res);
 
@@ -777,7 +781,8 @@ namespace test {
                 //交易所代码
                 std::string ExchangeID = res.at(0);
                 //证券代码
-                std::string SecurityID = res.at(1);
+                //std::string SecurityID = res.at(1);
+                if (strcmp(SecurityID, res.at(1).c_str())) continue;
                 //时间戳
                 std::string TradeTime = res.at(2);
                 //成交价格
@@ -805,10 +810,13 @@ namespace test {
                 //业务序号（只有上海行情有效）
                 std::string BizIndex = res.at(14);
 
-                //OnRtnTransaction(CalSecurityID, ExchangeID.c_str()[0], atoll(TradeVolume.c_str()), ExecType.c_str()[0],
-                //                 atoll(BuyNo.c_str()), atoll(SellNo.c_str()), atof(TradePrice.c_str()));
+                OnRtnTransaction(SecurityID, ExchangeID.c_str()[0], atoll(TradeVolume.c_str()), ExecType.c_str()[0],
+                                 atoll(BuyNo.c_str()), atoll(SellNo.c_str()), atof(TradePrice.c_str()));
+                if (i++%1000 == 0) {
+                    printf("已处理大文件中 %s %lld 条成交\n", SecurityID, i);
+                    ShowOrderBook(SecurityID);
+                }
             }
-            i++;
         }
         printf("处理完成所有成交 共 %lld 条\n", i);
     }
@@ -1121,14 +1129,14 @@ namespace test {
             char Security[] = "002151";
             //SplitSecurityFile(srcDataDir, dstDataDir, true, Security);
             //SplitSecurityFile(srcDataDir, dstDataDir, false, Security);
-            //SplitSecurityFileOrderQuot(srcDataDir, Security);
-            //SplitSecurityFileTradeQuot(srcDataDir, Security);
+            SplitSecurityFileOrderQuot(dstDataDir, Security);
+            SplitSecurityFileTradeQuot(dstDataDir, Security);
         }
 
         {
             char Security[] = "002151";
-            BigFileOrderQuot(srcDataDir, Security);
-            BigFileTradeQuot(srcDataDir, Security);
+            //BigFileOrderQuot(srcDataDir, Security);
+            //BigFileTradeQuot(srcDataDir, Security);
         }
 
         //{
