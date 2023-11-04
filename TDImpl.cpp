@@ -14,6 +14,13 @@ namespace PROTD {
             m_pApi->Join();
             m_pApi->Release();
         }
+
+        for (auto iter = m_marketSecurity.begin(); iter != m_marketSecurity.end(); ++iter) {
+            if (iter->second) {
+                free(iter->second);
+            }
+        }
+        m_marketSecurity.clear();
     }
 
     bool TDImpl::Start() {
@@ -43,7 +50,7 @@ namespace PROTD {
 
     void TDImpl::OnFrontDisconnected(int nReason) {
         printf("TDImpl::OnFrontDisconnected!!! Reason:%d\n", nReason);
-        m_isLogined = false;
+        m_isInited = false;
     }
 
     void TDImpl::OnRspUserLogin(CTORATstpRspUserLoginField *pRspUserLoginField, CTORATstpRspInfoField *pRspInfo, int nRequestID) {
@@ -53,8 +60,6 @@ namespace PROTD {
             return;
         }
 
-        m_isLogined = true;
-        m_pApp->m_ioc.post(boost::bind(&CApplication::TDOnRspUserLogin, m_pApp, *pRspUserLoginField));
         memcpy(&m_loginField, pRspUserLoginField, sizeof(m_loginField));
 
         CTORATstpQryShareholderAccountField Req = {0};
@@ -76,7 +81,22 @@ namespace PROTD {
 
     void TDImpl::OnRspQrySecurity(CTORATstpSecurityField *pSecurity, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
         if (pSecurity) {
-            m_pApp->m_ioc.post(boost::bind(&CApplication::TDOnRspQrySecurity, m_pApp, *pSecurity));
+            auto iter = m_marketSecurity.find(pSecurity->SecurityID);
+            if (iter == m_marketSecurity.end()) {
+                auto security = (stSecurity_t*)malloc(sizeof(stSecurity_t));
+                if (security) {
+                    strcpy(security->SecurityID, pSecurity->SecurityID);
+                    strcpy(security->SecurityName, pSecurity->SecurityName);
+                    security->ExchangeID = pSecurity->ExchangeID;
+                    security->UpperLimitPrice = pSecurity->UpperLimitPrice;
+                    security->LowerLimitPrice = pSecurity->LowerLimitPrice;
+                    m_marketSecurity[security->SecurityID] = security;
+
+                    if (m_pApp->m_watchSecurity.find(security->SecurityID) != m_pApp->m_watchSecurity.end()) {
+                        m_pApp->m_watchSecurity[security->SecurityID].ExchangeID = security->ExchangeID;
+                    }
+                }
+            }
         }
 
         if (bIsLast) {
@@ -88,7 +108,6 @@ namespace PROTD {
 
     void TDImpl::OnRspQryOrder(CTORATstpOrderField *pOrder, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
         if (pOrder) {
-            m_pApp->m_ioc.post(boost::bind(&CApplication::TDOnRspQryOrder, m_pApp, *pOrder));
         }
 
         if (bIsLast) {
@@ -100,7 +119,6 @@ namespace PROTD {
 
     void TDImpl::OnRspQryTrade(CTORATstpTradeField *pTrade, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
         if (pTrade) {
-            m_pApp->m_ioc.post(boost::bind(&CApplication::TDOnRspQryTrade, m_pApp, *pTrade));
         }
 
         if (bIsLast) {
@@ -112,7 +130,6 @@ namespace PROTD {
 
     void TDImpl::OnRspQryPosition(CTORATstpPositionField *pPosition, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
         if (pPosition) {
-            m_pApp->m_ioc.post(boost::bind(&CApplication::TDOnRspQryPosition, m_pApp, *pPosition));
         }
 
         if (bIsLast) {
@@ -124,10 +141,11 @@ namespace PROTD {
 
     void TDImpl::OnRspQryTradingAccount(CTORATstpTradingAccountField *pTradingAccount, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
         if (pTradingAccount) {
-            m_pApp->m_ioc.post(boost::bind(&CApplication::TDOnRspQryTradingAccount, m_pApp, *pTradingAccount));
         }
 
         if (bIsLast) {
+            m_isInited = true;
+            m_pApp->m_ioc.post(boost::bind(&CApplication::TDOnInited, m_pApp));
             printf("TDImpl::OnRspQryTradingAccount Success!!!\n");
         }
     }

@@ -18,7 +18,7 @@ namespace PROMD {
         void ShowOrderBook(TTORATstpSecurityIDType SecurityID);
         static const char *GetExchangeName(TTORATstpExchangeIDType ExchangeID);
 
-        bool IsLogined() const { return m_isLogined; }
+        bool IsInited() const { return m_isInited; }
         CTORATstpLev2MdApi *GetApi() const { return m_pApi; }
 
     public:
@@ -50,15 +50,14 @@ namespace PROMD {
 
     private:
         int m_reqID = 1;
-        bool m_isLogined = false;
+        bool m_isInited = false;
         CTORATstpLev2MdApi *m_pApi = nullptr;
         CApplication *m_pApp = nullptr;
         TTORATstpExchangeIDType m_exchangeID;
         MapOrder m_orderBuy;
         MapOrder m_orderSell;
-        std::unordered_map<std::string, stPostPrice> m_postMDL2;
-        std::unordered_map<std::string, std::map<TTORATstpLongSequenceType, std::vector<Order>> > m_unFindBuyTrades;
-        std::unordered_map<std::string, std::map<TTORATstpLongSequenceType, std::vector<Order>> > m_unFindSellTrades;
+        std::unordered_map<std::string, std::unordered_map<TTORATstpLongSequenceType, std::vector<Order>> > m_unFindBuyTrades;
+        std::unordered_map<std::string, std::unordered_map<TTORATstpLongSequenceType, std::vector<Order>> > m_unFindSellTrades;
     };
 
 }

@@ -1,8 +1,5 @@
 ﻿#include "MDL2Impl.h"
 #include "CApplication.h"
-#include <boost/bind.hpp>
-
-#include <sstream>
 
 namespace PROMD {
 
@@ -34,7 +31,7 @@ namespace PROMD {
             m_pApi->RegisterSpi(this);
             m_pApi->RegisterMulticast((char *) m_pApp->m_mdAddr.c_str(), (char*)m_pApp->m_mdInterface.c_str(), nullptr);
         }
-        printf("MD Start Bind cpucore %s\n", m_pApp->m_cpucore.c_str());
+        printf("MD Start Bind cpucore %s %s %c\n", m_pApp->m_cpucore.c_str(), isTest?"tcp":"udp", m_exchangeID);
         m_pApi->Init(m_pApp->m_cpucore.c_str());
         return true;
     }
@@ -42,26 +39,19 @@ namespace PROMD {
     int MDL2Impl::ReqMarketData(TTORATstpSecurityIDType SecurityID, TTORATstpExchangeIDType ExchangeID, int type, bool isSub) {
         char *security_arr[1];
         security_arr[0] = SecurityID;
-
         switch (type) {
             case 1:
                 if (isSub) return m_pApi->SubscribeMarketData(security_arr, 1, ExchangeID);
                 return m_pApi->UnSubscribeMarketData(security_arr, 1, ExchangeID);
-                break;
             case 2:
                 if (isSub) return m_pApi->SubscribeTransaction(security_arr, 1, ExchangeID);
                 return m_pApi->UnSubscribeTransaction(security_arr, 1, ExchangeID);
-                break;
             case 3:
                 if (isSub) return m_pApi->SubscribeOrderDetail(security_arr, 1, ExchangeID);
                 return m_pApi->UnSubscribeOrderDetail(security_arr, 1, ExchangeID);
-                break;
             case 4:
                 if (isSub) return m_pApi->SubscribeNGTSTick(security_arr, 1, ExchangeID);
                 return m_pApi->UnSubscribeNGTSTick(security_arr, 1, ExchangeID);
-                break;
-            default:
-                break;
         }
         return -1;
     }
@@ -69,50 +59,41 @@ namespace PROMD {
     void MDL2Impl::ShowOrderBook(TTORATstpSecurityIDType SecurityID) {
         if (m_orderBuy.empty() && m_orderSell.empty()) return;
 
-        auto t = time(nullptr);
-        auto* now = localtime(&t);
-        char time[32] = {0};
-        sprintf(time, "%04d-%02d-%02d %02d:%02d:%02d", now->tm_year+1900, now->tm_mon+1,
-                now->tm_mday, now->tm_hour, now->tm_min, now->tm_sec);
-
         std::stringstream stream;
         stream << "\n";
-        stream << "--------- " << SecurityID << " " << time << "---------\n";
+        stream << "--------- " << SecurityID << " " << GetTimeStr() << "---------\n";
 
-        char buffer[4096] = {0};
+        char buffer[512] = {0};
+        int showPankouCount = 5;
         {
-            int showCount = 5;
-            auto iter1 = m_orderSell.find(SecurityID);
-            if (iter1 != m_orderSell.end()) {
-                auto size = (int) iter1->second.size();
-                if (showCount < size) size = showCount;
+            auto iter = m_orderSell.find(SecurityID);
+            if (iter != m_orderSell.end()) {
+                auto size = (int) iter->second.size();
+                if (showPankouCount < size) size = showPankouCount;
                 for (auto i = size; i > 0; i--) {
                     memset(buffer, 0, sizeof(buffer));
-                    long long int totalVolume = 0;
-                    for (auto iter2: iter1->second.at(i - 1).Orders) {
-                        totalVolume += iter2.Volume;
+                    TTORATstpLongVolumeType totalVolume = 0;
+                    for (auto iter1: iter->second.at(i - 1).Orders) {
+                        totalVolume += iter1.Volume;
                     }
-                    sprintf(buffer, "S%d\t%.3f\t\t%d\t\t%lld\n", i, iter1->second.at(i - 1).Price,
-                            (int) iter1->second.at(i - 1).Orders.size(), totalVolume);
+                    sprintf(buffer, "S%d\t%.3f\t\t%d\t\t%lld\n", i, iter->second.at(i - 1).Price,
+                            (int) iter->second.at(i - 1).Orders.size(), totalVolume);
                     stream << buffer;
                 }
             }
         }
 
         {
-            int showCount = 5;
-            auto iter1 = m_orderBuy.find(SecurityID);
-            if (iter1 != m_orderBuy.end()) {
-                auto size = (int) iter1->second.size();
-                if (showCount < size) size = showCount;
+            auto iter = m_orderBuy.find(SecurityID);
+            if (iter != m_orderBuy.end()) {
+                auto size = (int) iter->second.size();
+                if (showPankouCount < size) size = showPankouCount;
                 for (auto i = 1; i <= size; i++) {
                     memset(buffer, 0, sizeof(buffer));
-                    long long int totalVolume = 0;
-                    for (auto iter2: iter1->second.at(i - 1).Orders) {
-                        totalVolume += iter2.Volume;
-                    }
-                    sprintf(buffer, "B%d\t%.3f\t\t%d\t\t%lld\n", i, iter1->second.at(i - 1).Price,
-                            (int) iter1->second.at(i - 1).Orders.size(), totalVolume);
+                    TTORATstpLongVolumeType totalVolume = 0;
+                    for (auto iter1: iter->second.at(i - 1).Orders) totalVolume += iter1.Volume;
+                    sprintf(buffer, "B%d\t%.3f\t\t%d\t\t%lld\n", i, iter->second.at(i - 1).Price,
+                            (int) iter->second.at(i - 1).Orders.size(), totalVolume);
                     stream << buffer;
                 }
             }
@@ -145,7 +126,7 @@ namespace PROMD {
 
     void MDL2Impl::OnFrontDisconnected(int nReason) {
         printf("%s MD::OnFrontDisconnected!!! Reason:%d\n", GetExchangeName(m_exchangeID), nReason);
-        m_isLogined = false;
+        m_isInited = false;
     }
 
     void MDL2Impl::OnRspUserLogin(CTORATstpRspUserLoginField *pRspUserLogin, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
@@ -154,8 +135,8 @@ namespace PROMD {
             printf("%s MD::OnRspUserLogin Failed!!! ErrMsg:%s\n", GetExchangeName(m_exchangeID), pRspInfo->ErrorMsg);
             return;
         }
-        m_isLogined = true;
-        m_pApp->m_ioc.post(boost::bind(&CApplication::MDOnRspUserLogin, m_pApp, m_exchangeID));
+        m_isInited = true;
+        m_pApp->m_ioc.post(boost::bind(&CApplication::MDOnInited, m_pApp, m_exchangeID));
     }
 
     void MDL2Impl::OnRspSubMarketData(CTORATstpSpecificSecurityField *pSpecificSecurity, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
@@ -224,11 +205,11 @@ namespace PROMD {
 
     void MDL2Impl::OnRtnMarketData(CTORATstpLev2MarketDataField *pDepthMarketData, const int FirstLevelBuyNum, const int FirstLevelBuyOrderVolumes[], const int FirstLevelSellNum, const int FirstLevelSellOrderVolumes[]) {
         if (!pDepthMarketData) return;
-        printf("%s MD::OnRtnMarketData %s [%.3f %.3f %.3f %.3f %.3f] [%.3f %.3f %.3f %c]\n",
-               PROMD::MDL2Impl::GetExchangeName(pDepthMarketData->ExchangeID),
-               pDepthMarketData->SecurityID, pDepthMarketData->LastPrice, pDepthMarketData->OpenPrice,
-               pDepthMarketData->HighestPrice, pDepthMarketData->LowestPrice, pDepthMarketData->ClosePrice,
-               pDepthMarketData->UpperLimitPrice, pDepthMarketData->LowerLimitPrice, pDepthMarketData->PreClosePrice, pDepthMarketData->MDSecurityStat);
+        //printf("%s MD::OnRtnMarketData %s [%.3f %.3f %.3f %.3f %.3f] [%.3f %.3f %.3f %c]\n",
+        //       PROMD::MDL2Impl::GetExchangeName(pDepthMarketData->ExchangeID),
+        //       pDepthMarketData->SecurityID, pDepthMarketData->LastPrice, pDepthMarketData->OpenPrice,
+        //       pDepthMarketData->HighestPrice, pDepthMarketData->LowestPrice, pDepthMarketData->ClosePrice,
+        //       pDepthMarketData->UpperLimitPrice, pDepthMarketData->LowerLimitPrice, pDepthMarketData->PreClosePrice, pDepthMarketData->MDSecurityStat);
     }
 
     /************************************HandleOrderBook***************************************/
@@ -252,12 +233,8 @@ namespace PROMD {
         if (!pTransaction) return;
 
         if (pTransaction->ExchangeID == TORA_TSTP_EXD_SSE) {
-            if (!ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->BuyNo, TORA_TSTP_LSD_Buy)) {
-                //AddUnFindTrade(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
-            }
-            if (!ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell)) {
-                //AddUnFindTrade(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
-            }
+            ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->BuyNo, TORA_TSTP_LSD_Buy);
+            ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell);
         } else if (pTransaction->ExchangeID == TORA_TSTP_EXD_SZSE) {
             if (pTransaction->ExecType == TORA_TSTP_ECT_Fill) {
                 ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->BuyNo, TORA_TSTP_LSD_Buy);
@@ -438,9 +415,9 @@ namespace PROMD {
         order.Volume = tradeVolume;
         order.OrderNo = OrderNo;
 
-        std::unordered_map<std::string, std::map<TTORATstpLongSequenceType, std::vector<Order>> >& unFindTrades = side==TORA_TSTP_LSD_Buy?m_unFindBuyTrades:m_unFindSellTrades;
+        auto& unFindTrades = side==TORA_TSTP_LSD_Buy?m_unFindBuyTrades:m_unFindSellTrades;
         if (unFindTrades.find(SecurityID) == unFindTrades.end()) {
-            unFindTrades[SecurityID] = std::map<TTORATstpLongSequenceType, std::vector<Order>>();
+            unFindTrades[SecurityID] = std::unordered_map<TTORATstpLongSequenceType, std::vector<Order>>();
         }
         if (unFindTrades[SecurityID].find(OrderNo) == unFindTrades[SecurityID].end()) {
             unFindTrades[SecurityID][OrderNo] = std::vector<Order>();
@@ -449,7 +426,7 @@ namespace PROMD {
     }
 
     void MDL2Impl::HandleUnFindTrade(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side) {
-        std::unordered_map<std::string, std::map<TTORATstpLongSequenceType, std::vector<Order>> >& unFindTrades = side==TORA_TSTP_LSD_Buy?m_unFindBuyTrades:m_unFindSellTrades;
+        auto& unFindTrades = side==TORA_TSTP_LSD_Buy?m_unFindBuyTrades:m_unFindSellTrades;
         auto iter = unFindTrades.find(SecurityID);
         if (iter == unFindTrades.end() || iter->second.empty()) return;
         auto iter1 = iter->second.find(OrderNo);
@@ -471,6 +448,8 @@ namespace PROMD {
     }
 
     void MDL2Impl::PostPrice(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType tradePrice) {
+        if (!m_pApp->m_strategyOpen) return;
+
         TTORATstpPriceType BidPrice1 = 0.0;
         TTORATstpLongVolumeType BidVolume1 = 0;
         TTORATstpPriceType AskPrice1 = 0.0;
@@ -503,27 +482,14 @@ namespace PROMD {
             }
         }
 
-        auto iter = m_postMDL2.find(SecurityID);
-        if (iter == m_postMDL2.end()) {
-            stPostPrice p = {0};
-            strcpy(p.SecurityID, SecurityID);
-            p.BidVolume1 = BidVolume1;
-            p.BidPrice1 = BidPrice1;
-            p.AskPrice1 = AskPrice1;
-            p.AskVolume1 = AskVolume1;
-            p.TradePrice = TradePrice;
-            m_postMDL2[SecurityID] = p;
-        } else {
-            iter->second.BidVolume1 = BidVolume1;
-            iter->second.BidPrice1 = BidPrice1;
-            iter->second.AskPrice1 = AskPrice1;
-            iter->second.TradePrice = TradePrice;
-            iter->second.AskVolume1 = AskVolume1;
-        }
-
-        m_pApp->m_ioc.post(boost::bind(&CApplication::MDPostPrice, m_pApp, m_postMDL2[SecurityID]));
-        //printf("MDPostPrice %s %lld %.3f %.3f %lld\n", SecurityID, AskVolume1, AskPrice1, BidPrice1, BidVolume1);
+        stPostPrice p = {0};
+        strcpy(p.SecurityID, SecurityID);
+        p.BidVolume1 = BidVolume1;
+        p.BidPrice1 = BidPrice1;
+        p.AskPrice1 = AskPrice1;
+        p.AskVolume1 = AskVolume1;
+        p.TradePrice = TradePrice;
+        m_pApp->m_ioc.post(boost::bind(&CApplication::MDPostPrice, m_pApp, p));
     }
-
 
 }

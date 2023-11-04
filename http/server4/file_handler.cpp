@@ -66,16 +66,7 @@ namespace http {
             int ServiceNo =reqvalue.isMember("ServiceNo")?reqvalue["ServiceNo"].asInt():0;
             printf("ServiceNo %d\n", ServiceNo);
 
-            if (ServiceNo == SERVICE_QRYSUBSECURITYREQ) {
-                for (auto &iter: m_app->m_subSecurityIDs) {
-                    item["securityid"] = iter.second.SecurityID;
-                    //item["SecurityName"] = iter.second.SecurityName;
-                    item["exchangeid"] = iter.second.ExchangeID;
-                    item["status"] = iter.second.Status;
-                    tmpvalue.append(item);
-                }
-                rspvalue["security"] = tmpvalue;
-            } else if (ServiceNo == SERVICE_ADDSTRATEGYREQ) {
+            if (ServiceNo == SERVICE_ADDSTRATEGYREQ) {
                 if (!reqvalue.isMember("securityid") || !reqvalue.isMember("type")) return;
                 stStrategy strategy = {0};
                 strcpy(strategy.SecurityID, reqvalue["securityid"].asString().c_str());

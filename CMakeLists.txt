@@ -45,6 +45,7 @@ add_executable(daban
         http/server4/request_parser.cpp
         http/server4/server.cpp
         test.cpp
+        defines.cpp
 )
 
 if (WIN32)

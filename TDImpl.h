@@ -4,16 +4,17 @@
 #include "defines.h"
 
 class CApplication;
-namespace PROTD {
 
+namespace PROTD {
     using namespace TORASTOCKAPI;
+
     class TDImpl : public CTORATstpTraderSpi {
     public:
         explicit TDImpl(CApplication *pApp);
         ~TDImpl();
 
         bool Start();
-        bool IsLogined() const { return m_isLogined; }
+        bool IsInited() const { return m_isInited; }
         CTORATstpTraderApi *GetApi() const { return m_pApi; }
 
         int OrderInsert(TTORATstpSecurityIDType SecurityID, TTORATstpExchangeIDType ExchangeID, TTORATstpDirectionType Direction, TTORATstpVolumeType VolumeTotalOriginal, TTORATstpPriceType LimitPric);
@@ -36,9 +37,12 @@ namespace PROTD {
         void OnRspOrderAction(CTORATstpInputOrderActionField *pInputOrderActionField, CTORATstpRspInfoField *pRspInfoField, int nRequestID) override;
         void OnErrRtnOrderAction(CTORATstpInputOrderActionField *pInputOrderActionField, CTORATstpRspInfoField *pRspInfoField, int nRequestID) override;
 
+    public:
+        std::unordered_map<std::string, stSecurity_t*> m_marketSecurity;
+
     private:
         int m_reqID = 1;
-        bool m_isLogined = false;
+        bool m_isInited = false;
         CTORATstpTraderApi *m_pApi = nullptr;
         CApplication *m_pApp = nullptr;
         CTORATstpRspUserLoginField m_loginField = {0};

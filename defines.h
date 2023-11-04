@@ -1,20 +1,17 @@
-//
-// Created by tanisme on 2023/10/28.
-//
-
 #ifndef DABAN_DEFINES_H
 #define DABAN_DEFINES_H
 
-#include <vector>
-#include <unordered_map>
-#include <map>
 #include <ctime>
+#include <fstream>
+#include <sstream>
+#include <unordered_map>
+#include <vector>
+
+#include <boost/bind/bind.hpp>
 
 #include "TORA/TORATstpLev2MdApi.h"
 #include "TORA/TORATstpTraderApi.h"
 
-#define SERVICE_QRYSUBSECURITYREQ   1   // 查询订阅合约请求
-#define SERVICE_QRYSUBSECURITYRSP   2
 #define SERVICE_ADDSTRATEGYREQ      3   // 增加策略请求
 #define SERVICE_ADDSTRATEGYRSP      4
 #define SERVICE_DELSTRATEGYREQ      5   // 删除策略请求
@@ -60,5 +57,17 @@ struct stPostPrice {
     TORALEV2API::TTORATstpLongVolumeType BidVolume1;
     TORALEV2API::TTORATstpPriceType TradePrice;
 };
+
+struct stSecurity_t {
+    TORASTOCKAPI::TTORATstpSecurityIDType SecurityID;
+    TORASTOCKAPI::TTORATstpSecurityNameType SecurityName;
+    TORASTOCKAPI::TTORATstpExchangeIDType ExchangeID;
+    TORASTOCKAPI::TTORATstpPriceType UpperLimitPrice;
+    TORASTOCKAPI::TTORATstpPriceType LowerLimitPrice;
+};
+
+void Stringsplit(const std::string &str, const char split, std::vector<std::string> &res);
+std::string GetTimeStr();
+void trim(std::string &s);
 
 #endif //DABAN_DEFINES_H

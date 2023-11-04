@@ -16,35 +16,20 @@ public:
 
     void Start();
     void OnTime(const boost::system::error_code& error);
-    void OnHttpHandle(int serviceNo);
 
     // MD
-    void MDOnRspUserLogin(PROMD::TTORATstpExchangeIDType exchangeID);
+    void MDOnInited(PROMD::TTORATstpExchangeIDType exchangeID);
     void MDPostPrice(stPostPrice& postPrice);
 
     // TD
-    void TDOnRspUserLogin(PROTD::CTORATstpRspUserLoginField& pRspUserLoginField);
-    void TDOnRspQrySecurity(PROTD::CTORATstpSecurityField& pSecurity);
-    void TDOnRspQryOrder(PROTD::CTORATstpOrderField& pOrder);
-    void TDOnRspQryTrade(PROTD::CTORATstpTradeField& pTrade);
-    void TDOnRspQryPosition(PROTD::CTORATstpPositionField& pPosition);
-    void TDOnRspQryTradingAccount(PROTD::CTORATstpTradingAccountField& pTradingAccount);
-    void TDOnRspOrderInsert(PROTD::CTORATstpInputOrderField& pInputOrderField);
-    void TDOnErrRtnOrderInsert(PROTD::CTORATstpInputOrderField& pInputOrderField);
-    void TDOnRtnOrder(PROTD::CTORATstpOrderField& pOrder);
-    void TDOnRtnTrade(PROTD::CTORATstpTradeField& pTrade);
-    void TDOnRspOrderAction(PROTD::CTORATstpInputOrderActionField& pInputOrderActionField);
-    void TDOnErrRtnOrderAction(PROTD::CTORATstpInputOrderActionField& pInputOrderActionField);
+    void TDOnInited();
 
 public:
     boost::asio::io_context& m_ioc;
     boost::asio::deadline_timer m_timer;
 
 public:
-    bool Init();
-    bool LoadSubSecurityIDs();
-    bool AddSubSecurity(char *SecurityID, char ExchangeID);
-    bool DelSubSecurity(char *SecurityID);
+    bool Init(std::string watchSecurity = "");
     bool LoadStrategy();
     bool AddStrategy(stStrategy & strategy);
 
@@ -62,9 +47,8 @@ public:
     std::string m_mdAddr = "tcp://210.14.72.17:16900";
     std::string m_mdInterface = "tcp://210.14.72.17:16900";
     std::string m_cpucore = "";
-    std::string m_watchSecurity = "";
 
-    std::unordered_map<std::string, stSubSecurity> m_subSecurityIDs;
+    std::unordered_map<std::string, stSecurity_t> m_watchSecurity;
     std::unordered_map<std::string, std::vector<stStrategy> > m_strategys;
 private:
     PROMD::MDL2Impl *GetMDByExchangeID(PROMD::TTORATstpExchangeIDType ExchangeID);
@@ -74,10 +58,6 @@ private:
     PROMD::MDL2Impl *m_szMD = nullptr;
     PROTD::TDImpl *m_TD = nullptr;
     SQLite3::ptr m_db = nullptr;
-
-    std::unordered_map<std::string, PROTD::CTORATstpSecurityField *> m_securityIDs;
-    std::unordered_map<std::string, PROTD::CTORATstpOrderField *> m_order;
-    std::unordered_map<std::string, PROTD::CTORATstpPositionField *> m_position;
 };
 
 #endif //TEST_BALIBALI_H
