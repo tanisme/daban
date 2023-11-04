@@ -494,7 +494,7 @@ namespace test {
             Stringsplit(line, ',', res);
 
             if ((int) res.size() != 15) {
-                printf("读订单 有错误数据 列数:%d 内容:%s\n", (int) res.size(), line.c_str());
+                //printf("读订单 有错误数据 列数:%d 内容:%s\n", (int) res.size(), line.c_str());
             } else {
                 //交易所代码
                 std::string ExchangeID = res.at(0);
@@ -533,13 +533,9 @@ namespace test {
                                  ExchangeID.c_str()[0],
                                  OrderStatus.c_str()[0]);
                 i++;
-                if (i % 1000 == 0) {
-                    printf("生成订单簿 已处理 %s %lld 条订单\n", SecurityID, i);
-                }
             }
         }
-        printf("生成订单簿 处理完成所有订单 共 %lld 条\n", i);
-        ShowOrderBook(SecurityID);
+        printf("生成%s订单簿 处理完成所有订单 共%lld条\n", SecurityID, i);
     }
 
     void SplitSecurityFileTradeQuot(std::string &dstDataDir, TTORATstpSecurityIDType SecurityID) {
@@ -558,7 +554,7 @@ namespace test {
             Stringsplit(line, ',', res);
 
             if ((int) res.size() != 15) {
-                printf("读成交 有错误数据 列数:%d 内容:%s\n", (int) res.size(), line.c_str());
+                //printf("读成交 有错误数据 列数:%d 内容:%s\n", (int) res.size(), line.c_str());
             } else {
                 //交易所代码
                 std::string ExchangeID = res.at(0);
@@ -595,14 +591,10 @@ namespace test {
                 OnRtnTransaction(SecurityID, ExchangeID.c_str()[0], atoll(TradeVolume.c_str()), ExecType.c_str()[0],
                                  atoll(BuyNo.c_str()), atoll(SellNo.c_str()), atof(TradePrice.c_str()));
                 i++;
-                if (i % 1000 == 0) {
-                    printf("生成订单簿 已处理 %s %lld 条成交\n", SecurityID, i);
-                }
             }
         }
-        printf("生成订单簿 处理完成 %s 所有成交 共 %lld 条\n", SecurityID, i);
+        printf("生成%s订单簿 处理完成所有成交 共%lld条\n", SecurityID, i);
         ShowOrderBook(SecurityID);
-        printf("=====================================================================\n");
     }
 
     void SplitSecurityFile(std::string srcDataDir, std::string dstDataDir, bool isOrder, TTORATstpSecurityIDType SecurityID) {
@@ -641,7 +633,7 @@ namespace test {
             Stringsplit(line, ',', res);
 
             if ((int) res.size() != 15) {
-                printf("读取%s文件 有错误数据 列数:%d 内容:%s\n", isOrder ? "订单" : "成交", (int) res.size(), line.c_str());
+                //printf("读取%s文件 有错误数据 列数:%d 内容:%s\n", isOrder ? "订单" : "成交", (int) res.size(), line.c_str());
             } else {
                 if (strcmp(SecurityID, res.at(1).c_str())) continue;
                 fputs(line.c_str(), pf);
@@ -649,13 +641,12 @@ namespace test {
             }
             line.clear();
             i++;
-            if (i % 1000 == 0) {
-                printf("已拆分 %s %lld 条 %s\n", SecurityID, i, isOrder ? "订单" : "成交");
+            if (i % 5000 == 0) {
+                printf("已写入%s%s数据%lld条\n", SecurityID, isOrder ? "订单" : "成交", i);
             }
         }
-
         fclose(pf);
-        printf("累计拆分写入 %s %s 文件 条数 %lld\n", SecurityID, isOrder ? "订单" : "成交", i);
+        printf("生成%s%s文件%s 累计写入%lld条\n", SecurityID, isOrder ? "订单" : "成交", dstDataFileName.c_str(), i);
     }
 
     void trim(std::string &s)
@@ -688,7 +679,7 @@ namespace test {
 
             //printf("处理第 %lld 行数据\n", i);
             if ((int) res.size() != 16) {
-                printf("有错误数据 列数:%d 内容:%s\n", (int) res.size(), line.c_str());
+                //printf("有错误数据 列数:%d 内容:%s\n", (int) res.size(), line.c_str());
             } else {
 
                 //证券代码
@@ -742,24 +733,29 @@ namespace test {
     }
 
     bool TestOrderBook(std::string& srcDataDir, std::string& watchsecurity) {
-        //std::string srcDataDir = "I:/tanisme/workspace/gitcode/data";
-        //std::string dstDataDir = "I:/tanisme/workspace/gitcode/result";
-        //std::string srcDataDir = "D:/BakFiles/15386406/FileRecv/20231018_A";
         std::string dstDataDir = srcDataDir + "/result";
 
         std::vector<std::string> Securityes;
         Stringsplit(watchsecurity, ',', Securityes);
 
-        for (auto iter : Securityes)
-        {
+        for (auto iter : Securityes) {
             char Security[31] = {0};
             strcpy(Security, iter.c_str());
+            auto bt = time(nullptr);
+            auto* now = localtime(&bt);
+            char strtime[32] = {0};
+            sprintf(strtime, "%04d-%02d-%02d %02d:%02d:%02d", now->tm_year+1900, now->tm_mon+1,
+                    now->tm_mday, now->tm_hour, now->tm_min, now->tm_sec);
+            printf("-------------------------------------------------------------------\n");
+            printf("开始生成%s订单簿 %s\n", Security, strtime);
+
             SplitSecurityFile(srcDataDir, dstDataDir, true, Security);
             SplitSecurityFile(srcDataDir, dstDataDir, false, Security);
             SplitSecurityFileOrderQuot(dstDataDir, Security);
             SplitSecurityFileTradeQuot(dstDataDir, Security);
-            //BigFileOrderQuot(srcDataDir, Security);
-            //BigFileTradeQuot(srcDataDir, Security);
+            auto et = time(nullptr);
+            printf("生成%s订单簿完成 耗时 %d分%d秒\n", Security, (int)((et-bt)/60), (int)((et-bt)%60));
+            printf("-------------------------------------------------------------------\n");
         }
 
         //{

@@ -10,19 +10,15 @@ set(Boost_USE_STATIC_LIBS ON)
 
 if (WIN32)
     message(STATUS "windows system")
-    #SET(BOOST_ROOT I:/tanisme/workspace/cpplib/boost_1_73_0)
-    SET(BOOST_ROOT E:/tangang/workspace/cpplib/boost_1_73_0_142_64)
+    SET(BOOST_ROOT I:/tanisme/workspace/cpplib/boost_1_73_0)
+    #SET(BOOST_ROOT E:/tangang/workspace/cpplib/boost_1_73_0_142_64)
     SET(BOOST_INCLUDEDIR ${BOOST_ROOT})
     SET(BOOST_LIBRARYDIR ${BOOST_ROOT}/lib64-msvc-14.2)
-    #include_directories(${BOOST_ROOT})
-    #link_directories(${BOOST_ROOT}/lib64-msvc-14.2)
 elseif(UNIX)
     message(STATUS "linux system")
     SET(BOOST_ROOT /usr/local/boost)
     SET(BOOST_INCLUDEDIR ${BOOST_ROOT}/include)
     SET(BOOST_LIBRARYDIR ${BOOST_ROOT}/lib)
-else()
-    message(FATAL_ERROR "unknow system")
 endif()
 
 find_package(Boost REQUIRED COMPONENTS program_options)
@@ -34,6 +30,7 @@ if (Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIR})
     link_directories(${Boost_LIBRARY_DIRS})
 endif ()
+
 include_directories(. include http/server4)
 link_directories(lib)
 
@@ -47,7 +44,6 @@ add_executable(daban
         http/server4/reply.cpp
         http/server4/request_parser.cpp
         http/server4/server.cpp
-        defines.h
         test.cpp
 )
 

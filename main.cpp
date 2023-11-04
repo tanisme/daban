@@ -1,15 +1,11 @@
 ﻿#include <fstream>
-
-#include "CApplication.h"
 #include <boost/asio.hpp>
-#include "server.hpp"
-#include "file_handler.hpp"
 #include <boost/program_options.hpp>
 
+#include "CApplication.h"
 #include "test.h"
 
 int main() {
-
     std::string cfgfile = "daban.ini";
     std::string dbfile = "database.db";
     std::string httpurl = "", cpucore = "";
@@ -30,12 +26,12 @@ int main() {
             ("daban.tdaccount", boost::program_options::value<std::string>(&tdaccount), "daban.tdaccount")
             ("daban.tdpassword", boost::program_options::value<std::string>(&tdpassword), "daban.tdpassword")
             ("daban.shmdnewversion", boost::program_options::value<int>(&shmdnewversion), "daban.shmdnewversion")
+            ("daban.watchsecurity", boost::program_options::value<std::string>(&watchsecurity), "daban.watchsecurity")
             ("ceshi.shmdaddr", boost::program_options::value<std::string>(&shmdaddr), "ceshi.shmdaddr")
             ("ceshi.szmdaddr", boost::program_options::value<std::string>(&szmdaddr), "ceshi.szmdaddr")
             ("shipan.mdaddr", boost::program_options::value<std::string>(&mdaddr), "shipan.mdaddr")
             ("shipan.mdinterface", boost::program_options::value<std::string>(&mdinterface), "shipan.mdinterface")
-            ("csvfile.srcdatapath", boost::program_options::value<std::string>(&srcdatapath), "csvfile.srcdatapath")
-            ("csvfile.watchsecurity", boost::program_options::value<std::string>(&watchsecurity), "csvfile.watchsecurity");
+            ("csvfile.srcdatapath", boost::program_options::value<std::string>(&srcdatapath), "csvfile.srcdatapath");
     boost::program_options::variables_map vm;
 
     std::ifstream ifs;
@@ -49,8 +45,15 @@ int main() {
     ifs.close();
     vm.clear();
 
-    if (srcdatapath.length() > 0 && watchsecurity.size() > 0) {
+    if (watchsecurity.size() <= 0) {
+        printf("配置文件中watchsecurity未配置（需要打印订单簿的合约）\n");
+        return 0;
+    }
+
+    if (srcdatapath.length() > 0) {
+        printf("-------------------该程序功能为生成订单簿-------------------\n");
         test::TestOrderBook(srcdatapath, watchsecurity);
+        printf("-------------------生成所有合约订单簿完成-------------------\n");
         return 0;
     }
 
@@ -69,6 +72,7 @@ int main() {
     app.m_mdInterface = mdinterface;
     app.m_cpucore = cpucore;
     app.m_strategyOpen = strategyopen;
+    app.m_watchSecurity = watchsecurity;
     app.Init();
 
     //if (httpurl.length() > 0) {

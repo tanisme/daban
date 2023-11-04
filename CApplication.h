@@ -62,6 +62,7 @@ public:
     std::string m_mdAddr = "tcp://210.14.72.17:16900";
     std::string m_mdInterface = "tcp://210.14.72.17:16900";
     std::string m_cpucore = "";
+    std::string m_watchSecurity = "";
 
     std::unordered_map<std::string, stSubSecurity> m_subSecurityIDs;
     std::unordered_map<std::string, std::vector<stStrategy> > m_strategys;
