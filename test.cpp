@@ -32,6 +32,23 @@ namespace test {
     std::unordered_map<std::string, std::map<TTORATstpLongSequenceType, std::vector<Order>> > m_unFindBuyTrades;
     std::unordered_map<std::string, std::map<TTORATstpLongSequenceType, std::vector<Order>> > m_unFindSellTrades;
 
+    void Stringsplit(const std::string &str, const char split, std::vector<std::string> &res) {
+        res.clear();
+        if (str == "") return;
+        //在字符串末尾也加入分隔符，方便截取最后一段
+        std::string strs = str + split;
+        size_t pos = strs.find(split);
+
+        // 若找不到内容则字符串搜索函数返回 npos
+        while (pos != strs.npos) {
+            std::string temp = strs.substr(0, pos);
+            res.push_back(temp);
+            //去掉已分割的字符串,在剩下的字符串中进行分割
+            strs = strs.substr(pos + 1, strs.size());
+            pos = strs.find(split);
+        }
+    }
+
     void ShowOrderBook(TTORATstpSecurityIDType SecurityID) {
         if (m_orderBuy.empty() && m_orderSell.empty()) return;
 
@@ -332,23 +349,6 @@ namespace test {
         }
     }
 
-    void Stringsplit(const std::string &str, const char split, std::vector<std::string> &res) {
-        res.clear();
-        if (str == "") return;
-        //在字符串末尾也加入分隔符，方便截取最后一段
-        std::string strs = str + split;
-        size_t pos = strs.find(split);
-
-        // 若找不到内容则字符串搜索函数返回 npos
-        while (pos != strs.npos) {
-            std::string temp = strs.substr(0, pos);
-            res.push_back(temp);
-            //去掉已分割的字符串,在剩下的字符串中进行分割
-            strs = strs.substr(pos + 1, strs.size());
-            pos = strs.find(split);
-        }
-    }
-
     void BigFileOrderQuot(std::string &srcDataDir, TTORATstpSecurityIDType SecurityID) {
         m_orderBuy.clear();m_orderSell.clear();
         std::string file = srcDataDir + "/OrderDetail.csv";
@@ -479,7 +479,7 @@ namespace test {
 
     void SplitSecurityFileOrderQuot(std::string &dstDataDir, TTORATstpSecurityIDType SecurityID) {
         m_orderBuy.clear();m_orderSell.clear();
-        std::string file = dstDataDir +"/"+ SecurityID + "_r.txt";
+        std::string file = dstDataDir +"/"+ SecurityID + "_o.txt";
         std::ifstream ifs(file, std::ios::in);
         if (!ifs.is_open()) {
             printf("Order open failed!!! path%s\n", file.c_str());
@@ -494,7 +494,7 @@ namespace test {
             Stringsplit(line, ',', res);
 
             if ((int) res.size() != 15) {
-                //printf("读订单 有错误数据 列数:%d 内容:%s\n", (int) res.size(), line.c_str());
+                printf("读订单 有错误数据 列数:%d 内容:%s\n", (int) res.size(), line.c_str());
             } else {
                 //交易所代码
                 std::string ExchangeID = res.at(0);
@@ -532,14 +532,14 @@ namespace test {
                                  atoll(Volume.c_str()),
                                  ExchangeID.c_str()[0],
                                  OrderStatus.c_str()[0]);
-                if (i++%1000 == 0) {
-                    //printf("已处理大文件中 %s %lld 条订单\n", SecurityID, i);
-                    //ShowOrderBook(SecurityID);
+                i++;
+                if (i % 1000 == 0) {
+                    printf("生成订单簿 已处理 %s %lld 条订单\n", SecurityID, i);
                 }
             }
         }
-        //printf("处理完成所有订单 共 %lld 条\n", i);
-        //ShowOrderBook(SecurityID);
+        printf("生成订单簿 处理完成所有订单 共 %lld 条\n", i);
+        ShowOrderBook(SecurityID);
     }
 
     void SplitSecurityFileTradeQuot(std::string &dstDataDir, TTORATstpSecurityIDType SecurityID) {
@@ -558,7 +558,7 @@ namespace test {
             Stringsplit(line, ',', res);
 
             if ((int) res.size() != 15) {
-                //printf("读成交 有错误数据 列数:%d 内容:%s\n", (int) res.size(), line.c_str());
+                printf("读成交 有错误数据 列数:%d 内容:%s\n", (int) res.size(), line.c_str());
             } else {
                 //交易所代码
                 std::string ExchangeID = res.at(0);
@@ -594,14 +594,13 @@ namespace test {
 
                 OnRtnTransaction(SecurityID, ExchangeID.c_str()[0], atoll(TradeVolume.c_str()), ExecType.c_str()[0],
                                  atoll(BuyNo.c_str()), atoll(SellNo.c_str()), atof(TradePrice.c_str()));
-                if (i++%1000 == 0) {
-                    //printf("已处理大文件中 %s %lld 条成交\n", SecurityID, i);
-                    //ShowOrderBook(SecurityID);
+                i++;
+                if (i % 1000 == 0) {
+                    printf("生成订单簿 已处理 %s %lld 条成交\n", SecurityID, i);
                 }
             }
         }
-        printf("=====================================================================\n");
-        printf("Small处理完成 %s 所有成交 共 %lld 条\n", SecurityID, i);
+        printf("生成订单簿 处理完成 %s 所有成交 共 %lld 条\n", SecurityID, i);
         ShowOrderBook(SecurityID);
         printf("=====================================================================\n");
     }
@@ -629,7 +628,7 @@ namespace test {
         std::vector<std::string> res;
 
         std::string dstDataFileName = dstDataDir + "/" + SecurityID;
-        if (isOrder) dstDataFileName = dstDataFileName + "_r.txt";
+        if (isOrder) dstDataFileName = dstDataFileName + "_o.txt";
         else dstDataFileName = dstDataFileName + "_t.txt";
         FILE *pf = fopen(dstDataFileName.c_str(), "w+");
         if (!pf) {
@@ -642,7 +641,7 @@ namespace test {
             Stringsplit(line, ',', res);
 
             if ((int) res.size() != 15) {
-                //printf("读取%s文件 有错误数据 列数:%d 内容:%s\n", isOrder ? "订单" : "成交", (int) res.size(), line.c_str());
+                printf("读取%s文件 有错误数据 列数:%d 内容:%s\n", isOrder ? "订单" : "成交", (int) res.size(), line.c_str());
             } else {
                 if (strcmp(SecurityID, res.at(1).c_str())) continue;
                 fputs(line.c_str(), pf);
@@ -650,10 +649,13 @@ namespace test {
             }
             line.clear();
             i++;
+            if (i % 1000 == 0) {
+                printf("已拆分 %s %lld 条 %s\n", SecurityID, i, isOrder ? "订单" : "成交");
+            }
         }
 
         fclose(pf);
-        printf("写入 %s 文件 条数 %lld\n", isOrder ? "订单" : "成交", i);
+        printf("累计拆分写入 %s %s 文件 条数 %lld\n", SecurityID, isOrder ? "订单" : "成交", i);
     }
 
     void trim(std::string &s)
@@ -739,27 +741,25 @@ namespace test {
         }
     }
 
-    void TestOrderBook() {
+    bool TestOrderBook(std::string& srcDataDir, std::string& watchsecurity) {
         //std::string srcDataDir = "I:/tanisme/workspace/gitcode/data";
         //std::string dstDataDir = "I:/tanisme/workspace/gitcode/result";
-        std::string srcDataDir = "D:/BakFiles/15386406/FileRecv/20231018_A";
-        std::string dstDataDir = "D:/BakFiles/15386406/FileRecv/20231018_A/result";
+        //std::string srcDataDir = "D:/BakFiles/15386406/FileRecv/20231018_A";
+        std::string dstDataDir = srcDataDir + "/result";
 
-        std::vector<std::string> Securityes = {
-            "002501", "002151", "688665", "603108", "600129", "688238", "605588", "603335",
-            "301487", "301021", "300709", "301201", "300375", "300630", "301151", "688636",
-            "688310", "688179", "300769"};
+        std::vector<std::string> Securityes;
+        Stringsplit(watchsecurity, ',', Securityes);
+
         for (auto iter : Securityes)
         {
             char Security[31] = {0};
             strcpy(Security, iter.c_str());
-            //SplitSecurityFile(srcDataDir, dstDataDir, true, Security);
-            //SplitSecurityFile(srcDataDir, dstDataDir, false, Security);
-            //SplitSecurityFileOrderQuot(dstDataDir, Security);
-            //SplitSecurityFileTradeQuot(dstDataDir, Security);
-
-            BigFileOrderQuot(srcDataDir, Security);
-            BigFileTradeQuot(srcDataDir, Security);
+            SplitSecurityFile(srcDataDir, dstDataDir, true, Security);
+            SplitSecurityFile(srcDataDir, dstDataDir, false, Security);
+            SplitSecurityFileOrderQuot(dstDataDir, Security);
+            SplitSecurityFileTradeQuot(dstDataDir, Security);
+            //BigFileOrderQuot(srcDataDir, Security);
+            //BigFileTradeQuot(srcDataDir, Security);
         }
 
         //{
@@ -773,7 +773,7 @@ namespace test {
         //    ParseSecurityFile(Security);
         //    ShowOrderBook(Security);
         //}
-
+        return true;
     }
 
 

@@ -18,6 +18,6 @@ namespace test {
     bool ModifyOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType tradeVolume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side);
     void ResetOrder(TTORATstpSecurityIDType SecurityID, TTORATstpTradeBSFlagType side);
 
-    void TestOrderBook();
+    bool TestOrderBook(std::string& srcDataDir, std::string& watchsecurity);
 }
 #endif //BALIBALI_TEST_H

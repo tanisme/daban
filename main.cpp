@@ -9,9 +9,6 @@
 #include "test.h"
 
 int main() {
-    test::TestOrderBook();
-    getchar();
-    if (true) return 0;
 
     std::string cfgfile = "daban.ini";
     std::string dbfile = "database.db";
@@ -20,6 +17,7 @@ int main() {
     std::string tdaddr = "", tdaccount = "", tdpassword = "";
     int shmdnewversion = 0;
     bool useTcp = true, isTest = true, strategyopen = false;
+    std::string srcdatapath = "", watchsecurity = "";
     boost::program_options::options_description cfgdesc("Config file options");
     cfgdesc.add_options()
             ("daban.istest", boost::program_options::value<bool>(&isTest), "daban.istest")
@@ -35,7 +33,9 @@ int main() {
             ("ceshi.shmdaddr", boost::program_options::value<std::string>(&shmdaddr), "ceshi.shmdaddr")
             ("ceshi.szmdaddr", boost::program_options::value<std::string>(&szmdaddr), "ceshi.szmdaddr")
             ("shipan.mdaddr", boost::program_options::value<std::string>(&mdaddr), "shipan.mdaddr")
-            ("shipan.mdinterface", boost::program_options::value<std::string>(&mdinterface), "shipan.mdinterface");
+            ("shipan.mdinterface", boost::program_options::value<std::string>(&mdinterface), "shipan.mdinterface")
+            ("csvfile.srcdatapath", boost::program_options::value<std::string>(&srcdatapath), "csvfile.srcdatapath")
+            ("csvfile.watchsecurity", boost::program_options::value<std::string>(&watchsecurity), "csvfile.watchsecurity");
     boost::program_options::variables_map vm;
 
     std::ifstream ifs;
@@ -48,6 +48,11 @@ int main() {
     notify(vm);
     ifs.close();
     vm.clear();
+
+    if (srcdatapath.length() > 0 && watchsecurity.size() > 0) {
+        test::TestOrderBook(srcdatapath, watchsecurity);
+        return 0;
+    }
 
     boost::asio::io_context io_context;
     CApplication app(io_context);
