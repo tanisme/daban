@@ -21,7 +21,7 @@ elseif(UNIX)
     SET(BOOST_LIBRARYDIR ${BOOST_ROOT}/lib)
 endif()
 
-find_package(Boost REQUIRED COMPONENTS program_options)
+find_package(Boost REQUIRED COMPONENTS program_options filesystem)
 if (Boost_FOUND)
     message( STATUS "Boost_INCLUDE_DIRS = ${Boost_INCLUDE_DIRS}")
     message( STATUS "Boost_LIBRARY_DIRS = ${Boost_LIBRARY_DIRS}")
