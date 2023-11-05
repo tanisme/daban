@@ -21,7 +21,7 @@ namespace test {
                     memset(buffer, 0, sizeof(buffer));
                     TTORATstpLongVolumeType totalVolume = 0;
                     for (auto iter1: iter->second.at(i - 1).Orders) {
-                        totalVolume += iter1.Volume;
+                        totalVolume += iter1->Volume;
                     }
                     sprintf(buffer, "S%d\t%.3f\t\t%d\t\t%lld\n", i, iter->second.at(i - 1).Price,
                             (int) iter->second.at(i - 1).Orders.size(), totalVolume);
@@ -38,7 +38,7 @@ namespace test {
                 for (auto i = 1; i <= size; i++) {
                     memset(buffer, 0, sizeof(buffer));
                     TTORATstpLongVolumeType totalVolume = 0;
-                    for (auto iter1: iter->second.at(i - 1).Orders) totalVolume += iter1.Volume;
+                    for (auto iter1: iter->second.at(i - 1).Orders) totalVolume += iter1->Volume;
                     sprintf(buffer, "B%d\t%.3f\t\t%d\t\t%lld\n", i, iter->second.at(i - 1).Price,
                             (int) iter->second.at(i - 1).Orders.size(), totalVolume);
                     stream << buffer;
@@ -137,9 +137,9 @@ namespace test {
     }
 
     void Imitate::InsertOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side) {
-        Order order = {0};
-        order.OrderNo = OrderNO;
-        order.Volume = Volume;
+        Order* order = m_orderPool.new_element();
+        order->OrderNo = OrderNO;
+        order->Volume = Volume;
 
         PriceOrders priceOrder = {0};
         priceOrder.Orders.emplace_back(order);
@@ -191,13 +191,13 @@ namespace test {
             auto needReset = false, founded = false;
             for (auto i = 0; i < (int) iter->second.size(); i++) {
                 for (auto j = 0; j < (int) iter->second.at(i).Orders.size(); j++) {
-                    if (iter->second.at(i).Orders.at(j).OrderNo == OrderNo) {
+                    if (iter->second.at(i).Orders.at(j)->OrderNo == OrderNo) {
                         if (TradeVolume == 0) {
-                            iter->second.at(i).Orders.at(j).Volume = 0;
+                            iter->second.at(i).Orders.at(j)->Volume = 0;
                             needReset = true;
                         } else {
-                            iter->second.at(i).Orders.at(j).Volume -= TradeVolume;
-                            if (iter->second.at(i).Orders.at(j).Volume <= 0) {
+                            iter->second.at(i).Orders.at(j)->Volume -= TradeVolume;
+                            if (iter->second.at(i).Orders.at(j)->Volume <= 0) {
                                 needReset = true;
                             }
                         }
@@ -221,19 +221,16 @@ namespace test {
         if (iter == mapOrder.end()) return;
 
         for (auto iterPriceOrder = iter->second.begin(); iterPriceOrder != iter->second.end();) {
-            auto bFlag1 = false;
-            auto bFlag2 = false;
             for (auto iterOrder = iterPriceOrder->Orders.begin(); iterOrder != iterPriceOrder->Orders.end();) {
-                if (iterOrder->Volume <= 0) {
+                if ((*iterOrder)->Volume <= 0) {
+                    Order* order = *iterOrder;
                     iterOrder = iterPriceOrder->Orders.erase(iterOrder);
-                    bFlag1 = false;
+                    m_orderPool.delete_element(order);
                 } else {
                     ++iterOrder;
-                    bFlag1 = true;
-                    bFlag2 = true;
                 }
             }
-            if (!bFlag1 && !bFlag2) {
+            if (iterPriceOrder->Orders.empty()) {
                 iterPriceOrder = iter->second.erase(iterPriceOrder);
             } else {
                 ++iterPriceOrder;

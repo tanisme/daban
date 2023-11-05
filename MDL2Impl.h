@@ -44,8 +44,7 @@ namespace PROMD {
         void ResetOrder(TTORATstpSecurityIDType SecurityID, TTORATstpTradeBSFlagType side);
         void PostPrice(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType price);
 
-        void FixOrder(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType TradePrice);
-        void AddUnFindTrade(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType tradeVolume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side);
+        void AddUnFindTrade(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType tradeVolume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side, TTORATstpTimeStampType TradeTime);
         void HandleUnFindTrade(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side);
 
     private:
@@ -56,8 +55,10 @@ namespace PROMD {
         TTORATstpExchangeIDType m_exchangeID;
         MapOrder m_orderBuy;
         MapOrder m_orderSell;
-        std::unordered_map<std::string, std::unordered_map<TTORATstpLongSequenceType, std::vector<Order>> > m_unFindBuyTrades;
-        std::unordered_map<std::string, std::unordered_map<TTORATstpLongSequenceType, std::vector<Order>> > m_unFindSellTrades;
+        MemoryPool<Order, 8192> m_orderPool;
+        std::unordered_map<TTORATstpLongSequenceType, std::vector<stUnFindOrderTrade*>> m_unFindBuyTrades;
+        std::unordered_map<TTORATstpLongSequenceType, std::vector<stUnFindOrderTrade*>> m_unFindSellTrades;
+        MemoryPool<stUnFindOrderTrade, 8192> m_unFindOrderTradePool;
     };
 
 }

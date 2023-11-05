@@ -8,6 +8,7 @@
 #include <vector>
 
 #include <boost/bind/bind.hpp>
+#include "memory_pool.h"
 
 #include "TORA/TORATstpLev2MdApi.h"
 #include "TORA/TORATstpTraderApi.h"
@@ -44,7 +45,7 @@ struct Order {
 
 struct PriceOrders {
     TORALEV2API::TTORATstpPriceType Price;
-    std::vector<Order> Orders;
+    std::vector<Order*> Orders;
 };
 
 typedef std::unordered_map<std::string, std::vector<PriceOrders> > MapOrder; // TODO改内存池
@@ -66,8 +67,16 @@ struct stSecurity_t {
     TORASTOCKAPI::TTORATstpPriceType LowerLimitPrice;
 };
 
+struct stUnFindOrderTrade {
+    TORALEV2API::TTORATstpSecurityIDType SecurityID;
+    TORALEV2API::TTORATstpLongSequenceType OrderNo;
+    TORALEV2API::TTORATstpLongVolumeType Volume;
+    TORALEV2API::TTORATstpTimeStampType TradeTime;
+};
+
 void Stringsplit(const std::string &str, const char split, std::vector<std::string> &res);
 std::string GetTimeStr();
+int GetNowTick();
 void trim(std::string &s);
 
 #endif //DABAN_DEFINES_H

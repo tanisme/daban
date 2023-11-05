@@ -39,6 +39,7 @@ namespace test {
         std::unordered_map<std::string, bool> m_watchSecurity;
         std::unordered_map<std::string, FILE*> m_watchOrderFILE;
         std::unordered_map<std::string, FILE*> m_watchTradeFILE;
+        MemoryPool<Order, 8192> m_orderPool;
         MapOrder m_orderBuy;
         MapOrder m_orderSell;
         std::unordered_map<std::string, std::map<TTORATstpLongSequenceType, std::vector<Order>> > m_unFindBuyTrades;

@@ -73,9 +73,7 @@ namespace PROMD {
                 for (auto i = size; i > 0; i--) {
                     memset(buffer, 0, sizeof(buffer));
                     TTORATstpLongVolumeType totalVolume = 0;
-                    for (auto iter1: iter->second.at(i - 1).Orders) {
-                        totalVolume += iter1.Volume;
-                    }
+                    for (auto iter1: iter->second.at(i - 1).Orders) totalVolume += iter1->Volume;
                     sprintf(buffer, "S%d\t%.3f\t\t%d\t\t%lld\n", i, iter->second.at(i - 1).Price,
                             (int) iter->second.at(i - 1).Orders.size(), totalVolume);
                     stream << buffer;
@@ -91,7 +89,7 @@ namespace PROMD {
                 for (auto i = 1; i <= size; i++) {
                     memset(buffer, 0, sizeof(buffer));
                     TTORATstpLongVolumeType totalVolume = 0;
-                    for (auto iter1: iter->second.at(i - 1).Orders) totalVolume += iter1.Volume;
+                    for (auto iter1: iter->second.at(i - 1).Orders) totalVolume += iter1->Volume;
                     sprintf(buffer, "B%d\t%.3f\t\t%d\t\t%lld\n", i, iter->second.at(i - 1).Price,
                             (int) iter->second.at(i - 1).Orders.size(), totalVolume);
                     stream << buffer;
@@ -233,8 +231,10 @@ namespace PROMD {
         if (!pTransaction) return;
 
         if (pTransaction->ExchangeID == TORA_TSTP_EXD_SSE) {
-            ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->BuyNo, TORA_TSTP_LSD_Buy);
-            ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell);
+            auto bret = ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->BuyNo, TORA_TSTP_LSD_Buy);
+            if (!bret) AddUnFindTrade(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->BuyNo, TORA_TSTP_LSD_Buy, pTransaction->TradeTime);
+            auto sret = ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell);
+            if (!sret) AddUnFindTrade(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell, pTransaction->TradeTime);
         } else if (pTransaction->ExchangeID == TORA_TSTP_EXD_SZSE) {
             if (pTransaction->ExecType == TORA_TSTP_ECT_Fill) {
                 ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->BuyNo, TORA_TSTP_LSD_Buy);
@@ -270,9 +270,9 @@ namespace PROMD {
     }
 
     void MDL2Impl::InsertOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side) {
-        Order order = {0};
-        order.OrderNo = OrderNO;
-        order.Volume = Volume;
+        Order* order = m_orderPool.new_element();
+        order->OrderNo = OrderNO;
+        order->Volume = Volume;
 
         PriceOrders priceOrder = {0};
         priceOrder.Orders.emplace_back(order);
@@ -317,42 +317,6 @@ namespace PROMD {
         }
     }
 
-    void MDL2Impl::FixOrder(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType TradePrice) {
-        if (TradePrice < 0.000001) return;
-
-        {
-            auto needReset = false;
-            auto iter = m_orderBuy.find(SecurityID);
-            if (iter != m_orderBuy.end()) {
-                for (auto i = 0; i < (int) iter->second.size(); i++) {
-                    if (iter->second.at(i).Price + 0.000001 < TradePrice) break;
-
-                    for (auto j = 0; j < (int) iter->second.at(i).Orders.size(); j++) {
-                        iter->second.at(i).Orders.at(j).Volume = 0;
-                        needReset = true;
-                    }
-                }
-            }
-            if (needReset) ResetOrder(SecurityID, TORA_TSTP_LSD_Buy);
-        }
-
-        {
-            auto needReset = false;
-            auto iter = m_orderSell.find(SecurityID);
-            if (iter != m_orderSell.end()) {
-                for (auto i = 0; i < (int) iter->second.size(); i++) {
-                    if (iter->second.at(i).Price > TradePrice + 0.000001) break;
-
-                    for (auto j = 0; j < (int) iter->second.at(i).Orders.size(); j++) {
-                        iter->second.at(i).Orders.at(j).Volume = 0;
-                        needReset = true;
-                    }
-                }
-            }
-            if (needReset) ResetOrder(SecurityID, TORA_TSTP_LSD_Sell);
-        }
-    }
-
     bool MDL2Impl::ModifyOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType TradeVolume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side) {
         MapOrder &mapOrder = Side == TORA_TSTP_LSD_Buy ? m_orderBuy : m_orderSell;
         auto iter = mapOrder.find(SecurityID);
@@ -360,13 +324,13 @@ namespace PROMD {
             auto needReset = false, founded = false;
             for (auto i = 0; i < (int) iter->second.size(); i++) {
                 for (auto j = 0; j < (int) iter->second.at(i).Orders.size(); j++) {
-                    if (iter->second.at(i).Orders.at(j).OrderNo == OrderNo) {
+                    if (iter->second.at(i).Orders.at(j)->OrderNo == OrderNo) {
                         if (TradeVolume == 0) {
-                            iter->second.at(i).Orders.at(j).Volume = 0;
+                            iter->second.at(i).Orders.at(j)->Volume = 0;
                             needReset = true;
                         } else {
-                            iter->second.at(i).Orders.at(j).Volume -= TradeVolume;
-                            if (iter->second.at(i).Orders.at(j).Volume <= 0) {
+                            iter->second.at(i).Orders.at(j)->Volume -= TradeVolume;
+                            if (iter->second.at(i).Orders.at(j)->Volume <= 0) {
                                 needReset = true;
                             }
                         }
@@ -390,19 +354,16 @@ namespace PROMD {
         if (iter == mapOrder.end()) return;
 
         for (auto iterPriceOrder = iter->second.begin(); iterPriceOrder != iter->second.end();) {
-            auto bFlag1 = false;
-            auto bFlag2 = false;
             for (auto iterOrder = iterPriceOrder->Orders.begin(); iterOrder != iterPriceOrder->Orders.end();) {
-                if (iterOrder->Volume <= 0) {
+                if ((*iterOrder)->Volume <= 0) {
+                    Order* order = *iterOrder;
                     iterOrder = iterPriceOrder->Orders.erase(iterOrder);
-                    bFlag1 = false;
+                    m_orderPool.delete_element(order);
                 } else {
                     ++iterOrder;
-                    bFlag1 = true;
-                    bFlag2 = true;
                 }
             }
-            if (!bFlag1 && !bFlag2) {
+            if (iterPriceOrder->Orders.empty()) {
                 iterPriceOrder = iter->second.erase(iterPriceOrder);
             } else {
                 ++iterPriceOrder;
@@ -410,40 +371,73 @@ namespace PROMD {
         }
     }
 
-    void MDL2Impl::AddUnFindTrade(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType tradeVolume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side) {
-        Order order = {0};
-        order.Volume = tradeVolume;
-        order.OrderNo = OrderNo;
+    void MDL2Impl::AddUnFindTrade(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType tradeVolume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side, TTORATstpTimeStampType TradeTime) {
+        stUnFindOrderTrade* order = m_unFindOrderTradePool.new_element();
+        strcpy(order->SecurityID, SecurityID);
+        order->Volume = tradeVolume;
+        order->OrderNo = OrderNo;
+        order->TradeTime = TradeTime;
 
         auto& unFindTrades = side==TORA_TSTP_LSD_Buy?m_unFindBuyTrades:m_unFindSellTrades;
-        if (unFindTrades.find(SecurityID) == unFindTrades.end()) {
-            unFindTrades[SecurityID] = std::unordered_map<TTORATstpLongSequenceType, std::vector<Order>>();
+        if (unFindTrades.find(OrderNo) == unFindTrades.end()) {
+            unFindTrades[OrderNo] = std::vector<stUnFindOrderTrade*>();
         }
-        if (unFindTrades[SecurityID].find(OrderNo) == unFindTrades[SecurityID].end()) {
-            unFindTrades[SecurityID][OrderNo] = std::vector<Order>();
-        }
-        unFindTrades[SecurityID][OrderNo].emplace_back(order);
+        unFindTrades[OrderNo].emplace_back(order);
     }
 
-    void MDL2Impl::HandleUnFindTrade(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side) {
-        auto& unFindTrades = side==TORA_TSTP_LSD_Buy?m_unFindBuyTrades:m_unFindSellTrades;
-        auto iter = unFindTrades.find(SecurityID);
-        if (iter == unFindTrades.end() || iter->second.empty()) return;
-        auto iter1 = iter->second.find(OrderNo);
-        if (iter1 == iter->second.end() || iter1->second.empty()) return;
-
-        for (auto iter2 = iter1->second.begin(); iter2 != iter1->second.end();) {
-            if (ModifyOrder(SecurityID, iter2->Volume, OrderNo, side)) {
-                iter2 = iter1->second.erase(iter2);
-            } else {
-                ++iter2;
+    void MDL2Impl::HandleUnFindTrade(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side) {
+        {
+            auto& unFindTrades = Side==TORA_TSTP_LSD_Buy?m_unFindBuyTrades:m_unFindSellTrades;
+            auto iter = unFindTrades.find(OrderNo);
+            if (iter != unFindTrades.end()) {
+                for (auto iter1 = iter->second.begin(); iter1 != iter->second.end();) {
+                    if (ModifyOrder(SecurityID, (*iter1)->Volume, OrderNo, Side)) {
+                        stUnFindOrderTrade* order = (*iter1);
+                        iter1 = iter->second.erase(iter1);
+                        m_unFindOrderTradePool.delete_element(order);
+                        continue;
+                    }
+                    ++iter1;
+                }
+                if (iter->second.empty()) {
+                    unFindTrades.erase(OrderNo);
+                }
             }
         }
-        if (iter1->second.empty()) {
-            iter->second.erase(iter1);
+
+        auto now = GetNowTick();
+        {
+            for (auto iter = m_unFindBuyTrades.begin(); iter != m_unFindBuyTrades.end();) {
+                for (auto iter1 = iter->second.begin(); iter1 != iter->second.end();) {
+                    if (now > (*iter1)->TradeTime + 2000) {
+                        stUnFindOrderTrade* order = (*iter1);
+                        iter1 = iter->second.erase(iter1);
+                        m_unFindOrderTradePool.delete_element(order);
+                        continue;
+                    }
+                    ++iter1;
+                }
+                if (iter->second.empty()) {
+                    m_unFindBuyTrades.erase(iter);
+                }
+            }
         }
-        if (iter->second.empty()) {
-            unFindTrades.erase(iter);
+
+        {
+            for (auto iter = m_unFindSellTrades.begin(); iter != m_unFindSellTrades.end();) {
+                for (auto iter1 = iter->second.begin(); iter1 != iter->second.end();) {
+                    if (now > (*iter1)->TradeTime + 2000) {
+                        stUnFindOrderTrade* order = (*iter1);
+                        iter1 = iter->second.erase(iter1);
+                        m_unFindOrderTradePool.delete_element(order);
+                        continue;
+                    }
+                    ++iter1;
+                }
+                if (iter->second.empty()) {
+                    m_unFindSellTrades.erase(iter);
+                }
+            }
         }
     }
 
@@ -462,7 +456,7 @@ namespace PROMD {
                 auto size = (int) iter->second.begin()->Orders.size();
                 long long int totalVolume = 0;
                 for (auto i = 0; i < size; ++i) {
-                    totalVolume += iter->second.begin()->Orders.at(i).Volume;
+                    totalVolume += iter->second.begin()->Orders.at(i)->Volume;
                 }
                 AskPrice1 = iter->second.begin()->Price;
                 AskVolume1 = totalVolume;
@@ -475,7 +469,7 @@ namespace PROMD {
                 auto size = (int) iter->second.begin()->Orders.size();
                 long long int totalVolume = 0;
                 for (auto i = 0; i < size; ++i) {
-                    totalVolume += iter->second.begin()->Orders.at(i).Volume;
+                    totalVolume += iter->second.begin()->Orders.at(i)->Volume;
                 }
                 BidPrice1 = iter->second.begin()->Price;
                 BidVolume1 = totalVolume;

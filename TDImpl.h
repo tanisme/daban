@@ -45,6 +45,7 @@ namespace PROTD {
         bool m_isInited = false;
         CTORATstpTraderApi *m_pApi = nullptr;
         CApplication *m_pApp = nullptr;
+        MemoryPool<stSecurity_t, 8192> m_marketSecurityPool;
         CTORATstpRspUserLoginField m_loginField = {0};
         std::unordered_map<TTORATstpExchangeIDType, CTORATstpShareholderAccountField> m_shareHolder;
     };

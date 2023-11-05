@@ -23,6 +23,14 @@ std::string GetTimeStr() {
     return std::string(time);
 }
 
+int GetNowTick() {
+    auto t = time(nullptr);
+    auto* now = localtime(&t);
+    char time[32] = {0};
+    sprintf(time, "%02d%02d%02d000", now->tm_hour, now->tm_min, now->tm_sec);
+    return atoi(time);
+}
+
 void trim(std::string &s) {
     int index = 0;
     if(!s.empty()) {

@@ -17,7 +17,7 @@ namespace PROTD {
 
         for (auto iter = m_marketSecurity.begin(); iter != m_marketSecurity.end(); ++iter) {
             if (iter->second) {
-                free(iter->second);
+                m_marketSecurityPool.delete_element(iter->second);
             }
         }
         m_marketSecurity.clear();
@@ -83,7 +83,7 @@ namespace PROTD {
         if (pSecurity) {
             auto iter = m_marketSecurity.find(pSecurity->SecurityID);
             if (iter == m_marketSecurity.end()) {
-                auto security = (stSecurity_t*)malloc(sizeof(stSecurity_t));
+                auto security = m_marketSecurityPool.new_element();
                 if (security) {
                     strcpy(security->SecurityID, pSecurity->SecurityID);
                     strcpy(security->SecurityName, pSecurity->SecurityName);
