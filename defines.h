@@ -67,11 +67,13 @@ struct stSecurity_t {
     TORASTOCKAPI::TTORATstpPriceType LowerLimitPrice;
 };
 
-struct stUnFindOrderTrade {
+struct stUnfindOrder {
     TORALEV2API::TTORATstpSecurityIDType SecurityID;
     TORALEV2API::TTORATstpLongSequenceType OrderNo;
     TORALEV2API::TTORATstpLongVolumeType Volume;
-    TORALEV2API::TTORATstpTimeStampType TradeTime;
+    TORALEV2API::TTORATstpTradeBSFlagType Side;
+    TORALEV2API::TTORATstpTimeStampType Time;
+    int Type;   // 0-trade 1-deleteorder
 };
 
 void Stringsplit(const std::string &str, const char split, std::vector<std::string> &res);

@@ -16,6 +16,7 @@ namespace PROMD {
         bool Start(bool isTest = true);
         int ReqMarketData(TTORATstpSecurityIDType SecurityID, TTORATstpExchangeIDType ExchangeID, int type, bool isSub = true);
         void ShowOrderBook(TTORATstpSecurityIDType SecurityID);
+        void ShowUnfindOrder(TTORATstpSecurityIDType SecurityID);
         static const char *GetExchangeName(TTORATstpExchangeIDType ExchangeID);
 
         bool IsInited() const { return m_isInited; }
@@ -44,7 +45,7 @@ namespace PROMD {
         void ResetOrder(TTORATstpSecurityIDType SecurityID, TTORATstpTradeBSFlagType side);
         void PostPrice(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType price);
 
-        void AddUnFindTrade(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType tradeVolume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side, TTORATstpTimeStampType TradeTime);
+        void AddUnFindOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType tradeVolume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side, int type);
         void HandleUnFindTrade(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side);
 
     private:
@@ -56,9 +57,8 @@ namespace PROMD {
         MapOrder m_orderBuy;
         MapOrder m_orderSell;
         MemoryPool<Order, 8192> m_orderPool;
-        std::unordered_map<TTORATstpLongSequenceType, std::vector<stUnFindOrderTrade*>> m_unFindBuyTrades;
-        std::unordered_map<TTORATstpLongSequenceType, std::vector<stUnFindOrderTrade*>> m_unFindSellTrades;
-        MemoryPool<stUnFindOrderTrade, 8192> m_unFindOrderTradePool;
+        std::unordered_map<std::string, std::unordered_map<TTORATstpLongSequenceType, std::vector<stUnfindOrder*>>> m_unFindOrders;
+        MemoryPool<stUnfindOrder, 8192> m_unFindOrderPool;
     };
 
 }

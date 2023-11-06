@@ -42,9 +42,15 @@ void CApplication::OnTime(const boost::system::error_code& error) {
 
     for (auto& iter : m_watchSecurity) {
         if (!m_isTest || iter.second.ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
-            if (m_shMD) m_shMD->ShowOrderBook((char*)iter.first.c_str());
+            if (m_shMD) {
+                //m_shMD->ShowOrderBook((char*)iter.first.c_str());
+                m_shMD->ShowUnfindOrder((char*)iter.first.c_str());
+            }
         } else if (iter.second.ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
-            if (m_szMD) m_szMD->ShowOrderBook((char*)iter.first.c_str());
+            if (m_szMD) {
+                //m_szMD->ShowOrderBook((char*)iter.first.c_str());
+                m_szMD->ShowUnfindOrder((char*)iter.first.c_str());
+            }
         }
     }
     m_timer.expires_from_now(boost::posix_time::milliseconds(6000));
@@ -55,7 +61,7 @@ void CApplication::OnTime(const boost::system::error_code& error) {
 void CApplication::MDOnInited(PROMD::TTORATstpExchangeIDType exchangeID) {
     auto md = GetMDByExchangeID(exchangeID);
     if (!md) return;
-    for (auto &iter: m_watchSecurity) {
+    for (auto &iter: m_watchSecurity) { // change to marketSecurity
         if (exchangeID == iter.second.ExchangeID || exchangeID == PROMD::TORA_TSTP_EXD_COMM) {
             PROMD::TTORATstpSecurityIDType Security = {0};
             strncpy(Security, iter.first.c_str(), sizeof(Security));
@@ -132,13 +138,13 @@ void CApplication::MDPostPrice(stPostPrice& postPrice) {
 void CApplication::TDOnInited() {
     if (m_isTest) {
         m_shMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SSE);
-        m_shMD->Start(m_useTcp);
-        m_szMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SZSE);
-        m_szMD->Start(m_useTcp);
+        m_shMD->Start(true);
+        //m_szMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SZSE);
+        //m_szMD->Start(true);
     }
     else {
         m_shMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_COMM);
-        m_shMD->Start(m_useTcp);
+        m_shMD->Start(false);
     }
 }
 
@@ -147,7 +153,7 @@ PROMD::MDL2Impl *CApplication::GetMDByExchangeID(PROMD::TTORATstpExchangeIDType 
     return m_szMD;
 }
 
-bool CApplication::Init(std::string watchSecurity) {
+bool CApplication::Init(std::string& watchSecurity) {
     trim(watchSecurity);
     std::vector<std::string> vtSecurity;
     Stringsplit(watchSecurity, ',', vtSecurity);

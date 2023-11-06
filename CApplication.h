@@ -29,13 +29,12 @@ public:
     boost::asio::deadline_timer m_timer;
 
 public:
-    bool Init(std::string watchSecurity = "");
+    bool Init(std::string& watchSecurity);
     bool LoadStrategy();
     bool AddStrategy(stStrategy & strategy);
 
 public:
     bool m_isTest = true;
-    bool m_useTcp = true;
     bool m_strategyOpen = false;
     std::string m_dbFile;
     std::string m_TDAddr = "tcp://210.14.72.21:4400";

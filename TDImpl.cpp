@@ -42,9 +42,8 @@ namespace PROTD {
         req.LogInAccountType = TORA_TSTP_LACT_AccountID;
         strcpy(req.LogInAccount, m_pApp->m_TDAccount.c_str());
         strcpy(req.Password, m_pApp->m_TDPassword.c_str());
-        strcpy(req.UserProductInfo, "notthisone");
-        strcpy(req.TerminalInfo,
-               "PC;IIP=123.112.154.118;IPORT=50361;LIP=192.168.118.107;MAC=54EE750B1713FCF8AE5CBD58;HD=TF655AY91GHRVL;@notthisone");
+        //strcpy(req.UserProductInfo, "notthisone");
+        //strcpy(req.TerminalInfo, "PC;IIP=123.112.154.118;IPORT=50361;LIP=192.168.118.107;MAC=54EE750B1713FCF8AE5CBD58;HD=TF655AY91GHRVL;@notthisone");
         m_pApi->ReqUserLogin(&req, ++m_reqID);
     }
 
@@ -144,9 +143,9 @@ namespace PROTD {
         }
 
         if (bIsLast) {
+            printf("TDImpl::OnRspQryTradingAccount Success!!!\n");
             m_isInited = true;
             m_pApp->m_ioc.post(boost::bind(&CApplication::TDOnInited, m_pApp));
-            printf("TDImpl::OnRspQryTradingAccount Success!!!\n");
         }
     }
 

@@ -25,6 +25,11 @@ std::string GetTimeStr() {
 
 int GetNowTick() {
     auto t = time(nullptr);
+    return (int)t;
+}
+
+int GetNowTickBak() {
+    auto t = time(nullptr);
     auto* now = localtime(&t);
     char time[32] = {0};
     sprintf(time, "%02d%02d%02d000", now->tm_hour, now->tm_min, now->tm_sec);
