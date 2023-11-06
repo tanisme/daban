@@ -138,13 +138,13 @@ void CApplication::MDPostPrice(stPostPrice& postPrice) {
 void CApplication::TDOnInited() {
     if (m_isTest) {
         m_shMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SSE);
-        m_shMD->Start(true);
-        //m_szMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SZSE);
-        //m_szMD->Start(true);
+        m_shMD->Start(m_isTest);
+        m_szMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SZSE);
+        m_szMD->Start(m_isTest);
     }
     else {
         m_shMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_COMM);
-        m_shMD->Start(false);
+        m_shMD->Start(m_isTest);
     }
 }
 

@@ -11,18 +11,17 @@ namespace test {
         std::stringstream stream;
         stream << "--------- " << SecurityID << " " << GetTimeStr() << "---------\n";
 
-        char buffer[2048] = {0};
+        char buffer[512] = {0};
+        int showPankouCount = 5;
         {
             auto iter = m_orderSell.find(SecurityID);
             if (iter != m_orderSell.end()) {
                 auto size = (int) iter->second.size();
-                if (m_showPankouCount < size) size = m_showPankouCount;
+                if (showPankouCount < size) size = showPankouCount;
                 for (auto i = size; i > 0; i--) {
                     memset(buffer, 0, sizeof(buffer));
                     TTORATstpLongVolumeType totalVolume = 0;
-                    for (auto iter1: iter->second.at(i - 1).Orders) {
-                        totalVolume += iter1->Volume;
-                    }
+                    for (auto iter1: iter->second.at(i - 1).Orders) totalVolume += iter1->Volume;
                     sprintf(buffer, "S%d\t%.3f\t\t%d\t\t%lld\n", i, iter->second.at(i - 1).Price,
                             (int) iter->second.at(i - 1).Orders.size(), totalVolume);
                     stream << buffer;
@@ -34,7 +33,7 @@ namespace test {
             auto iter = m_orderBuy.find(SecurityID);
             if (iter != m_orderBuy.end()) {
                 auto size = (int) iter->second.size();
-                if (m_showPankouCount < size) size = m_showPankouCount;
+                if (showPankouCount < size) size = showPankouCount;
                 for (auto i = 1; i <= size; i++) {
                     memset(buffer, 0, sizeof(buffer));
                     TTORATstpLongVolumeType totalVolume = 0;
@@ -48,91 +47,211 @@ namespace test {
         printf("%s\n", stream.str().c_str());
     }
 
-    void Imitate::AddUnFindTrade(TTORATstpSecurityIDType securityID, TTORATstpLongVolumeType tradeVolume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side) {
-        Order order = {0};
-        order.Volume = tradeVolume;
-        order.OrderNo = OrderNo;
-
-        std::unordered_map<std::string, std::map<TTORATstpLongSequenceType, std::vector<Order>> >& unFindTrades = side==TORA_TSTP_LSD_Buy?m_unFindBuyTrades:m_unFindSellTrades;
-        if (unFindTrades.find(securityID) == unFindTrades.end()) {
-            unFindTrades[securityID] = std::map<TTORATstpLongSequenceType, std::vector<Order>>();
-        }
-        if (unFindTrades[securityID].find(OrderNo) == unFindTrades[securityID].end()) {
-            unFindTrades[securityID][OrderNo] = std::vector<Order>();
-        }
-        unFindTrades[securityID][OrderNo].emplace_back(order);
-    }
-
-    void Imitate::HandleUnFindTrade(TTORATstpSecurityIDType securityID, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side) {
-        std::unordered_map<std::string, std::map<TTORATstpLongSequenceType, std::vector<Order>> >& unFindTrades = side==TORA_TSTP_LSD_Buy?m_unFindBuyTrades:m_unFindSellTrades;
-        auto iter = unFindTrades.find(securityID);
-        if (iter == unFindTrades.end() || iter->second.empty()) return;
-        auto iter1 = iter->second.find(OrderNo);
-        if (iter1 == iter->second.end() || iter1->second.empty()) return;
-
-        for (auto iter2 = iter1->second.begin(); iter2 != iter1->second.end();) {
-            if (ModifyOrder(securityID, iter2->Volume, OrderNo, side)) {
-                iter2 = iter1->second.erase(iter2);
-            } else {
-                ++iter2;
+    void Imitate::ShowUnfindOrder(TTORATstpSecurityIDType SecurityID) {
+        char buffer[512] = {0};
+        {
+            auto iter = m_unFindOrders.find(SecurityID);
+            if (iter != m_unFindOrders.end()) {
+                sprintf(buffer, "%s %s UnfindOrderCount:%d", GetTimeStr().c_str(), SecurityID, (int)iter->second.size());
+                printf("%s\n", buffer);
             }
         }
-        if (iter1->second.empty()) {
-            iter->second.erase(iter1);
+    }
+
+    void Imitate::AddUnFindOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side, int type) {
+        auto order = m_unFindOrderPool.new_element();
+        strcpy(order->SecurityID, SecurityID);
+        order->OrderNo = OrderNo;
+        order->Volume = Volume;
+        order->Side = Side;
+        order->Time = GetNowTick();
+        order->Type = type; // 0-trade 1-delete
+
+        auto iter = m_unFindOrders.find(SecurityID);
+        if (iter == m_unFindOrders.end()) {
+            m_unFindOrders[SecurityID] = std::unordered_map<TTORATstpLongSequenceType, std::vector<stUnfindOrder*> >();
         }
-        if (iter->second.empty()) {
-            unFindTrades.erase(iter);
+        m_unFindOrders[SecurityID][OrderNo].emplace_back(order);
+    }
+
+    void Imitate::HandleUnFindOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side) {
+        auto nowTick = GetNowTick();
+
+        {
+            auto iter = m_unFindOrders.find(SecurityID);
+            if (iter == m_unFindOrders.end()) return;
+
+            auto iter1 = iter->second.find(OrderNo);
+            if (iter1 != iter->second.end()) {
+                for (auto iter2 = iter1->second.begin(); iter2 != iter1->second.end();) {
+                    if ((*iter2)->Side == Side && (*iter2)->Type == 0) {
+                        if (ModifyOrder(SecurityID, (*iter2)->Volume, OrderNo, Side)) {
+                            //printf("处理%s未找到的成交单成功 OrderNo:%lld Volume:%lld Side:%c\n", SecurityID, OrderNo, (*iter2)->Volume, Side);
+                            auto order = (*iter2);
+                            iter2 = iter1->second.erase(iter2);
+                            m_unFindOrderPool.delete_element(order);
+                        } else {
+                            ++iter2;
+                        }
+                    }
+                    else {
+                        ++iter2;
+                    }
+                }
+                if (iter1->second.empty()) {
+                    iter->second.erase(iter1);
+                }
+            }
+            if (iter->second.empty()) {
+                m_unFindOrders.erase(iter);
+            }
+        }
+
+        {
+            auto iter = m_unFindOrders.find(SecurityID);
+            if (iter == m_unFindOrders.end()) return;
+
+            auto iter1 = iter->second.find(OrderNo);
+            if (iter1 != iter->second.end()) {
+                for (auto iter2 = iter1->second.begin(); iter2 != iter1->second.end();) {
+                    if ((*iter2)->Side == Side && (*iter2)->Type == 1) {
+                        if (ModifyOrder(SecurityID, (*iter2)->Volume, OrderNo, Side)) {
+                            //printf("处理%s未找到的撤单成功 OrderNo:%lld Volume:%lld Side:%c\n", SecurityID, OrderNo, (*iter2)->Volume, Side);
+                            auto order = (*iter2);
+                            iter2 = iter1->second.erase(iter2);
+                            m_unFindOrderPool.delete_element(order);
+                        } else {
+                            ++iter2;
+                        }
+                    }
+                    else {
+                        ++iter2;
+                    }
+                }
+                if (iter1->second.empty()) {
+                    iter->second.erase(iter1);
+                }
+            }
+            if (iter->second.empty()) {
+                m_unFindOrders.erase(iter);
+            }
+        }
+
+        {
+            auto iter = m_unFindOrders.find(SecurityID);
+            if (iter == m_unFindOrders.end()) return;
+
+            for (auto iter1 = iter->second.begin(); iter1 != iter->second.end();) {
+                for (auto iter2 = iter1->second.begin(); iter2 != iter1->second.end();) {
+                    if ((*iter2)->Time + 30 < nowTick) {
+                        //printf("删除订单%d-%d=%d\n", nowTick, (*iter2)->Time, nowTick-(*iter2)->Time);
+                        auto order = (*iter2);
+                        iter2 = iter1->second.erase(iter2);
+                        m_unFindOrderPool.delete_element(order);
+                    } else {
+                        ++iter2;
+                    }
+                }
+                if (iter1->second.empty()) {
+                    iter1 = iter->second.erase(iter1);
+                }
+                else {
+                    ++iter1;
+                }
+            }
+            if (iter->second.empty()) {
+                m_unFindOrders.erase(iter);
+            }
         }
     }
 
     void Imitate::OnRtnOrderDetail(TTORATstpSecurityIDType SecurityID, TTORATstpTradeBSFlagType Side, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpExchangeIDType ExchangeID, TTORATstpLOrderStatusType OrderStatus) {
         if (Side != TORA_TSTP_LSD_Buy && Side != TORA_TSTP_LSD_Sell) return;
+
         if (ExchangeID == TORA_TSTP_EXD_SSE) {
             if (OrderStatus == TORA_TSTP_LOS_Add) {
                 InsertOrder(SecurityID, OrderNO, Price, Volume, Side);
+                HandleUnFindOrder(SecurityID, OrderNO, Side);
             } else if (OrderStatus == TORA_TSTP_LOS_Delete) {
-                ModifyOrder(SecurityID, 0, OrderNO, Side);
+                auto ret = ModifyOrder(SecurityID, 0, OrderNO, Side);
+                if (!ret) {
+                    AddUnFindOrder(SecurityID, 0, OrderNO, Side, 1) ;
+                }
             }
         } else if (ExchangeID == TORA_TSTP_EXD_SZSE) {
             InsertOrder(SecurityID, OrderNO, Price, Volume, Side);
+            HandleUnFindOrder(SecurityID, OrderNO, Side);
         }
     }
 
     void Imitate::OnRtnTransaction(TTORATstpSecurityIDType SecurityID, TTORATstpExchangeIDType ExchangeID, TTORATstpLongVolumeType TradeVolume, TTORATstpExecTypeType ExecType, TTORATstpLongSequenceType BuyNo, TTORATstpLongSequenceType SellNo, TTORATstpPriceType TradePrice) {
         if (ExchangeID == TORA_TSTP_EXD_SSE) {
-            if (!ModifyOrder(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy)) {
-                //AddUnFindTrade(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
+            auto ret = ModifyOrder(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
+            if (!ret) {
+                AddUnFindOrder(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
             }
-            if (!ModifyOrder(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell)) {
-                //AddUnFindTrade(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
+            ret = ModifyOrder(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
+            if (!ret) {
+                AddUnFindOrder(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
             }
         } else if (ExchangeID == TORA_TSTP_EXD_SZSE) {
             if (ExecType == TORA_TSTP_ECT_Fill) {
-                ModifyOrder(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
-                ModifyOrder(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
+
+                auto ret = ModifyOrder(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
+                if (!ret) {
+                    AddUnFindOrder(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
+                }
+                ret = ModifyOrder(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
+                if (!ret) {
+                    AddUnFindOrder(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
+                }
             } else if (ExecType == TORA_TSTP_ECT_Cancel) {
-                if (BuyNo > 0) ModifyOrder(SecurityID, 0, BuyNo, TORA_TSTP_LSD_Buy);
-                if (SellNo > 0) ModifyOrder(SecurityID, 0, SellNo, TORA_TSTP_LSD_Sell);
+                if (BuyNo > 0) {
+                    auto ret = ModifyOrder(SecurityID, 0, BuyNo, TORA_TSTP_LSD_Buy);
+                    if (!ret) {
+                        AddUnFindOrder(SecurityID, 0, BuyNo, TORA_TSTP_LSD_Buy, 1);
+                    }
+                }
+                if (SellNo > 0) {
+                    auto ret = ModifyOrder(SecurityID, 0, SellNo, TORA_TSTP_LSD_Sell);
+                    if (!ret) {
+                        AddUnFindOrder(SecurityID, 0, SellNo, TORA_TSTP_LSD_Sell, 1);
+                    }
+                }
             }
         }
     }
 
     void Imitate::OnRtnNGTSTick(TTORATstpSecurityIDType SecurityID, TTORATstpLTickTypeType TickType, TTORATstpLongSequenceType BuyNo, TTORATstpLongSequenceType SellNo, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType	Side) {
+        if (Side != TORA_TSTP_LSD_Buy && Side != TORA_TSTP_LSD_Sell) return;
+
         if (TickType == TORA_TSTP_LTT_Add) {
-            if (Side == TORA_TSTP_LSD_Buy) {
-                InsertOrder(SecurityID, BuyNo, Price, Volume, Side);
-            } else if (Side == TORA_TSTP_LSD_Sell){
-                InsertOrder(SecurityID, SellNo, Price, Volume, Side);
-            }
+            TTORATstpLongSequenceType OrderNo;
+            if (Side == TORA_TSTP_LSD_Buy)
+                OrderNo = BuyNo;
+            else
+                OrderNo = SellNo;
+            InsertOrder(SecurityID, OrderNo, Price, Volume, Side);
+            HandleUnFindOrder(SecurityID, OrderNo, Side);
         } else if (TickType == TORA_TSTP_LTT_Delete) {
-            if (Side == TORA_TSTP_LSD_Buy) {
-                ModifyOrder(SecurityID, 0, BuyNo, TORA_TSTP_LSD_Buy);
-            } else if (Side == TORA_TSTP_LSD_Sell){
-                ModifyOrder(SecurityID, 0, SellNo, TORA_TSTP_LSD_Buy);
+            TTORATstpLongSequenceType OrderNo;
+            if (Side == TORA_TSTP_LSD_Buy)
+                OrderNo = BuyNo;
+            else
+                OrderNo = SellNo;
+            auto ret = ModifyOrder(SecurityID, 0, OrderNo, Side);
+            if (!ret) {
+                AddUnFindOrder(SecurityID, 0, OrderNo, Side, 1);
             }
         } else if (TickType == TORA_TSTP_LTT_Trade) {
-            ModifyOrder(SecurityID, Volume, BuyNo, TORA_TSTP_LSD_Buy);
-            ModifyOrder(SecurityID, Volume, SellNo, TORA_TSTP_LSD_Sell);
+            auto ret = ModifyOrder(SecurityID, Volume, BuyNo, TORA_TSTP_LSD_Buy);
+            if (!ret) {
+                AddUnFindOrder(SecurityID, Volume, BuyNo, TORA_TSTP_LSD_Buy);
+            }
+            ret = ModifyOrder(SecurityID, Volume, SellNo, TORA_TSTP_LSD_Sell);
+            if (!ret)  {
+                AddUnFindOrder(SecurityID, Volume, SellNo, TORA_TSTP_LSD_Sell);
+            }
         }
     }
 
@@ -184,7 +303,7 @@ namespace test {
         }
     }
 
-    bool Imitate::ModifyOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType TradeVolume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side) {
+    bool Imitate::ModifyOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side) {
         MapOrder &mapOrder = Side == TORA_TSTP_LSD_Buy ? m_orderBuy : m_orderSell;
         auto iter = mapOrder.find(SecurityID);
         if (iter != mapOrder.end()) {
@@ -192,11 +311,11 @@ namespace test {
             for (auto i = 0; i < (int) iter->second.size(); i++) {
                 for (auto j = 0; j < (int) iter->second.at(i).Orders.size(); j++) {
                     if (iter->second.at(i).Orders.at(j)->OrderNo == OrderNo) {
-                        if (TradeVolume == 0) {
+                        if (Volume == 0) {
                             iter->second.at(i).Orders.at(j)->Volume = 0;
                             needReset = true;
                         } else {
-                            iter->second.at(i).Orders.at(j)->Volume -= TradeVolume;
+                            iter->second.at(i).Orders.at(j)->Volume -= Volume;
                             if (iter->second.at(i).Orders.at(j)->Volume <= 0) {
                                 needReset = true;
                             }
@@ -485,6 +604,7 @@ namespace test {
         }
         ifs.close();
         printf("生成%s订单簿 处理完成所有成交 共%lld条\n", SecurityID, i);
+        ShowUnfindOrder(SecurityID);
         ShowOrderBook(SecurityID);
     }
 
@@ -638,27 +758,27 @@ namespace test {
             printf("-------------------------------------------------------------------\n");
             printf("开始生成订单簿 %s\n", strtime);
 
-            for (auto iter : tempSecurity) {
-                std::string orderFileName = dstDataDir + iter + "_o.txt";
-                std::string tradeFileName = dstDataDir + iter + "_t.txt";
-                FILE *opf = fopen(orderFileName.c_str(), "w+");
-                if (!opf) {
-                    printf("打开订单%s文件失败\n", orderFileName.c_str());
-                    return false;
-                }
-                FILE *tpf = fopen(tradeFileName.c_str(), "w+");
-                if (!tpf) {
-                    printf("打开成交%s文件失败\n", tradeFileName.c_str());
-                    fclose(opf);
-                    return false;
-                }
-                m_watchOrderFILE[iter] = opf;
-                m_watchTradeFILE[iter] = tpf;
-            }
-            SplitSecurityFile(srcDataDir, true);
-            for (auto iter = m_watchOrderFILE.begin(); iter != m_watchOrderFILE.end(); ++iter) if (iter->second) fclose(iter->second);
-            SplitSecurityFile(srcDataDir, false);
-            for (auto iter = m_watchTradeFILE.begin(); iter != m_watchTradeFILE.end(); ++iter) if (iter->second) fclose(iter->second);
+            //for (auto iter : tempSecurity) {
+            //    std::string orderFileName = dstDataDir + iter + "_o.txt";
+            //    std::string tradeFileName = dstDataDir + iter + "_t.txt";
+            //    FILE *opf = fopen(orderFileName.c_str(), "w+");
+            //    if (!opf) {
+            //        printf("打开订单%s文件失败\n", orderFileName.c_str());
+            //        return false;
+            //    }
+            //    FILE *tpf = fopen(tradeFileName.c_str(), "w+");
+            //    if (!tpf) {
+            //        printf("打开成交%s文件失败\n", tradeFileName.c_str());
+            //        fclose(opf);
+            //        return false;
+            //    }
+            //    m_watchOrderFILE[iter] = opf;
+            //    m_watchTradeFILE[iter] = tpf;
+            //}
+            //SplitSecurityFile(srcDataDir, true);
+            //for (auto iter = m_watchOrderFILE.begin(); iter != m_watchOrderFILE.end(); ++iter) if (iter->second) fclose(iter->second);
+            //SplitSecurityFile(srcDataDir, false);
+            //for (auto iter = m_watchTradeFILE.begin(); iter != m_watchTradeFILE.end(); ++iter) if (iter->second) fclose(iter->second);
 
             for (auto iter : tempSecurity) {
                 SplitSecurityFileOrderQuot(dstDataDir, (char*)iter.c_str());

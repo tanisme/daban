@@ -91,8 +91,10 @@ namespace PROTD {
                     security->LowerLimitPrice = pSecurity->LowerLimitPrice;
                     m_marketSecurity[security->SecurityID] = security;
 
-                    if (m_pApp->m_watchSecurity.find(security->SecurityID) != m_pApp->m_watchSecurity.end()) {
-                        m_pApp->m_watchSecurity[security->SecurityID].ExchangeID = security->ExchangeID;
+                    if (!m_pApp->m_watchSecurity.empty()) {
+                        if (m_pApp->m_watchSecurity.find(security->SecurityID) != m_pApp->m_watchSecurity.end()) {
+                            m_pApp->m_watchSecurity[security->SecurityID].ExchangeID = security->ExchangeID;
+                        }
                     }
                 }
             }

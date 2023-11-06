@@ -19,12 +19,13 @@ namespace test {
         void OnRtnNGTSTick(TTORATstpSecurityIDType SecurityID, TTORATstpLTickTypeType TickType, TTORATstpLongSequenceType BuyNo, TTORATstpLongSequenceType SellNo, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType	Side);
 
         void ShowOrderBook(TTORATstpSecurityIDType SecurityID);
+        void ShowUnfindOrder(TTORATstpSecurityIDType SecurityID);
         void InsertOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType orderNO, TTORATstpPriceType price, TTORATstpLongVolumeType Volume, TTORATstpLSideType side);
         bool ModifyOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType tradeVolume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side);
         void ResetOrder(TTORATstpSecurityIDType SecurityID, TTORATstpTradeBSFlagType side);
-
-        void AddUnFindTrade(TTORATstpSecurityIDType securityID, TTORATstpLongVolumeType tradeVolume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side);
-        void HandleUnFindTrade(TTORATstpSecurityIDType securityID, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side);
+        void PostPrice(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType price);
+        void AddUnFindOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side, int type = 0);
+        void HandleUnFindOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side);
 
         void SplitSecurityFile(std::string srcDataDir, bool isOrder);
         void SplitSecurityFileOrderQuot(std::string &dstDataDir, TTORATstpSecurityIDType SecurityID);
@@ -39,11 +40,11 @@ namespace test {
         std::unordered_map<std::string, bool> m_watchSecurity;
         std::unordered_map<std::string, FILE*> m_watchOrderFILE;
         std::unordered_map<std::string, FILE*> m_watchTradeFILE;
-        MemoryPool<Order, 8192> m_orderPool;
         MapOrder m_orderBuy;
         MapOrder m_orderSell;
-        std::unordered_map<std::string, std::map<TTORATstpLongSequenceType, std::vector<Order>> > m_unFindBuyTrades;
-        std::unordered_map<std::string, std::map<TTORATstpLongSequenceType, std::vector<Order>> > m_unFindSellTrades;
+        MemoryPool<Order, 8192> m_orderPool;
+        std::unordered_map<std::string, std::unordered_map<TTORATstpLongSequenceType, std::vector<stUnfindOrder*>>> m_unFindOrders;
+        MemoryPool<stUnfindOrder, 8192> m_unFindOrderPool;
     };
 
 }

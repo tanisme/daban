@@ -43,10 +43,11 @@ namespace PROMD {
         void InsertOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType orderNO, TTORATstpPriceType price, TTORATstpLongVolumeType Volume, TTORATstpLSideType side);
         bool ModifyOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType tradeVolume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side);
         void ResetOrder(TTORATstpSecurityIDType SecurityID, TTORATstpTradeBSFlagType side);
+        void FixOrder(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType price);
         void PostPrice(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType price);
 
-        void AddUnFindOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType tradeVolume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side, int type);
-        void HandleUnFindTrade(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side);
+        void AddUnFindOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side, int type = 0);
+        void HandleUnFindOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side);
 
     private:
         int m_reqID = 1;
