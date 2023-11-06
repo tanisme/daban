@@ -430,12 +430,6 @@ namespace PROMD {
         order->Time = GetNowTick();
         order->Type = type;
 
-        if (type == 0) {
-            printf("添加%s未找到的成交单 OrderNo:%lld Volume:%lld Side:%c\n", SecurityID, OrderNo, Volume, Side);
-        } else {
-            printf("添加%s未找到的撤单 OrderNo:%lld Volume:%lld Side:%c\n", SecurityID, OrderNo, Volume, Side);
-        }
-
         auto iter = m_unFindOrders.find(SecurityID);
         if (iter == m_unFindOrders.end()) {
             m_unFindOrders[SecurityID] = std::unordered_map<TTORATstpLongSequenceType, std::vector<stUnfindOrder*> >();
