@@ -449,7 +449,7 @@ namespace PROMD {
                 for (auto iter2 = iter1->second.begin(); iter2 != iter1->second.end();) {
                     if ((*iter2)->Side == Side && (*iter2)->Type == 0) {
                         if (ModifyOrder(SecurityID, (*iter2)->Volume, OrderNo, Side)) {
-                            printf("处理%s未找到的成交单成功 OrderNo:%lld Volume:%lld Side:%c\n", SecurityID, OrderNo, (*iter2)->Volume, Side);
+                            //printf("处理%s未找到的成交单成功 OrderNo:%lld Volume:%lld Side:%c\n", SecurityID, OrderNo, (*iter2)->Volume, Side);
                             auto order = (*iter2);
                             iter2 = iter1->second.erase(iter2);
                             m_unFindOrderPool.delete_element(order);
@@ -479,7 +479,7 @@ namespace PROMD {
                 for (auto iter2 = iter1->second.begin(); iter2 != iter1->second.end();) {
                     if ((*iter2)->Side == Side && (*iter2)->Type == 1) {
                         if (ModifyOrder(SecurityID, (*iter2)->Volume, OrderNo, Side)) {
-                            printf("处理%s未找到的撤单成功 OrderNo:%lld Volume:%lld Side:%c\n", SecurityID, OrderNo, (*iter2)->Volume, Side);
+                            //printf("处理%s未找到的撤单成功 OrderNo:%lld Volume:%lld Side:%c\n", SecurityID, OrderNo, (*iter2)->Volume, Side);
                             auto order = (*iter2);
                             iter2 = iter1->second.erase(iter2);
                             m_unFindOrderPool.delete_element(order);
@@ -507,7 +507,7 @@ namespace PROMD {
             for (auto iter1 = iter->second.begin(); iter1 != iter->second.end();) {
                 for (auto iter2 = iter1->second.begin(); iter2 != iter1->second.end();) {
                     if ((*iter2)->Time + 30 < nowTick) {
-                        printf("删除订单%d-%d=%d\n", nowTick, (*iter2)->Time, nowTick-(*iter2)->Time);
+                        //printf("删除订单%d-%d=%d\n", nowTick, (*iter2)->Time, nowTick-(*iter2)->Time);
                         auto order = (*iter2);
                         iter2 = iter1->second.erase(iter2);
                         m_unFindOrderPool.delete_element(order);
