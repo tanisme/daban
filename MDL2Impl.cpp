@@ -104,7 +104,7 @@ namespace PROMD {
         {
             auto iter = m_unFindOrders.find(SecurityID);
             if (iter != m_unFindOrders.end()) {
-                sprintf(buffer, "%s UnfindOrderCount:%d\n", SecurityID, (int)iter->second.size());
+                sprintf(buffer, "%s %s UnfindOrderCount:%d", GetTimeStr().c_str(), SecurityID, (int)iter->second.size());
                 printf("%s\n", buffer);
             }
         }
@@ -463,6 +463,9 @@ namespace PROMD {
                             ++iter2;
                         }
                     }
+                    else {
+                        ++iter2;
+                    }
                 }
                 if (iter1->second.empty()) {
                     iter->second.erase(iter1);
@@ -489,6 +492,9 @@ namespace PROMD {
                         } else {
                             ++iter2;
                         }
+                    }
+                    else {
+                        ++iter2;
                     }
                 }
                 if (iter1->second.empty()) {
