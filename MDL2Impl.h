@@ -40,14 +40,14 @@ namespace PROMD {
         void OnRtnNGTSTick(CTORATstpLev2NGTSTickField *pTick) override;
 
     private:
-        void InsertOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType orderNO, TTORATstpPriceType price, TTORATstpLongVolumeType Volume, TTORATstpLSideType side);
-        bool ModifyOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType tradeVolume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side);
-        void ResetOrder(TTORATstpSecurityIDType SecurityID, TTORATstpTradeBSFlagType side);
-        void FixOrder(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType price);
-        void PostPrice(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType price);
+        void InsertOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side);
+        bool ModifyOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side);
+        void ResetOrder(TTORATstpSecurityIDType SecurityID, TTORATstpTradeBSFlagType Side);
+        void FixOrder(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price, TTORATstpTimeStampType Time);
+        void PostPrice(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price);
 
-        void AddUnFindOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side, int type = 0);
-        void HandleUnFindOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType side);
+        void AddUnFindOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side, int type = 0);
+        void HandleUnFindOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side);
 
     private:
         int m_reqID = 1;

@@ -15,6 +15,7 @@ public:
     explicit CApplication(boost::asio::io_context& ioc);
     ~CApplication();
 
+    bool Init(std::string& watchSecurity);
     void Start();
     void OnTime(const boost::system::error_code& error);
 
@@ -30,7 +31,6 @@ public:
     boost::asio::deadline_timer m_timer;
 
 public:
-    bool Init(std::string& watchSecurity);
     bool LoadStrategy();
     bool AddStrategy(stStrategy & strategy);
 

@@ -29,7 +29,7 @@ namespace PROTD {
     }
 
     void TDImpl::OnFrontConnected() {
-        printf("TDImpl::OnFrontConnected!!!\n");
+        printf("TD::OnFrontConnected!!!\n");
 
         CTORATstpReqUserLoginField req = {0};
         req.LogInAccountType = TORA_TSTP_LACT_AccountID;
@@ -48,7 +48,7 @@ namespace PROTD {
     void TDImpl::OnRspUserLogin(CTORATstpRspUserLoginField *pRspUserLoginField, CTORATstpRspInfoField *pRspInfo, int nRequestID) {
         if (!pRspUserLoginField || !pRspInfo) return;
         if (pRspInfo->ErrorID > 0) {
-            printf("TDImpl::OnRspUserLogin Failed!!! ErrMsg:%s\n", pRspInfo->ErrorMsg);
+            printf("TD::OnRspUserLogin Failed!!! ErrMsg:%s\n", pRspInfo->ErrorMsg);
             return;
         }
 
@@ -94,7 +94,7 @@ namespace PROTD {
         }
 
         if (bIsLast) {
-            printf("TDImpl::OnRspQrySecurity Success!!!\n");
+            printf("TD::OnRspQrySecurity Success!!!\n");
             CTORATstpQryOrderField req = {0};
             m_pApi->ReqQryOrder(&req, 0);
         }
@@ -105,7 +105,7 @@ namespace PROTD {
         }
 
         if (bIsLast) {
-            printf("TDImpl::OnRspQryOrder Success!!!\n");
+            printf("TD::OnRspQryOrder Success!!!\n");
             CTORATstpQryTradeField Req = {0};
             m_pApi->ReqQryTrade(&Req, 0);
         }
@@ -116,7 +116,7 @@ namespace PROTD {
         }
 
         if (bIsLast) {
-            printf("TDImpl::OnRspQryTrade Success!!!\n");
+            printf("TD::OnRspQryTrade Success!!!\n");
             CTORATstpQryPositionField Req = {0};
             m_pApi->ReqQryPosition(&Req, 0);
         }
@@ -127,7 +127,7 @@ namespace PROTD {
         }
 
         if (bIsLast) {
-            printf("TDImpl::OnRspQryPosition Success!!!\n");
+            printf("TD::OnRspQryPosition Success!!!\n");
             CTORATstpQryTradingAccountField Req = {0};
             m_pApi->ReqQryTradingAccount(&Req, 0);
         }
@@ -138,7 +138,7 @@ namespace PROTD {
         }
 
         if (bIsLast) {
-            printf("TDImpl::OnRspQryTradingAccount Success!!!\n");
+            printf("TD::OnRspQryTradingAccount Success!!!\n");
             m_isInited = true;
             m_pApp->m_ioc.post(boost::bind(&CApplication::TDOnInited, m_pApp));
         }

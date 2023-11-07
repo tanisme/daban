@@ -22,7 +22,7 @@ int main() {
             ("daban.strategyopen", boost::program_options::value<bool>(&strategyopen), "daban.strategyopen")
             //("daban.dbfile", boost::program_options::value<std::string>(&dbfile), "daban.dbfile")
             ("daban.cpucore", boost::program_options::value<std::string>(&cpucore), "daban.cpucore")
-            ("daban.httpurl", boost::program_options::value<std::string>(&httpurl), "daban.httpurl")
+            //("daban.httpurl", boost::program_options::value<std::string>(&httpurl), "daban.httpurl")
             ("daban.tdaddr", boost::program_options::value<std::string>(&tdaddr), "daban.tdaddr")
             ("daban.tdaccount", boost::program_options::value<std::string>(&tdaccount), "daban.tdaccount")
             ("daban.tdpassword", boost::program_options::value<std::string>(&tdpassword), "daban.tdpassword")

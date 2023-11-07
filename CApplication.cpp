@@ -25,6 +25,23 @@ CApplication::~CApplication() {
     }
 }
 
+bool CApplication::Init(std::string& watchSecurity) {
+    trim(watchSecurity);
+    std::vector<std::string> vtSecurity;
+    Stringsplit(watchSecurity, ',', vtSecurity);
+    for (auto iter : vtSecurity) {
+        stSecurity_t security = {0};
+        strcpy(security.SecurityID, iter.c_str());
+        m_watchSecurity[security.SecurityID] = security;
+    }
+
+    //if (!LoadStrategy()) {
+    //    printf("LoadStrategy Failed!!!\n");
+    //    return false;
+    //}
+    return true;
+}
+
 void CApplication::Start() {
     m_TD = new PROTD::TDImpl(this);
     m_TD->Start();
@@ -61,20 +78,20 @@ void CApplication::OnTime(const boost::system::error_code& error) {
 void CApplication::MDOnInited(PROMD::TTORATstpExchangeIDType exchangeID) {
     auto md = GetMDByExchangeID(exchangeID);
     if (!md) return;
-    for (auto &iter: m_watchSecurity) { // change to marketSecurity
-        if (exchangeID == iter.second.ExchangeID || exchangeID == PROMD::TORA_TSTP_EXD_COMM) {
+    for (auto &iter: m_TD->m_marketSecurity) { // watch change to m_watchSecurity
+        if (exchangeID == iter.second->ExchangeID || exchangeID == PROMD::TORA_TSTP_EXD_COMM) {
             PROMD::TTORATstpSecurityIDType Security = {0};
             strncpy(Security, iter.first.c_str(), sizeof(Security));
-            if (iter.second.ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
+            if (iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
                 if (m_shMDNewVersion > 0) {
-                    md->ReqMarketData(Security, iter.second.ExchangeID, 4);
+                    md->ReqMarketData(Security, iter.second->ExchangeID, 4);
                 } else {
-                    md->ReqMarketData(Security, iter.second.ExchangeID, 2);
-                    md->ReqMarketData(Security, iter.second.ExchangeID, 3);
+                    md->ReqMarketData(Security, iter.second->ExchangeID, 2);
+                    md->ReqMarketData(Security, iter.second->ExchangeID, 3);
                 }
-            } else if (iter.second.ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
-                md->ReqMarketData(Security, iter.second.ExchangeID, 2);
-                md->ReqMarketData(Security, iter.second.ExchangeID, 3);
+            } else if (iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
+                md->ReqMarketData(Security, iter.second->ExchangeID, 2);
+                md->ReqMarketData(Security, iter.second->ExchangeID, 3);
             }
         }
     }
@@ -138,13 +155,13 @@ void CApplication::MDPostPrice(stPostPrice& postPrice) {
 void CApplication::TDOnInited() {
     if (m_isTest) {
         m_shMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SSE);
-        m_shMD->Start(m_isTest);
-        m_szMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SZSE);
-        m_szMD->Start(m_isTest);
+        m_shMD->Start(true);
+        //m_szMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SZSE);
+        //m_szMD->Start(true);
     }
     else {
         m_shMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_COMM);
-        m_shMD->Start(m_isTest);
+        m_shMD->Start(false);
     }
 }
 
@@ -153,23 +170,7 @@ PROMD::MDL2Impl *CApplication::GetMDByExchangeID(PROMD::TTORATstpExchangeIDType 
     return m_szMD;
 }
 
-bool CApplication::Init(std::string& watchSecurity) {
-    trim(watchSecurity);
-    std::vector<std::string> vtSecurity;
-    Stringsplit(watchSecurity, ',', vtSecurity);
-    for (auto iter : vtSecurity) {
-        stSecurity_t security = {0};
-        strcpy(security.SecurityID, iter.c_str());
-        m_watchSecurity[security.SecurityID] = security;
-    }
-
-    //if (!LoadStrategy()) {
-    //    printf("LoadStrategy Failed!!!\n");
-    //    return false;
-    //}
-    return true;
-}
-
+/*************************************Http****************************************/
 bool CApplication::LoadStrategy() {
     m_db = SQLite3::Create(m_dbFile, SQLite3::READWRITE | SQLite3::CREATE);
     if (!m_db) return false;
