@@ -14,13 +14,6 @@ namespace PROTD {
             m_pApi->Join();
             m_pApi->Release();
         }
-
-        for (auto iter = m_marketSecurity.begin(); iter != m_marketSecurity.end(); ++iter) {
-            if (iter->second) {
-                m_marketSecurityPool.delete_element(iter->second);
-            }
-        }
-        m_marketSecurity.clear();
     }
 
     bool TDImpl::Start() {
@@ -82,7 +75,7 @@ namespace PROTD {
         if (pSecurity) {
             auto iter = m_marketSecurity.find(pSecurity->SecurityID);
             if (iter == m_marketSecurity.end()) {
-                auto security = m_marketSecurityPool.new_element();
+                auto security = m_pApp->m_pool.Malloc<stSecurity_t>(sizeof(stSecurity_t));
                 if (security) {
                     strcpy(security->SecurityID, pSecurity->SecurityID);
                     strcpy(security->SecurityName, pSecurity->SecurityName);

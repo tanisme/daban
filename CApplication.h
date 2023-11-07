@@ -8,6 +8,7 @@
 #include "sqliteimpl.h"
 #include "MDL2Impl.h"
 #include "TDImpl.h"
+#include "MemoryPool.h"
 
 class CApplication {
 public:
@@ -47,6 +48,7 @@ public:
     std::string m_mdInterface = "tcp://210.14.72.17:16900";
     std::string m_cpucore = "";
 
+    MemoryPool m_pool;
     std::unordered_map<std::string, stSecurity_t> m_watchSecurity;
     std::unordered_map<std::string, std::vector<stStrategy> > m_strategys;
 private:

@@ -10,8 +10,8 @@ set(Boost_USE_STATIC_LIBS ON)
 
 if (WIN32)
     message(STATUS "windows system")
-    SET(BOOST_ROOT I:/tanisme/workspace/cpplib/boost_1_73_0)
-    #SET(BOOST_ROOT E:/tangang/workspace/cpplib/boost_1_73_0_142_64)
+    #SET(BOOST_ROOT I:/tanisme/workspace/cpplib/boost_1_73_0)
+    SET(BOOST_ROOT E:/tangang/workspace/cpplib/boost_1_73_0_142_64)
     SET(BOOST_INCLUDEDIR ${BOOST_ROOT})
     SET(BOOST_LIBRARYDIR ${BOOST_ROOT}/lib64-msvc-14.2)
 elseif(UNIX)
@@ -46,6 +46,8 @@ add_executable(daban
         http/server4/server.cpp
         test.cpp
         defines.cpp
+        MemoryPool.cpp
+        MemoryPool.h
 )
 
 if (WIN32)

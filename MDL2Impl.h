@@ -57,9 +57,7 @@ namespace PROMD {
         TTORATstpExchangeIDType m_exchangeID;
         MapOrder m_orderBuy;
         MapOrder m_orderSell;
-        MemoryPool<Order, 8192> m_orderPool;
         std::unordered_map<std::string, std::unordered_map<TTORATstpLongSequenceType, std::vector<stUnfindOrder*>>> m_unFindOrders;
-        MemoryPool<stUnfindOrder, 8192> m_unFindOrderPool;
     };
 
 }

@@ -320,7 +320,7 @@ namespace PROMD {
     }
 
     void MDL2Impl::InsertOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side) {
-        Order* order = m_orderPool.new_element();
+        Order* order = m_pApp->m_pool.Malloc<Order>(sizeof(Order));
         order->OrderNo = OrderNO;
         order->Volume = Volume;
 
@@ -408,7 +408,7 @@ namespace PROMD {
                 if ((*iterOrder)->Volume <= 0) {
                     Order* order = *iterOrder;
                     iterOrder = iterPriceOrder->Orders.erase(iterOrder);
-                    m_orderPool.delete_element(order);
+                    m_pApp->m_pool.Free<Order>(order, sizeof(Order));
                 } else {
                     ++iterOrder;
                 }
@@ -458,7 +458,7 @@ namespace PROMD {
     }
 
     void MDL2Impl::AddUnFindOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side, int type) {
-        auto order = m_unFindOrderPool.new_element();
+        auto order = m_pApp->m_pool.Malloc<stUnfindOrder>(sizeof(stUnfindOrder));
         strcpy(order->SecurityID, SecurityID);
         order->OrderNo = OrderNo;
         order->Volume = Volume;
@@ -488,7 +488,7 @@ namespace PROMD {
                             //printf("处理%s未找到的成交单成功 OrderNo:%lld Volume:%lld Side:%c\n", SecurityID, OrderNo, (*iter2)->Volume, Side);
                             auto order = (*iter2);
                             iter2 = iter1->second.erase(iter2);
-                            m_unFindOrderPool.delete_element(order);
+                            m_pApp->m_pool.Free<stUnfindOrder>(order, sizeof(stUnfindOrder));
                         } else {
                             ++iter2;
                         }
@@ -518,7 +518,7 @@ namespace PROMD {
                             //printf("处理%s未找到的撤单成功 OrderNo:%lld Volume:%lld Side:%c\n", SecurityID, OrderNo, (*iter2)->Volume, Side);
                             auto order = (*iter2);
                             iter2 = iter1->second.erase(iter2);
-                            m_unFindOrderPool.delete_element(order);
+                            m_pApp->m_pool.Free<stUnfindOrder>(order, sizeof(stUnfindOrder));
                         } else {
                             ++iter2;
                         }
@@ -546,7 +546,7 @@ namespace PROMD {
                         //printf("删除订单%d-%d=%d\n", nowTick, (*iter2)->Time, nowTick-(*iter2)->Time);
                         auto order = (*iter2);
                         iter2 = iter1->second.erase(iter2);
-                        m_unFindOrderPool.delete_element(order);
+                        m_pApp->m_pool.Free<stUnfindOrder>(order, sizeof(stUnfindOrder));
                     } else {
                         ++iter2;
                     }

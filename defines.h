@@ -8,8 +8,6 @@
 #include <vector>
 
 #include <boost/bind/bind.hpp>
-#include "memory_pool.h"
-
 #include "TORA/TORATstpLev2MdApi.h"
 #include "TORA/TORATstpTraderApi.h"
 

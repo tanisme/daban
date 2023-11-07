@@ -2,6 +2,7 @@
 #define BALIBALI_TEST_H
 
 #include "defines.h"
+#include "MemoryPool.h"
 
 namespace test {
     using namespace TORALEV2API;
@@ -42,9 +43,8 @@ namespace test {
         std::unordered_map<std::string, FILE*> m_watchTradeFILE;
         MapOrder m_orderBuy;
         MapOrder m_orderSell;
-        MemoryPool<Order, 8192> m_orderPool;
+        MemoryPool m_pool;
         std::unordered_map<std::string, std::unordered_map<TTORATstpLongSequenceType, std::vector<stUnfindOrder*>>> m_unFindOrders;
-        MemoryPool<stUnfindOrder, 8192> m_unFindOrderPool;
     };
 
 }
