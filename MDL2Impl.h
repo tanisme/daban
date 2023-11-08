@@ -14,6 +14,7 @@ namespace PROMD {
         explicit MDL2Impl(CApplication *pApp, TTORATstpExchangeIDType ExchangeID);
         ~MDL2Impl();
 
+        void Clear();
         bool Start(bool isTest = true);
         int ReqMarketData(TTORATstpSecurityIDType SecurityID, TTORATstpExchangeIDType ExchangeID, int type, bool isSub = true);
         void ShowOrderBook(TTORATstpSecurityIDType SecurityID);
@@ -22,6 +23,10 @@ namespace PROMD {
 
         bool IsInited() const { return m_isInited; }
         CTORATstpLev2MdApi *GetApi() const { return m_pApi; }
+
+        void OrderDetail(TTORATstpSecurityIDType SecurityID, TTORATstpTradeBSFlagType Side, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpExchangeIDType ExchangeID, TTORATstpLOrderStatusType OrderStatus);
+        void Transaction(TTORATstpSecurityIDType SecurityID, TTORATstpExchangeIDType ExchangeID, TTORATstpLongVolumeType TradeVolume, TTORATstpExecTypeType ExecType, TTORATstpLongSequenceType BuyNo, TTORATstpLongSequenceType SellNo, TTORATstpPriceType TradePrice, TTORATstpTimeStampType	TradeTime);
+        void NGTSTick(TTORATstpSecurityIDType SecurityID, TTORATstpLTickTypeType TickType, TTORATstpLongSequenceType BuyNo, TTORATstpLongSequenceType SellNo, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType	Side, TTORATstpTimeStampType TickTime);
 
     public:
         void OnFrontConnected() override;
@@ -54,6 +59,7 @@ namespace PROMD {
         TTORATstpExchangeIDType m_exchangeID;
         MapOrder m_orderBuy;
         MapOrder m_orderSell;
+        MemoryPool m_pool;
         std::unordered_map<std::string, std::unordered_map<TTORATstpLongSequenceType, std::vector<stUnfindOrder*>>> m_unFindOrders;
     };
 

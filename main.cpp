@@ -9,7 +9,7 @@
 
 int main() {
     std::string cfgfile = "daban.ini";
-    //std::string dbfile = "database.db";
+    std::string dbfile = "database.db";
     std::string httpurl = "", cpucore = "";
     std::string shmdaddr = "", szmdaddr = "", mdaddr = "", mdinterface = "";
     std::string tdaddr = "", tdaccount = "", tdpassword = "";
@@ -20,7 +20,7 @@ int main() {
     cfgdesc.add_options()
             ("daban.istest", boost::program_options::value<bool>(&isTest), "daban.istest")
             ("daban.strategyopen", boost::program_options::value<bool>(&strategyopen), "daban.strategyopen")
-            //("daban.dbfile", boost::program_options::value<std::string>(&dbfile), "daban.dbfile")
+            ("daban.dbfile", boost::program_options::value<std::string>(&dbfile), "daban.dbfile")
             ("daban.cpucore", boost::program_options::value<std::string>(&cpucore), "daban.cpucore")
             //("daban.httpurl", boost::program_options::value<std::string>(&httpurl), "daban.httpurl")
             ("daban.tdaddr", boost::program_options::value<std::string>(&tdaddr), "daban.tdaddr")
@@ -49,7 +49,7 @@ int main() {
     if (srcdatapath.length() > 0) {
         printf("-------------------该程序功能为生成订单簿-------------------\n");
         test::Imitate imitate;
-        imitate.TestOrderBook(srcdatapath, watchsecurity);
+        imitate.TestOrderBook(srcdatapath, watchsecurity, shmdnewversion, true);
         printf("-------------------生成所有合约订单簿完成-------------------\n");
         return 0;
     }
@@ -57,7 +57,7 @@ int main() {
     boost::asio::io_context io_context;
     CApplication app(io_context);
     app.m_isTest = isTest;
-    //app.m_dbFile = dbfile;
+    app.m_dbFile = dbfile;
     app.m_TDAddr = tdaddr;
     app.m_TDAccount = tdaccount;
     app.m_TDPassword = tdpassword;
