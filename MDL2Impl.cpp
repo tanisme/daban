@@ -25,8 +25,7 @@ namespace PROMD {
             } else {
                 return false;
             }
-        }
-        else { // udp
+        } else { // udp
             m_pApi = CTORATstpLev2MdApi::CreateTstpLev2MdApi(TORA_TSTP_MST_MCAST);
             m_pApi->RegisterSpi(this);
             m_pApi->RegisterMulticast((char *)m_pApp->m_mdAddr.c_str(), (char*)m_pApp->m_mdInterface.c_str(), nullptr);
@@ -41,15 +40,12 @@ namespace PROMD {
         security_arr[0] = SecurityID;
         switch (type) {
             case 1:
-                if (isSub) return m_pApi->SubscribeMarketData(security_arr, 1, ExchangeID);
-                return m_pApi->UnSubscribeMarketData(security_arr, 1, ExchangeID);
+                if (isSub) return m_pApi->SubscribeOrderDetail(security_arr, 1, ExchangeID);
+                return m_pApi->UnSubscribeOrderDetail(security_arr, 1, ExchangeID);
             case 2:
                 if (isSub) return m_pApi->SubscribeTransaction(security_arr, 1, ExchangeID);
                 return m_pApi->UnSubscribeTransaction(security_arr, 1, ExchangeID);
             case 3:
-                if (isSub) return m_pApi->SubscribeOrderDetail(security_arr, 1, ExchangeID);
-                return m_pApi->UnSubscribeOrderDetail(security_arr, 1, ExchangeID);
-            case 4:
                 if (isSub) return m_pApi->SubscribeNGTSTick(security_arr, 1, ExchangeID);
                 return m_pApi->UnSubscribeNGTSTick(security_arr, 1, ExchangeID);
         }
@@ -147,22 +143,6 @@ namespace PROMD {
         m_pApp->m_ioc.post(boost::bind(&CApplication::MDOnInited, m_pApp, m_exchangeID));
     }
 
-    void MDL2Impl::OnRspSubMarketData(CTORATstpSpecificSecurityField *pSpecificSecurity, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
-        if (!pSpecificSecurity || !pRspInfo) return;
-        if (pRspInfo->ErrorID > 0) {
-            printf("%s MD::OnRspSubMarketData Failed!!! ErrMsg:%s\n", GetExchangeName(m_exchangeID), pRspInfo->ErrorMsg);
-            return;
-        }
-    }
-
-    void MDL2Impl::OnRspUnSubMarketData(CTORATstpSpecificSecurityField *pSpecificSecurity, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
-        if (!pSpecificSecurity || !pRspInfo) return;
-        if (pRspInfo->ErrorID > 0) {
-            printf("%s MD::OnRspUnSubMarketData Failed!!! ErrMsg:%s\n", GetExchangeName(m_exchangeID), pRspInfo->ErrorMsg);
-            return;
-        }
-    }
-
     void MDL2Impl::OnRspSubOrderDetail(CTORATstpSpecificSecurityField *pSpecificSecurity, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
         if (!pSpecificSecurity || !pRspInfo) return;
         if (pRspInfo->ErrorID > 0) {
@@ -209,15 +189,6 @@ namespace PROMD {
             printf("%s MD::OnRspUnSubNGTSTick Failed!!! ErrMsg:%s\n", GetExchangeName(m_exchangeID), pRspInfo->ErrorMsg);
             return;
         }
-    }
-
-    void MDL2Impl::OnRtnMarketData(CTORATstpLev2MarketDataField *pDepthMarketData, const int FirstLevelBuyNum, const int FirstLevelBuyOrderVolumes[], const int FirstLevelSellNum, const int FirstLevelSellOrderVolumes[]) {
-        if (!pDepthMarketData) return;
-        printf("%s MD::OnRtnMarketData %s [%.3f %.3f %.3f %.3f %.3f] [%.3f %.3f %.3f %c]\n",
-               PROMD::MDL2Impl::GetExchangeName(pDepthMarketData->ExchangeID),
-               pDepthMarketData->SecurityID, pDepthMarketData->LastPrice, pDepthMarketData->OpenPrice,
-               pDepthMarketData->HighestPrice, pDepthMarketData->LowestPrice, pDepthMarketData->ClosePrice,
-               pDepthMarketData->UpperLimitPrice, pDepthMarketData->LowerLimitPrice, pDepthMarketData->PreClosePrice, pDepthMarketData->MDSecurityStat);
     }
 
     /************************************HandleOrderBook***************************************/
@@ -299,18 +270,18 @@ namespace PROMD {
     }
 
     void MDL2Impl::InsertOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side) {
-        Order* order = m_pApp->m_pool.Malloc<Order>(sizeof(Order));
+        stOrder* order = m_pApp->m_pool.Malloc<stOrder>(sizeof(stOrder));
         order->OrderNo = OrderNO;
         order->Volume = Volume;
 
-        PriceOrders priceOrder = {0};
+        stPriceOrders priceOrder = {0};
         priceOrder.Orders.emplace_back(order);
         priceOrder.Price = Price;
 
         MapOrder &mapOrder = Side == TORA_TSTP_LSD_Buy ? m_orderBuy : m_orderSell;
         auto iter = mapOrder.find(SecurityID);
         if (iter == mapOrder.end()) {
-            mapOrder[SecurityID] = std::vector<PriceOrders>();
+            mapOrder[SecurityID] = std::vector<stPriceOrders>();
             mapOrder[SecurityID].emplace_back(priceOrder);
         } else if (iter->second.empty()) {
             iter->second.emplace_back(priceOrder);
@@ -385,9 +356,9 @@ namespace PROMD {
         for (auto iterPriceOrder = iter->second.begin(); iterPriceOrder != iter->second.end();) {
             for (auto iterOrder = iterPriceOrder->Orders.begin(); iterOrder != iterPriceOrder->Orders.end();) {
                 if ((*iterOrder)->Volume <= 0) {
-                    Order* order = *iterOrder;
+                    stOrder* order = *iterOrder;
                     iterOrder = iterPriceOrder->Orders.erase(iterOrder);
-                    m_pApp->m_pool.Free<Order>(order, sizeof(Order));
+                    m_pApp->m_pool.Free<stOrder>(order, sizeof(stOrder));
                 } else {
                     ++iterOrder;
                 }

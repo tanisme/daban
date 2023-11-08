@@ -28,7 +28,7 @@ int GetNowTick() {
     return (int)t;
 }
 
-int GetNowTickStr() {
+int GetClockTick() {
     auto t = time(nullptr);
     auto* now = localtime(&t);
     char time[32] = {0};

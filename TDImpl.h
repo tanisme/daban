@@ -2,6 +2,7 @@
 #define TEST_TDIMPL_H
 
 #include "defines.h"
+#include "MemoryPool.h"
 
 class CApplication;
 
@@ -38,13 +39,14 @@ namespace PROTD {
         void OnErrRtnOrderAction(CTORATstpInputOrderActionField *pInputOrderActionField, CTORATstpRspInfoField *pRspInfoField, int nRequestID) override;
 
     public:
-        std::unordered_map<std::string, stSecurity_t*> m_marketSecurity;
+        std::unordered_map<std::string, stSecurity*> m_marketSecurity;
 
     private:
         int m_reqID = 1;
         bool m_isInited = false;
         CTORATstpTraderApi *m_pApi = nullptr;
         CApplication *m_pApp = nullptr;
+        MemoryPool m_pool;
         CTORATstpRspUserLoginField m_loginField = {0};
         std::unordered_map<TTORATstpExchangeIDType, CTORATstpShareholderAccountField> m_shareHolder;
     };

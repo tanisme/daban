@@ -84,15 +84,15 @@ namespace http {
                 // 查询策略
                 for (auto& iter : m_app->m_strategys) {
                     for (auto& iter1 : iter.second) {
-                        item["idx"] = iter1.idx;
-                        item["securityid"] = iter1.SecurityID;
-                        item["type"] = iter1.type;
-                        item["status"] = iter1.status;
-                        item["p1"] = iter1.params.p1;
-                        item["p2"] = iter1.params.p2;
-                        item["p3"] = iter1.params.p3;
-                        item["p4"] = iter1.params.p4;
-                        item["p5"] = iter1.params.p5;
+                        item["idx"] = iter1->idx;
+                        item["securityid"] = iter1->SecurityID;
+                        item["type"] = iter1->type;
+                        item["status"] = iter1->status;
+                        item["p1"] = iter1->params.p1;
+                        item["p2"] = iter1->params.p2;
+                        item["p3"] = iter1->params.p3;
+                        item["p4"] = iter1->params.p4;
+                        item["p5"] = iter1->params.p5;
                         tmpvalue.append(item);
                     }
                 }

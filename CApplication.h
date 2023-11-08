@@ -33,6 +33,7 @@ public:
 public:
     bool LoadStrategy();
     bool AddStrategy(stStrategy & strategy);
+    bool ModStrategy(stStrategy* strategy);
 
 public:
     bool m_isTest = true;
@@ -49,8 +50,8 @@ public:
     std::string m_cpucore = "";
 
     MemoryPool m_pool;
-    std::unordered_map<std::string, stSecurity_t> m_watchSecurity;
-    std::unordered_map<std::string, std::vector<stStrategy> > m_strategys;
+    std::unordered_map<std::string, stSecurity> m_watchSecurity;
+    std::unordered_map<std::string, std::vector<stStrategy*> > m_strategys;
 private:
     PROMD::MDL2Impl *GetMDByExchangeID(PROMD::TTORATstpExchangeIDType ExchangeID);
 

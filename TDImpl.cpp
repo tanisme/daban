@@ -41,7 +41,7 @@ namespace PROTD {
     }
 
     void TDImpl::OnFrontDisconnected(int nReason) {
-        printf("TDImpl::OnFrontDisconnected!!! Reason:%d\n", nReason);
+        printf("TD::OnFrontDisconnected!!! Reason:%d\n", nReason);
         m_isInited = false;
     }
 
@@ -75,7 +75,7 @@ namespace PROTD {
         if (pSecurity) {
             auto iter = m_marketSecurity.find(pSecurity->SecurityID);
             if (iter == m_marketSecurity.end()) {
-                auto security = m_pApp->m_pool.Malloc<stSecurity_t>(sizeof(stSecurity_t));
+                auto security = m_pool.Malloc<stSecurity>(sizeof(stSecurity));
                 if (security) {
                     strcpy(security->SecurityID, pSecurity->SecurityID);
                     strcpy(security->SecurityName, pSecurity->SecurityName);
@@ -162,26 +162,15 @@ namespace PROTD {
     }
 
     void TDImpl::OnRspOrderInsert(CTORATstpInputOrderField *pInputOrderField, CTORATstpRspInfoField *pRspInfoField, int nRequestID) {
-        if (!pInputOrderField || !pRspInfoField) return;
-        if (pRspInfoField->ErrorID > 0) {
-            printf("TDImpl::OnRspOrderInsert Failed!!! ErrMsg:%s\n", pRspInfoField->ErrorMsg);
-            return;
-        }
     }
 
     void TDImpl::OnErrRtnOrderInsert(CTORATstpInputOrderField *pInputOrderField, CTORATstpRspInfoField *pRspInfoField, int nRequestID) {
-        printf("TDImpl::OnErrRtnOrderInsert\n");
     }
 
     void TDImpl::OnRtnOrder(CTORATstpOrderField *pOrder) {
-        if (!pOrder) return;
-
     }
 
     void TDImpl::OnRtnTrade(CTORATstpTradeField *pTrade) {
-        if (!pTrade) return;
-
-
     }
 
     int TDImpl::OrderCancel() {

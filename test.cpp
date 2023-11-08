@@ -182,18 +182,18 @@ namespace test {
     }
 
     void Imitate::InsertOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side) {
-        Order* order = m_pool.Malloc<Order>(sizeof(Order));
+        stOrder* order = m_pool.Malloc<stOrder>(sizeof(stOrder));
         order->OrderNo = OrderNO;
         order->Volume = Volume;
 
-        PriceOrders priceOrder = {0};
+        stPriceOrders priceOrder = {0};
         priceOrder.Orders.emplace_back(order);
         priceOrder.Price = Price;
 
         MapOrder &mapOrder = Side == TORA_TSTP_LSD_Buy ? m_orderBuy : m_orderSell;
         auto iter = mapOrder.find(SecurityID);
         if (iter == mapOrder.end()) {
-            mapOrder[SecurityID] = std::vector<PriceOrders>();
+            mapOrder[SecurityID] = std::vector<stPriceOrders>();
             mapOrder[SecurityID].emplace_back(priceOrder);
         } else if (iter->second.empty()) {
             iter->second.emplace_back(priceOrder);
@@ -268,9 +268,9 @@ namespace test {
         for (auto iterPriceOrder = iter->second.begin(); iterPriceOrder != iter->second.end();) {
             for (auto iterOrder = iterPriceOrder->Orders.begin(); iterOrder != iterPriceOrder->Orders.end();) {
                 if ((*iterOrder)->Volume <= 0) {
-                    Order* order = *iterOrder;
+                    stOrder* order = *iterOrder;
                     iterOrder = iterPriceOrder->Orders.erase(iterOrder);
-                    m_pool.Free<Order>(order, sizeof(Order));
+                    m_pool.Free<stOrder>(order, sizeof(stOrder));
                 } else {
                     ++iterOrder;
                 }
@@ -323,7 +323,7 @@ namespace test {
         std::string file = dstDataDir +"/"+ SecurityID + "_o.txt";
         std::ifstream ifs(file, std::ios::in);
         if (!ifs.is_open()) {
-            printf("Order open failed!!! path%s\n", file.c_str());
+            printf("stOrder open failed!!! path%s\n", file.c_str());
             return;
         }
 

@@ -11,42 +11,35 @@
 #include "TORA/TORATstpLev2MdApi.h"
 #include "TORA/TORATstpTraderApi.h"
 
-#define SERVICE_ADDSTRATEGYREQ      3   // 增加策略请求
-#define SERVICE_ADDSTRATEGYRSP      4
-#define SERVICE_DELSTRATEGYREQ      5   // 删除策略请求
-#define SERVICE_DELSTRATEGYRSP      6
-#define SERVICE_QRYSTRATEGYREQ      7   // 查询策略请求
-#define SERVICE_QRYSTRATEGYRSP      8
+#define SERVICE_ADDSTRATEGYREQ      1   // 增加策略请求
+#define SERVICE_ADDSTRATEGYRSP      2
+#define SERVICE_DELSTRATEGYREQ      3   // 删除策略请求
+#define SERVICE_DELSTRATEGYRSP      4
+#define SERVICE_QRYSTRATEGYREQ      5   // 查询策略请求
+#define SERVICE_QRYSTRATEGYRSP      6
 
-typedef struct _stSecurity {
-    TORALEV2API::TTORATstpSecurityIDType SecurityID;
-    char SecurityName[81];
-    TORALEV2API::TTORATstpExchangeIDType ExchangeID;
-    int Status;
-} stSubSecurity;
-
-typedef struct _stStrategy {
+struct stStrategy {
     int idx;
     TORALEV2API::TTORATstpSecurityIDType SecurityID;
     int type;
-    int status;
+    int status; // executed
     struct stParams {
         double p1; double p2; double p3; double p4; double p5;
     };
     stParams params;
-} stStrategy;
+};
 
-struct Order {
+struct stOrder {
     TORALEV2API::TTORATstpLongSequenceType OrderNo;
     TORALEV2API::TTORATstpLongVolumeType Volume;
 };
 
-struct PriceOrders {
+struct stPriceOrders {
     TORALEV2API::TTORATstpPriceType Price;
-    std::vector<Order*> Orders;
+    std::vector<stOrder*> Orders;
 };
 
-typedef std::unordered_map<std::string, std::vector<PriceOrders> > MapOrder; // TODO改内存池
+typedef std::unordered_map<std::string, std::vector<stPriceOrders> > MapOrder;
 
 struct stPostPrice {
     TORALEV2API::TTORATstpSecurityIDType SecurityID;
@@ -57,7 +50,7 @@ struct stPostPrice {
     TORALEV2API::TTORATstpPriceType TradePrice;
 };
 
-struct stSecurity_t {
+struct stSecurity {
     TORASTOCKAPI::TTORATstpSecurityIDType SecurityID;
     TORASTOCKAPI::TTORATstpSecurityNameType SecurityName;
     TORASTOCKAPI::TTORATstpExchangeIDType ExchangeID;
@@ -77,6 +70,7 @@ struct stUnfindOrder {
 void Stringsplit(const std::string &str, const char split, std::vector<std::string> &res);
 std::string GetTimeStr();
 int GetNowTick();
+int GetClockTick();
 void trim(std::string &s);
 
 #endif //DABAN_DEFINES_H
