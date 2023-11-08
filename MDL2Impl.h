@@ -42,6 +42,7 @@ namespace PROMD {
         void OnRtnNGTSTick(CTORATstpLev2NGTSTickField *pTick) override;
 
     private:
+        void ClearOrder(TTORATstpLSideType Side);
         void InsertOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side);
         bool ModifyOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side);
         void ResetOrder(TTORATstpSecurityIDType SecurityID, TTORATstpTradeBSFlagType Side);

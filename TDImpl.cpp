@@ -10,7 +10,7 @@ namespace PROTD {
     }
 
     TDImpl::~TDImpl() {
-        if (m_pApi != nullptr) {
+        if (m_pApi) {
             m_pApi->Join();
             m_pApi->Release();
         }
