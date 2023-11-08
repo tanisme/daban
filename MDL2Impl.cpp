@@ -251,22 +251,22 @@ namespace PROMD {
             if (!ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell)) {
                 AddUnFindOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell);
             }
-            FixOrder(pTransaction->SecurityID, pTransaction->TradePrice, pTransaction->TradeTime);
+            //FixOrder(pTransaction->SecurityID, pTransaction->TradePrice, pTransaction->TradeTime);
         } else if (pTransaction->ExchangeID == TORA_TSTP_EXD_SZSE) {
             if (pTransaction->ExecType == TORA_TSTP_ECT_Fill) {
                 if (!ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->BuyNo, TORA_TSTP_LSD_Buy)) {
-                    AddUnFindOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->BuyNo, TORA_TSTP_LSD_Buy);
+                    //AddUnFindOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->BuyNo, TORA_TSTP_LSD_Buy);
                 }
                 if (!ModifyOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell)) {
-                    AddUnFindOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell);
+                    //AddUnFindOrder(pTransaction->SecurityID, pTransaction->TradeVolume, pTransaction->SellNo, TORA_TSTP_LSD_Sell);
                 }
-                FixOrder(pTransaction->SecurityID, pTransaction->TradePrice, pTransaction->TradeTime);
+                //FixOrder(pTransaction->SecurityID, pTransaction->TradePrice, pTransaction->TradeTime);
             } else if (pTransaction->ExecType == TORA_TSTP_ECT_Cancel) {
                 if (pTransaction->BuyNo > 0 && !ModifyOrder(pTransaction->SecurityID, 0, pTransaction->BuyNo, TORA_TSTP_LSD_Buy)) {
-                    AddUnFindOrder(pTransaction->SecurityID, 0, pTransaction->BuyNo, TORA_TSTP_LSD_Buy, 1);
+                    //AddUnFindOrder(pTransaction->SecurityID, 0, pTransaction->BuyNo, TORA_TSTP_LSD_Buy, 1);
                 }
                 if (pTransaction->SellNo > 0 && !ModifyOrder(pTransaction->SecurityID, 0, pTransaction->SellNo, TORA_TSTP_LSD_Sell)) {
-                    AddUnFindOrder(pTransaction->SecurityID, 0, pTransaction->SellNo, TORA_TSTP_LSD_Sell, 1);
+                    //AddUnFindOrder(pTransaction->SecurityID, 0, pTransaction->SellNo, TORA_TSTP_LSD_Sell, 1);
                 }
             }
         }
@@ -293,7 +293,7 @@ namespace PROMD {
             if (!ModifyOrder(pTick->SecurityID, pTick->Volume, pTick->SellNo, TORA_TSTP_LSD_Sell)) {
                 AddUnFindOrder(pTick->SecurityID, pTick->Volume, pTick->SellNo, TORA_TSTP_LSD_Sell);
             }
-            FixOrder(pTick->SecurityID, pTick->Price, pTick->TickTime);
+            //FixOrder(pTick->SecurityID, pTick->Price, pTick->TickTime);
         }
         PostPrice(pTick->SecurityID, pTick->Price);
     }
@@ -408,7 +408,7 @@ namespace PROMD {
             if (iter != m_orderSell.end()) {
                 for (auto i = 0; i < (int)iter->second.size(); i++) {
                     if (iter->second.at(i).Price < Price) {
-                        for (auto j = 0; i < (int)iter->second.at(i).Orders.size(); j++) {
+                        for (auto j = 0; j < (int)iter->second.at(i).Orders.size(); j++) {
                             iter->second.at(i).Orders.at(j)->Volume = 0;
                             reset = true;
                         }
@@ -424,7 +424,7 @@ namespace PROMD {
             if (iter != m_orderBuy.end()) {
                 for (auto i = 0; i < (int)iter->second.size(); i++) {
                     if (iter->second.at(i).Price > Price) {
-                        for (auto j = 0; i < (int)iter->second.at(i).Orders.size(); j++) {
+                        for (auto j = 0; j < (int)iter->second.at(i).Orders.size(); j++) {
                             iter->second.at(i).Orders.at(j)->Volume = 0;
                             reset = true;
                         }

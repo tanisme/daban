@@ -156,8 +156,8 @@ void CApplication::TDOnInited() {
     if (m_isTest) {
         m_shMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SSE);
         m_shMD->Start(true);
-        //m_szMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SZSE);
-        //m_szMD->Start(true);
+        m_szMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SZSE);
+        m_szMD->Start(true);
     }
     else {
         m_shMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_COMM);
