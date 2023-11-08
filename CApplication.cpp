@@ -60,13 +60,11 @@ void CApplication::OnTime(const boost::system::error_code& error) {
     for (auto& iter : m_watchSecurity) {
         if (!m_isTest || iter.second.ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
             if (m_shMD) {
-                //m_shMD->ShowOrderBook((char*)iter.first.c_str());
-                m_shMD->ShowUnfindOrder((char*)iter.first.c_str());
+                m_shMD->ShowOrderBook((char*)iter.first.c_str());
             }
         } else if (iter.second.ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
             if (m_szMD) {
-                //m_szMD->ShowOrderBook((char*)iter.first.c_str());
-                m_szMD->ShowUnfindOrder((char*)iter.first.c_str());
+                m_szMD->ShowOrderBook((char*)iter.first.c_str());
             }
         }
     }
@@ -79,7 +77,7 @@ void CApplication::OnTime(const boost::system::error_code& error) {
 void CApplication::MDOnInited(PROMD::TTORATstpExchangeIDType exchangeID) {
     auto md = GetMDByExchangeID(exchangeID);
     if (!md || !md->IsInited()) return;
-    for (auto &iter: m_TD->m_marketSecurity) { // watch change to m_watchSecurity
+    for (auto &iter: m_TD->m_marketSecurity) {
         if (exchangeID == iter.second->ExchangeID || exchangeID == PROMD::TORA_TSTP_EXD_COMM) {
             PROMD::TTORATstpSecurityIDType Security = {0};
             strncpy(Security, iter.first.c_str(), sizeof(Security));

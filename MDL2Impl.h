@@ -18,7 +18,6 @@ namespace PROMD {
         bool Start(bool isTest = true);
         int ReqMarketData(TTORATstpSecurityIDType SecurityID, TTORATstpExchangeIDType ExchangeID, int type, bool isSub = true);
         void ShowOrderBook(TTORATstpSecurityIDType SecurityID);
-        void ShowUnfindOrder(TTORATstpSecurityIDType SecurityID);
         static const char *GetExchangeName(TTORATstpExchangeIDType ExchangeID);
 
         bool IsInited() const { return m_isInited; }
@@ -48,8 +47,6 @@ namespace PROMD {
         void ResetOrder(TTORATstpSecurityIDType SecurityID, TTORATstpTradeBSFlagType Side);
         void FixOrder(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price, TTORATstpTimeStampType Time);
         void PostPrice(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price);
-        void AddUnFindOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side, int type = 0);
-        void HandleUnFindOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side);
 
     private:
         int m_reqID = 1;
@@ -60,7 +57,6 @@ namespace PROMD {
         MapOrder m_orderBuy;
         MapOrder m_orderSell;
         MemoryPool m_pool;
-        std::unordered_map<std::string, std::unordered_map<TTORATstpLongSequenceType, std::vector<stUnfindOrder*>>> m_unFindOrders;
     };
 
 }

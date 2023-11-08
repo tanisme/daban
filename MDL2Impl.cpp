@@ -117,17 +117,6 @@ namespace PROMD {
         printf("%s\n", stream.str().c_str());
     }
 
-    void MDL2Impl::ShowUnfindOrder(TTORATstpSecurityIDType SecurityID) {
-        char buffer[512] = {0};
-        {
-            auto iter = m_unFindOrders.find(SecurityID);
-            if (iter != m_unFindOrders.end()) {
-                sprintf(buffer, "%s %s UnfindOrderCount:%d", GetTimeStr().c_str(), SecurityID, (int)iter->second.size());
-                printf("%s\n", buffer);
-            }
-        }
-    }
-
     const char *MDL2Impl::GetExchangeName(TTORATstpExchangeIDType ExchangeID) {
         switch (ExchangeID) {
             case TORA_TSTP_EXD_SSE:
@@ -236,15 +225,11 @@ namespace PROMD {
         if (ExchangeID == TORA_TSTP_EXD_SSE) {
             if (OrderStatus == TORA_TSTP_LOS_Add) {
                 InsertOrder(SecurityID, OrderNO, Price, Volume, Side);
-                //HandleUnFindOrder(SecurityID, OrderNO, Side);
             } else if (OrderStatus == TORA_TSTP_LOS_Delete) {
-                if (!ModifyOrder(SecurityID, 0, OrderNO, Side)) {
-                    //AddUnFindOrder(SecurityID, 0, OrderNO, Side, 1) ;
-                }
+                ModifyOrder(SecurityID, 0, OrderNO, Side);
             }
         } else if (ExchangeID == TORA_TSTP_EXD_SZSE) {
             InsertOrder(SecurityID, OrderNO, Price, Volume, Side);
-            //HandleUnFindOrder(SecurityID, OrderNO, Side);
         }
     }
 
@@ -252,61 +237,40 @@ namespace PROMD {
                                TTORATstpExecTypeType ExecType, TTORATstpLongSequenceType BuyNo, TTORATstpLongSequenceType SellNo,
                                TTORATstpPriceType TradePrice, TTORATstpTimeStampType TradeTime) {
         if (ExchangeID == TORA_TSTP_EXD_SSE) {
-            if (!ModifyOrder(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy)) {
-                //AddUnFindOrder(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
-            }
-            if (!ModifyOrder(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell)) {
-                //AddUnFindOrder(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
-            }
-            //FixOrder(SecurityID, TradePrice, TradeTime);
+            ModifyOrder(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
+            ModifyOrder(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
             PostPrice(SecurityID, TradePrice);
         } else if (ExchangeID == TORA_TSTP_EXD_SZSE) {
             if (ExecType == TORA_TSTP_ECT_Fill) {
-                if (!ModifyOrder(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy)) {
-                    //AddUnFindOrder(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
-                }
-                if (!ModifyOrder(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell)) {
-                    //AddUnFindOrder(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
-                }
-                //FixOrder(SecurityID, TradePrice, TradeTime);
+                ModifyOrder(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
+                ModifyOrder(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
                 PostPrice(SecurityID, TradePrice);
             } else if (ExecType == TORA_TSTP_ECT_Cancel) {
                 if (BuyNo > 0) {
-                    if (!ModifyOrder(SecurityID, 0, BuyNo, TORA_TSTP_LSD_Buy)) {
-                        //AddUnFindOrder(SecurityID, 0, BuyNo, TORA_TSTP_LSD_Buy, 1);
-                    }
+                    ModifyOrder(SecurityID, 0, BuyNo, TORA_TSTP_LSD_Buy);
                 }
                 if (SellNo > 0) {
-                    if (!ModifyOrder(SecurityID, 0, SellNo, TORA_TSTP_LSD_Sell)) {
-                        //AddUnFindOrder(SecurityID, 0, SellNo, TORA_TSTP_LSD_Sell, 1);
-                    }
+                    ModifyOrder(SecurityID, 0, SellNo, TORA_TSTP_LSD_Sell);
                 }
             }
         }
     }
-
 
     void MDL2Impl::NGTSTick(TTORATstpSecurityIDType SecurityID, TTORATstpLTickTypeType TickType, TTORATstpLongSequenceType BuyNo,
                             TTORATstpLongSequenceType SellNo, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume,
                             TTORATstpLSideType Side, TTORATstpTimeStampType TickTime) {
         if (TickType == TORA_TSTP_LTT_Add) {
             InsertOrder(SecurityID, Side == TORA_TSTP_LSD_Buy?BuyNo:SellNo, Price, Volume, Side);
-            //HandleUnFindOrder(SecurityID, Side == TORA_TSTP_LSD_Buy?BuyNo:SellNo, Side);
         } else if (TickType == TORA_TSTP_LTT_Delete) {
-            if (BuyNo > 0 && !ModifyOrder(SecurityID, 0, BuyNo, Side)) {
-                //AddUnFindOrder(SecurityID, 0, BuyNo, Side, 1);
+            if (BuyNo > 0) {
+                ModifyOrder(SecurityID, 0, BuyNo, Side);
             }
-            if (SellNo > 0 && !ModifyOrder(SecurityID, 0, SellNo, Side)) {
-                //AddUnFindOrder(SecurityID, 0, SellNo, Side, 1);
+            if (SellNo > 0) {
+                ModifyOrder(SecurityID, 0, SellNo, Side);
             }
         } else if (TickType == TORA_TSTP_LTT_Trade) {
-            if (!ModifyOrder(SecurityID, Volume, BuyNo, TORA_TSTP_LSD_Buy)) {
-                //AddUnFindOrder(SecurityID, Volume, BuyNo, TORA_TSTP_LSD_Buy);
-            }
-            if (!ModifyOrder(SecurityID, Volume, SellNo, TORA_TSTP_LSD_Sell)) {
-                //AddUnFindOrder(SecurityID, Volume, SellNo, TORA_TSTP_LSD_Sell);
-            }
-            //FixOrder(SecurityID, Price, TickTime);
+            ModifyOrder(SecurityID, Volume, BuyNo, TORA_TSTP_LSD_Buy);
+            ModifyOrder(SecurityID, Volume, SellNo, TORA_TSTP_LSD_Sell);
             PostPrice(SecurityID, Price);
         }
     }
@@ -445,61 +409,6 @@ namespace PROMD {
                 }
             }
             if (reset) ResetOrder(SecurityID, TORA_TSTP_LSD_Buy);
-        }
-    }
-
-    void MDL2Impl::AddUnFindOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side, int Type) {
-        auto order = m_pool.Malloc<stUnfindOrder>(sizeof(stUnfindOrder));
-        strcpy(order->SecurityID, SecurityID);
-        order->OrderNo = OrderNo;
-        order->Volume = Volume;
-        order->Side = Side;
-        order->Time = GetNowTick();
-        order->Type = Type; // 0-trade 1-delete
-
-        auto iter = m_unFindOrders.find(SecurityID);
-        if (iter == m_unFindOrders.end()) {
-            m_unFindOrders[SecurityID] = std::unordered_map<TTORATstpLongSequenceType, std::vector<stUnfindOrder*> >();
-        }
-        m_unFindOrders[SecurityID][OrderNo].emplace_back(order);
-    }
-
-    void MDL2Impl::HandleUnFindOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side) {
-        auto nowTick = GetNowTick();
-        {
-            auto iter = m_unFindOrders.find(SecurityID);
-            if (iter == m_unFindOrders.end()) return;
-
-            for (auto iter1 = iter->second.begin(); iter1 != iter->second.end();) {
-                for (auto iter2 = iter1->second.begin(); iter2 != iter1->second.end();) {
-                    if ((*iter2)->Time + 30 <= nowTick) {
-                        auto order = *iter2;
-                        iter2 = iter1->second.erase(iter2);
-                        m_pool.Free<stUnfindOrder>(order, sizeof(stUnfindOrder));
-                        //printf("超时删除:%s\n", SecurityID);
-                        continue;
-                    } else if ((*iter2)->OrderNo == OrderNo){
-                        if ((*iter2)->Side == Side) {
-                            if (ModifyOrder(SecurityID, (*iter2)->Volume, OrderNo, Side)) {
-                                auto order = *iter2;
-                                iter2 = iter1->second.erase(iter2);
-                                m_pool.Free<stUnfindOrder>(order, sizeof(stUnfindOrder));
-                                printf("找到删除:%s\n", SecurityID);
-                                continue;
-                            }
-                        }
-                    }
-                    ++iter2;
-                }
-                if (iter1->second.empty()) {
-                    iter1 = iter->second.erase(iter1);
-                    continue;
-                }
-                ++iter1;
-            }
-            if (iter->second.empty()) {
-                m_unFindOrders.erase(iter);
-            }
         }
     }
 
