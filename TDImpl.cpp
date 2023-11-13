@@ -86,7 +86,7 @@ namespace PROTD {
 
                     if (!m_pApp->m_watchSecurity.empty()) {
                         if (m_pApp->m_watchSecurity.find(security->SecurityID) != m_pApp->m_watchSecurity.end()) {
-                            m_pApp->m_watchSecurity[security->SecurityID].ExchangeID = security->ExchangeID;
+                            m_pApp->m_watchSecurity[security->SecurityID]->ExchangeID = security->ExchangeID;
                         }
                     }
                 }

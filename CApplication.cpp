@@ -30,15 +30,15 @@ bool CApplication::Init(std::string& watchSecurity) {
     std::vector<std::string> vtSecurity;
     Stringsplit(watchSecurity, ',', vtSecurity);
     for (auto iter : vtSecurity) {
-        stSecurity security = {0};
-        strcpy(security.SecurityID, iter.c_str());
-        m_watchSecurity[security.SecurityID] = security;
+        stSecurity* security = m_pool.Malloc<stSecurity>(sizeof(stSecurity));
+        strcpy(security->SecurityID, iter.c_str());
+        m_watchSecurity[security->SecurityID] = security;
     }
 
-    //if (!LoadStrategy()) {
-    //    printf("LoadStrategy Failed!!!\n");
-    //    return false;
-    //}
+    if (!LoadStrategy()) {
+        printf("LoadStrategy Failed!!!\n");
+        return false;
+    }
     return true;
 }
 
@@ -58,18 +58,18 @@ void CApplication::OnTime(const boost::system::error_code& error) {
     }
 
     for (auto& iter : m_watchSecurity) {
-        if (!m_isTest || iter.second.ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
+        if (!m_isTest || iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
             if (m_shMD) {
                 m_shMD->ShowOrderBook((char*)iter.first.c_str());
             }
-        } else if (iter.second.ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
+        } else if (iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
             if (m_szMD) {
                 m_szMD->ShowOrderBook((char*)iter.first.c_str());
             }
         }
     }
-    printf("-----------------------------------------\n");
-    m_timer.expires_from_now(boost::posix_time::milliseconds(6000));
+    printf("-----------------------------------------%s\n", GetThreadID().c_str());
+    m_timer.expires_from_now(boost::posix_time::milliseconds(60000));
     m_timer.async_wait(boost::bind(&CApplication::OnTime, this, boost::asio::placeholders::error));
 }
 

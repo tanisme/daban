@@ -6,6 +6,7 @@
 #include <sstream>
 #include <unordered_map>
 #include <vector>
+#include <thread>
 
 #include <boost/bind/bind.hpp>
 #include "TORA/TORATstpLev2MdApi.h"
@@ -72,5 +73,6 @@ std::string GetTimeStr();
 int GetNowTick();
 int GetClockTick();
 void trim(std::string &s);
+std::string GetThreadID();
 
 #endif //DABAN_DEFINES_H

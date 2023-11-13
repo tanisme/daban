@@ -44,3 +44,11 @@ void trim(std::string &s) {
         }
     }
 }
+
+std::string GetThreadID() {
+    auto tid = std::this_thread::get_id();
+    std::stringstream ss;
+    ss << tid;
+    printf("xx = %s\n", ss.str().c_str());
+    return ss.str();
+}

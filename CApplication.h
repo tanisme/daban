@@ -9,6 +9,7 @@
 #include "MDL2Impl.h"
 #include "TDImpl.h"
 #include "MemoryPool.h"
+//#include "WebServer.h"
 
 class CApplication {
 public:
@@ -38,6 +39,7 @@ public:
 public:
     bool m_isTest = true;
     bool m_strategyOpen = false;
+    std::string m_websocketurl = "";
     std::string m_dbFile;
     std::string m_TDAddr = "tcp://210.14.72.21:4400";
     std::string m_TDAccount = "00030557";
@@ -50,7 +52,7 @@ public:
     std::string m_cpucore = "";
 
     MemoryPool m_pool;
-    std::unordered_map<std::string, stSecurity> m_watchSecurity;
+    std::unordered_map<std::string, stSecurity*> m_watchSecurity;
     std::unordered_map<std::string, std::vector<stStrategy*> > m_strategys;
 private:
     PROMD::MDL2Impl *GetMDByExchangeID(PROMD::TTORATstpExchangeIDType ExchangeID);

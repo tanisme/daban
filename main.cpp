@@ -2,15 +2,14 @@
 #include <boost/asio.hpp>
 #include <boost/program_options.hpp>
 
-#include "server.hpp"
 #include "file_handler.hpp"
 #include "CApplication.h"
-#include "test.h"
+#include "Imitate.h"
 
 int main() {
     std::string cfgfile = "daban.ini";
     std::string dbfile = "database.db";
-    std::string httpurl = "", cpucore = "";
+    std::string httpurl = "", cpucore = "", websocketurl = "";
     std::string shmdaddr = "", szmdaddr = "", mdaddr = "", mdinterface = "";
     std::string tdaddr = "", tdaccount = "", tdpassword = "";
     int shmdnewversion = 0;
@@ -23,6 +22,7 @@ int main() {
             ("daban.dbfile", boost::program_options::value<std::string>(&dbfile), "daban.dbfile")
             ("daban.cpucore", boost::program_options::value<std::string>(&cpucore), "daban.cpucore")
             //("daban.httpurl", boost::program_options::value<std::string>(&httpurl), "daban.httpurl")
+            //("daban.websocketurl", boost::program_options::value<std::string>(&websocketurl), "daban.websocketurl")
             ("daban.tdaddr", boost::program_options::value<std::string>(&tdaddr), "daban.tdaddr")
             ("daban.tdaccount", boost::program_options::value<std::string>(&tdaccount), "daban.tdaccount")
             ("daban.tdpassword", boost::program_options::value<std::string>(&tdpassword), "daban.tdpassword")
@@ -68,12 +68,13 @@ int main() {
     app.m_mdInterface = mdinterface;
     app.m_cpucore = cpucore;
     app.m_strategyOpen = strategyopen;
+    app.m_websocketurl = websocketurl;
     app.Init(watchsecurity);
 
-    if (httpurl.length() > 0) {
-        http::server4::server(io_context, std::string(httpurl, 0, httpurl.find(':')),
-                              httpurl.substr(httpurl.find(':') + 1), http::server4::file_handler(&app))();
-    }
+    //if (httpurl.length() > 0) {
+    //    http::server4::server(io_context, std::string(httpurl, 0, httpurl.find(':')),
+    //                          httpurl.substr(httpurl.find(':') + 1), http::server4::file_handler(&app))();
+    //}
 
     app.Start();
     io_context.run();
