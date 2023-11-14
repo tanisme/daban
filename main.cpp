@@ -2,36 +2,36 @@
 #include <boost/asio.hpp>
 #include <boost/program_options.hpp>
 
-#include "file_handler.hpp"
 #include "CApplication.h"
 #include "Imitate.h"
 
 int main() {
     std::string cfgfile = "daban.ini";
+    bool istest = true, isstrategyopen = false, isshmdnewversion = true;
     std::string dbfile = "database.db";
-    std::string httpurl = "", cpucore = "", websocketurl = "";
-    std::string shmdaddr = "", szmdaddr = "", mdaddr = "", mdinterface = "";
+    std::string shcpucore = "", szcpucore = "", currentexchangeid = "";
+    std::string testshmdaddr = "", testszmdaddr = "", shmdaddr = "", shmdinterface = "", szmdaddr = "", szmdinterface = "";
     std::string tdaddr = "", tdaccount = "", tdpassword = "";
-    int shmdnewversion = 0;
-    bool isTest = true, strategyopen = false;
     std::string srcdatapath = "", watchsecurity = "";
     boost::program_options::options_description cfgdesc("Config file options");
     cfgdesc.add_options()
-            ("daban.istest", boost::program_options::value<bool>(&isTest), "daban.istest")
-            ("daban.strategyopen", boost::program_options::value<bool>(&strategyopen), "daban.strategyopen")
+            ("daban.istest", boost::program_options::value<bool>(&istest), "daban.istest")
+            ("daban.isstrategyopen", boost::program_options::value<bool>(&isstrategyopen), "daban.isstrategyopen")
+            ("daban.isshmdnewversion", boost::program_options::value<bool>(&isshmdnewversion), "daban.isshmdnewversion")
+            ("daban.currentexchangeid", boost::program_options::value<std::string>(&currentexchangeid), "daban.currentexchangeid")
             ("daban.dbfile", boost::program_options::value<std::string>(&dbfile), "daban.dbfile")
-            ("daban.cpucore", boost::program_options::value<std::string>(&cpucore), "daban.cpucore")
-            //("daban.httpurl", boost::program_options::value<std::string>(&httpurl), "daban.httpurl")
-            //("daban.websocketurl", boost::program_options::value<std::string>(&websocketurl), "daban.websocketurl")
+            ("daban.shcpucore", boost::program_options::value<std::string>(&shcpucore), "daban.shcpucore")
+            ("daban.szcpucore", boost::program_options::value<std::string>(&szcpucore), "daban.szcpucore")
             ("daban.tdaddr", boost::program_options::value<std::string>(&tdaddr), "daban.tdaddr")
             ("daban.tdaccount", boost::program_options::value<std::string>(&tdaccount), "daban.tdaccount")
             ("daban.tdpassword", boost::program_options::value<std::string>(&tdpassword), "daban.tdpassword")
-            ("daban.shmdnewversion", boost::program_options::value<int>(&shmdnewversion), "daban.shmdnewversion")
             ("daban.watchsecurity", boost::program_options::value<std::string>(&watchsecurity), "daban.watchsecurity")
-            ("ceshi.shmdaddr", boost::program_options::value<std::string>(&shmdaddr), "ceshi.shmdaddr")
-            ("ceshi.szmdaddr", boost::program_options::value<std::string>(&szmdaddr), "ceshi.szmdaddr")
-            ("shipan.mdaddr", boost::program_options::value<std::string>(&mdaddr), "shipan.mdaddr")
-            ("shipan.mdinterface", boost::program_options::value<std::string>(&mdinterface), "shipan.mdinterface")
+            ("ceshi.testshmdaddr", boost::program_options::value<std::string>(&testshmdaddr), "ceshi.testshmdaddr")
+            ("ceshi.testszmdaddr", boost::program_options::value<std::string>(&testszmdaddr), "ceshi.testszmdaddr")
+            ("shipan.shmdaddr", boost::program_options::value<std::string>(&shmdaddr), "shipan.shmdaddr")
+            ("shipan.shmdinterface", boost::program_options::value<std::string>(&shmdinterface), "shipan.shmdinterface")
+            ("shipan.szmdaddr", boost::program_options::value<std::string>(&szmdaddr), "shipan.szmdaddr")
+            ("shipan.szmdinterface", boost::program_options::value<std::string>(&szmdinterface), "shipan.szmdinterface")
             ("csvfile.srcdatapath", boost::program_options::value<std::string>(&srcdatapath), "csvfile.srcdatapath");
     boost::program_options::variables_map vm;
 
@@ -46,30 +46,32 @@ int main() {
     ifs.close();
     vm.clear();
 
-    if (srcdatapath.length() > 0) {
-        printf("-------------------该程序功能为生成订单簿-------------------\n");
-        test::Imitate imitate;
-        imitate.TestOrderBook(srcdatapath, watchsecurity, shmdnewversion, true);
-        printf("-------------------生成所有合约订单簿完成-------------------\n");
-        return 0;
-    }
+    //if (srcdatapath.length() > 0) {
+    //    printf("-------------------该程序功能为生成订单簿-------------------\n");
+    //    test::Imitate imitate;
+    //    imitate.TestOrderBook(srcdatapath, watchsecurity, isshmdnewversion, true);
+    //    printf("-------------------生成所有合约订单簿完成-------------------\n");
+    //    return 0;
+    //}
 
     boost::asio::io_context io_context;
     CApplication app(io_context);
-    app.m_isTest = isTest;
+    app.m_isTest = istest;
+    app.m_isStrategyOpen = isstrategyopen;
+    app.m_isSHMDNewVersion = isshmdnewversion;
     app.m_dbFile = dbfile;
+    app.m_shCpucore = shcpucore;
+    app.m_szCpucore = szcpucore;
     app.m_TDAddr = tdaddr;
     app.m_TDAccount = tdaccount;
     app.m_TDPassword = tdpassword;
-    app.m_shMDNewVersion = shmdnewversion;
+    app.m_testSHMDAddr = testshmdaddr;
+    app.m_testSZMDAddr = testszmdaddr;
     app.m_shMDAddr = shmdaddr;
+    app.m_shMDInterface = shmdinterface;
     app.m_szMDAddr = szmdaddr;
-    app.m_mdAddr = mdaddr;
-    app.m_mdInterface = mdinterface;
-    app.m_cpucore = cpucore;
-    app.m_strategyOpen = strategyopen;
-    app.m_websocketurl = websocketurl;
-    app.Init(watchsecurity);
+    app.m_szMDInterface = szmdinterface;
+    app.Init(watchsecurity, currentexchangeid);
 
     //if (httpurl.length() > 0) {
     //    http::server4::server(io_context, std::string(httpurl, 0, httpurl.find(':')),

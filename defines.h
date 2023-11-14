@@ -74,5 +74,6 @@ int GetNowTick();
 int GetClockTick();
 void trim(std::string &s);
 std::string GetThreadID();
+long long int GetMs();
 
 #endif //DABAN_DEFINES_H

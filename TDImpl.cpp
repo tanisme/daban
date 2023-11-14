@@ -31,13 +31,13 @@ namespace PROTD {
     void TDImpl::OnFrontConnected() {
         printf("TD::OnFrontConnected!!!\n");
 
-        CTORATstpReqUserLoginField req = {0};
-        req.LogInAccountType = TORA_TSTP_LACT_AccountID;
-        strcpy(req.LogInAccount, m_pApp->m_TDAccount.c_str());
-        strcpy(req.Password, m_pApp->m_TDPassword.c_str());
-        //strcpy(req.UserProductInfo, "notthisone");
-        //strcpy(req.TerminalInfo, "PC;IIP=123.112.154.118;IPORT=50361;LIP=192.168.118.107;MAC=54EE750B1713FCF8AE5CBD58;HD=TF655AY91GHRVL;@notthisone");
-        m_pApi->ReqUserLogin(&req, ++m_reqID);
+        CTORATstpReqUserLoginField Req = {0};
+        Req.LogInAccountType = TORA_TSTP_LACT_AccountID;
+        strcpy(Req.LogInAccount, m_pApp->m_TDAccount.c_str());
+        strcpy(Req.Password, m_pApp->m_TDPassword.c_str());
+        //strcpy(Req.UserProductInfo, "notthisone");
+        //strcpy(Req.TerminalInfo, "PC;IIP=123.112.154.118;IPORT=50361;LIP=192.168.118.107;MAC=54EE750B1713FCF8AE5CBD58;HD=TF655AY91GHRVL;@notthisone");
+        m_pApi->ReqUserLogin(&Req, ++m_reqID);
     }
 
     void TDImpl::OnFrontDisconnected(int nReason) {
@@ -84,10 +84,8 @@ namespace PROTD {
                     security->LowerLimitPrice = pSecurity->LowerLimitPrice;
                     m_marketSecurity[security->SecurityID] = security;
 
-                    if (!m_pApp->m_watchSecurity.empty()) {
-                        if (m_pApp->m_watchSecurity.find(security->SecurityID) != m_pApp->m_watchSecurity.end()) {
-                            m_pApp->m_watchSecurity[security->SecurityID]->ExchangeID = security->ExchangeID;
-                        }
+                    if (m_pApp->m_watchSecurity.find(security->SecurityID) != m_pApp->m_watchSecurity.end()) {
+                        m_pApp->m_watchSecurity[security->SecurityID]->ExchangeID = security->ExchangeID;
                     }
                 }
             }
@@ -95,8 +93,8 @@ namespace PROTD {
 
         if (bIsLast) {
             printf("TD::OnRspQrySecurity Success!!!\n");
-            CTORATstpQryOrderField req = {0};
-            m_pApi->ReqQryOrder(&req, 0);
+            CTORATstpQryOrderField Req = {0};
+            m_pApi->ReqQryOrder(&Req, 0);
         }
     }
 
@@ -146,19 +144,19 @@ namespace PROTD {
 
     int TDImpl::OrderInsert(TTORATstpSecurityIDType SecurityID, TTORATstpExchangeIDType ExchangeID, TTORATstpDirectionType Direction,
                             TTORATstpVolumeType VolumeTotalOriginal, TTORATstpPriceType LimitPric) {
-        CTORATstpInputOrderField req = {0};
+        CTORATstpInputOrderField Req = {0};
 
-        strcpy(req.SecurityID, SecurityID);
-        req.ExchangeID = ExchangeID;
-        strcpy(req.ShareholderID, m_shareHolder[ExchangeID].ShareholderID);
-        req.Direction = Direction;
-        req.VolumeTotalOriginal = VolumeTotalOriginal;
-        req.LimitPrice = LimitPric;
-        req.OrderPriceType = TORA_TSTP_OPT_LimitPrice;
-        req.TimeCondition = TORA_TSTP_TC_GFD;
-        req.VolumeCondition = TORA_TSTP_VC_AV;
-        req.OrderRef = m_reqID;
-        return m_pApi->ReqOrderInsert(&req, ++m_reqID);
+        strcpy(Req.SecurityID, SecurityID);
+        Req.ExchangeID = ExchangeID;
+        strcpy(Req.ShareholderID, m_shareHolder[ExchangeID].ShareholderID);
+        Req.Direction = Direction;
+        Req.VolumeTotalOriginal = VolumeTotalOriginal;
+        Req.LimitPrice = LimitPric;
+        Req.OrderPriceType = TORA_TSTP_OPT_LimitPrice;
+        Req.TimeCondition = TORA_TSTP_TC_GFD;
+        Req.VolumeCondition = TORA_TSTP_VC_AV;
+        Req.OrderRef = m_reqID;
+        return m_pApi->ReqOrderInsert(&Req, ++m_reqID);
     }
 
     void TDImpl::OnRspOrderInsert(CTORATstpInputOrderField *pInputOrderField, CTORATstpRspInfoField *pRspInfoField, int nRequestID) {
@@ -174,9 +172,9 @@ namespace PROTD {
     }
 
     int TDImpl::OrderCancel() {
-        CTORATstpInputOrderActionField req = {0};
-        req.ActionFlag = TORA_TSTP_AF_Delete;
-        return m_pApi->ReqOrderAction(&req, ++m_reqID);
+        CTORATstpInputOrderActionField Req = {0};
+        Req.ActionFlag = TORA_TSTP_AF_Delete;
+        return m_pApi->ReqOrderAction(&Req, ++m_reqID);
     }
 
     void TDImpl::OnRspOrderAction(CTORATstpInputOrderActionField *pInputOrderActionField, CTORATstpRspInfoField *pRspInfoField, int nRequestID) {

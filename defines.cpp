@@ -1,4 +1,6 @@
 ﻿#include "defines.h"
+#include <chrono>
+#include <iostream>
 
 void Stringsplit(const std::string &str, const char split, std::vector<std::string> &res) {
     res.clear();
@@ -49,6 +51,12 @@ std::string GetThreadID() {
     auto tid = std::this_thread::get_id();
     std::stringstream ss;
     ss << tid;
-    printf("xx = %s\n", ss.str().c_str());
     return ss.str();
+}
+
+long long int GetMs() {
+    auto now = std::chrono::system_clock::now();
+    auto ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+    auto val = ms.time_since_epoch().count();
+    return val;
 }

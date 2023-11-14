@@ -20,23 +20,36 @@ namespace PROMD {
     }
 
     bool MDL2Impl::Start(bool isTest) {
+        Clear();
         if (isTest) { // tcp
             m_pApi = CTORATstpLev2MdApi::CreateTstpLev2MdApi();
             m_pApi->RegisterSpi(this);
             if (m_exchangeID == TORA_TSTP_EXD_SSE) {
-                m_pApi->RegisterFront((char *)m_pApp->m_shMDAddr.c_str());
+                m_pApi->RegisterFront((char *)m_pApp->m_testSHMDAddr.c_str());
+                m_pApi->Init(m_pApp->m_shCpucore.c_str());
             } else if (m_exchangeID == TORA_TSTP_EXD_SZSE) {
-                m_pApi->RegisterFront((char *)m_pApp->m_szMDAddr.c_str());
+                m_pApi->RegisterFront((char *)m_pApp->m_testSZMDAddr.c_str());
+                m_pApi->Init(m_pApp->m_szCpucore.c_str());
             } else {
                 return false;
             }
         } else { // udp
             m_pApi = CTORATstpLev2MdApi::CreateTstpLev2MdApi(TORA_TSTP_MST_MCAST);
             m_pApi->RegisterSpi(this);
-            m_pApi->RegisterMulticast((char *)m_pApp->m_mdAddr.c_str(), (char*)m_pApp->m_mdInterface.c_str(), nullptr);
+            if (m_exchangeID == TORA_TSTP_EXD_SSE) {
+                m_pApi->RegisterMulticast((char *)m_pApp->m_shMDAddr.c_str(), (char*)m_pApp->m_shMDInterface.c_str(), nullptr);
+                m_pApi->Init(m_pApp->m_shCpucore.c_str());
+            } else if (m_exchangeID == TORA_TSTP_EXD_SZSE) {
+                m_pApi->RegisterMulticast((char *)m_pApp->m_szMDAddr.c_str(), (char*)m_pApp->m_szMDInterface.c_str(), nullptr);
+                m_pApi->Init(m_pApp->m_szCpucore.c_str());
+            } else {
+                return false;
+            }
         }
-        printf("MD::Start Bind cpucore %s %s %c\n", m_pApp->m_cpucore.c_str(), isTest?"tcp":"udp", m_exchangeID);
-        m_pApi->Init(m_pApp->m_cpucore.c_str());
+        printf("MD::Start Bind %s %s cpucore[%s]\n",
+               isTest?"tcp":"udp",
+               m_exchangeID == TORA_TSTP_EXD_SSE?"SH":"SZ",
+               m_exchangeID == TORA_TSTP_EXD_SSE?m_pApp->m_shCpucore.c_str():m_pApp->m_szCpucore.c_str());
         return true;
     }
 
@@ -58,7 +71,7 @@ namespace PROMD {
     }
 
     void MDL2Impl::ShowOrderBook(TTORATstpSecurityIDType SecurityID) {
-        if (m_orderBuy.empty() && m_orderSell.empty()) return;
+        if (m_orderBuy.find(SecurityID) == m_orderBuy.end() && m_orderSell.find(SecurityID) == m_orderSell.end()) return;
 
         std::stringstream stream;
         stream << "\n";
@@ -75,8 +88,8 @@ namespace PROMD {
                     memset(buffer, 0, sizeof(buffer));
                     TTORATstpLongVolumeType totalVolume = 0;
                     for (auto iter1: iter->second.at(i - 1).Orders) totalVolume += iter1->Volume;
-                    sprintf(buffer, "S%d\t%.3f\t\t%d\t\t%lld\n", i, iter->second.at(i - 1).Price,
-                            (int) iter->second.at(i - 1).Orders.size(), totalVolume);
+                    sprintf(buffer, "S%d\t%.3f\t\t%lld\t%d\n", i, iter->second.at(i - 1).Price,
+                            totalVolume, (int) iter->second.at(i - 1).Orders.size());
                     stream << buffer;
                 }
             }
@@ -91,13 +104,25 @@ namespace PROMD {
                     memset(buffer, 0, sizeof(buffer));
                     TTORATstpLongVolumeType totalVolume = 0;
                     for (auto iter1: iter->second.at(i - 1).Orders) totalVolume += iter1->Volume;
-                    sprintf(buffer, "B%d\t%.3f\t\t%d\t\t%lld\n", i, iter->second.at(i - 1).Price,
-                            (int) iter->second.at(i - 1).Orders.size(), totalVolume);
+                    sprintf(buffer, "B%d\t%.3f\t\t%lld\t%d\n", i, iter->second.at(i - 1).Price,
+                            totalVolume, (int) iter->second.at(i - 1).Orders.size());
                     stream << buffer;
                 }
             }
         }
         printf("%s\n", stream.str().c_str());
+    }
+
+    void MDL2Impl::ShowHandleSpeed() {
+        if (m_handleCount >= INT_MAX - 1000) {
+            m_handleCount = 0;
+            m_handleTick = 0.0f;
+        }
+
+        if (m_handleCount > 0) {
+            printf("%s HandleCount:%d TotalTime:%.0fms PerTick:%.8fms\n", m_exchangeID==TORA_TSTP_EXD_SSE?"SH":"SZ",
+                   m_handleCount, m_handleTick, m_handleTick / m_handleCount);
+        }
     }
 
     const char *MDL2Impl::GetExchangeName(TTORATstpExchangeIDType ExchangeID) {
@@ -118,8 +143,8 @@ namespace PROMD {
 
     void MDL2Impl::OnFrontConnected() {
         printf("%s MD::OnFrontConnected!!!\n", GetExchangeName(m_exchangeID));
-        CTORATstpReqUserLoginField req = {0};
-        m_pApi->ReqUserLogin(&req, ++m_reqID);
+        CTORATstpReqUserLoginField Req = {0};
+        m_pApi->ReqUserLogin(&Req, ++m_reqID);
     }
 
     void MDL2Impl::OnFrontDisconnected(int nReason) {
@@ -187,17 +212,27 @@ namespace PROMD {
 
     void MDL2Impl::OnRtnOrderDetail(CTORATstpLev2OrderDetailField *pOrderDetail) {
         if (!pOrderDetail) return;
+
+        auto start = GetMs();
         OrderDetail(pOrderDetail->SecurityID, pOrderDetail->Side, pOrderDetail->OrderNO, pOrderDetail->Price, pOrderDetail->Volume, pOrderDetail->ExchangeID, pOrderDetail->OrderStatus);
+        m_handleTick += GetMs() - start;
+        m_handleCount++;
     }
 
     void MDL2Impl::OnRtnTransaction(CTORATstpLev2TransactionField *pTransaction) {
         if (!pTransaction) return;
+        auto start = GetMs();
         Transaction(pTransaction->SecurityID, pTransaction->ExchangeID, pTransaction->TradeVolume, pTransaction->ExecType, pTransaction->BuyNo, pTransaction->SellNo, pTransaction->TradePrice, pTransaction->TradeTime);
+        m_handleTick += GetMs() - start;
+        m_handleCount++;
     }
 
     void MDL2Impl::OnRtnNGTSTick(CTORATstpLev2NGTSTickField *pTick) {
         if (!pTick) return;
+        auto start = GetMs();
         NGTSTick(pTick->SecurityID, pTick->TickType, pTick->BuyNo, pTick->SellNo, pTick->Price, pTick->Volume, pTick->Side, pTick->TickTime);
+        m_handleTick += GetMs() - start;
+        m_handleCount++;
     }
 
     /************************************HandleOrderBook***************************************/
@@ -400,7 +435,7 @@ namespace PROMD {
     }
 
     void MDL2Impl::PostPrice(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price) {
-        if (!m_pApp || !m_pApp->m_strategyOpen) return;
+        if (!m_pApp || !m_pApp->m_isStrategyOpen) return;
 
         TTORATstpPriceType BidPrice1 = 0.0;
         TTORATstpLongVolumeType BidVolume1 = 0;

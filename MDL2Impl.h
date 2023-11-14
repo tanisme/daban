@@ -18,6 +18,7 @@ namespace PROMD {
         bool Start(bool isTest = true);
         int ReqMarketData(TTORATstpSecurityIDType SecurityID, TTORATstpExchangeIDType ExchangeID, int type, bool isSub = true);
         void ShowOrderBook(TTORATstpSecurityIDType SecurityID);
+        void ShowHandleSpeed();
         static const char *GetExchangeName(TTORATstpExchangeIDType ExchangeID);
 
         bool IsInited() const { return m_isInited; }
@@ -58,6 +59,8 @@ namespace PROMD {
         MapOrder m_orderBuy;
         MapOrder m_orderSell;
         MemoryPool m_pool;
+        int m_handleCount = 0;
+        float m_handleTick = 0.0f;
     };
 
 }
