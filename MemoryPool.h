@@ -16,7 +16,7 @@
 static const int __align = 8;
 static const int __max_bytes = 1024;
 static const int __list_number = __max_bytes/__align;
-static const int __grow_number = 50;
+static const int __grow_number = 500;
 
 class MemoryPool {
 public:

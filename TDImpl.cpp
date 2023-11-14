@@ -72,7 +72,9 @@ namespace PROTD {
     }
 
     void TDImpl::OnRspQrySecurity(CTORATstpSecurityField *pSecurity, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
-        if (pSecurity) {
+        if (pSecurity && (pSecurity->SecurityType == TORA_TSTP_STP_SZMainAShares ||
+                        pSecurity->SecurityType == TORA_TSTP_STP_SHAShares ||
+                        pSecurity->SecurityType == TORA_TSTP_STP_SHKC)) {
             auto iter = m_marketSecurity.find(pSecurity->SecurityID);
             if (iter == m_marketSecurity.end()) {
                 auto security = m_pool.Malloc<stSecurity>(sizeof(stSecurity));

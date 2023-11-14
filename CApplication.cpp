@@ -90,8 +90,10 @@ void CApplication::OnTime(const boost::system::error_code& error) {
 
 /***************************************MD***************************************/
 void CApplication::MDOnInited(PROMD::TTORATstpExchangeIDType exchangeID) {
+    auto cnt = 0;
     for (auto &iter: m_TD->m_marketSecurity) {
         if (exchangeID == iter.second->ExchangeID) {
+            cnt++;
             PROMD::TTORATstpSecurityIDType Security = {0};
             strncpy(Security, iter.first.c_str(), sizeof(Security));
             if (iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
@@ -107,6 +109,7 @@ void CApplication::MDOnInited(PROMD::TTORATstpExchangeIDType exchangeID) {
             }
         }
     }
+    printf("%s subcount:%d total:%d\n", exchangeID==PROMD::TORA_TSTP_EXD_SSE?"SH":"SZ", cnt, (int)m_TD->m_marketSecurity.size());
 }
 
 void CApplication::MDPostPrice(stPostPrice& postPrice) {
