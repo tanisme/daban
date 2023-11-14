@@ -120,7 +120,7 @@ namespace PROMD {
         }
 
         if (m_handleCount > 0) {
-            printf("%s %-11d %-8.0f %.6fms %-9ld\n", m_exchangeID==TORA_TSTP_EXD_SSE?"SH":"SZ",
+            printf("%s %s %-11d %-8.0f %.6fms %-9ld\n",  GetTimeStr().c_str(), m_exchangeID==TORA_TSTP_EXD_SSE?"SH":"SZ",
                    m_handleCount, m_handleTick, m_handleTick / m_handleCount, m_pool.GetTotalCnt());
         }
     }
