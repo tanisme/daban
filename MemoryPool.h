@@ -23,6 +23,8 @@ public:
     MemoryPool();
     ~MemoryPool();
 
+    long GetTotalCnt() const { return m_totalCnt; }
+
     template<class T>
     T* Malloc(int size);
     template<class T>
@@ -45,6 +47,7 @@ private:
     char* m_ptrEnd;
     std::vector<char*> m_memVecs;
     std::recursive_mutex m_mutex;
+    long m_totalCnt = 0;
 };
 
 template<class T>

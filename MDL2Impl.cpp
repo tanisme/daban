@@ -114,14 +114,14 @@ namespace PROMD {
     }
 
     void MDL2Impl::ShowHandleSpeed() {
-        if (m_handleCount >= INT_MAX - 1000) {
+        if (m_handleCount >= INT_MAX - 10000) {
             m_handleCount = 0;
             m_handleTick = 0.0f;
         }
 
         if (m_handleCount > 0) {
-            printf("%s HandleCount:%d TotalTime:%.0fms PerTick:%.8fms\n", m_exchangeID==TORA_TSTP_EXD_SSE?"SH":"SZ",
-                   m_handleCount, m_handleTick, m_handleTick / m_handleCount);
+            printf("%s HandleCount:%d TotalTime:%.0fms PerTick:%.8fms %ld\n", m_exchangeID==TORA_TSTP_EXD_SSE?"SH":"SZ",
+                   m_handleCount, m_handleTick, m_handleTick / m_handleCount, m_pool.GetTotalCnt());
         }
     }
 

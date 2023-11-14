@@ -37,6 +37,7 @@ void* MemoryPool::ReFill(int size, int grow_number) {
         return nullptr;
     }
 
+    m_totalCnt += number;
     MemNode* volatile* first;
     MemNode* res, *cur, *next;
     if (number == 1) return chunk;
