@@ -5,6 +5,7 @@ project(daban)
 set(CMAKE_CXX_STANDARD 11)
 
 add_compile_definitions(_CRT_SECURE_NO_WARNINGS BOOST_BIND_GLOBAL_PLACEHOLDERS)
+add_definitions(-D_GLIBCXX_USE_CXX11_ABI=1)
 
 set(Boost_USE_STATIC_LIBS ON)
 
