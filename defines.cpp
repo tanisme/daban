@@ -59,4 +59,7 @@ long long int GetMs() {
     auto ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
     auto val = ms.time_since_epoch().count();
     return val;
+    //auto val = std::chrono::high_resolution_clock::now();
+    //auto item = val.time_since_epoch().count();
+    //return item;
 }
