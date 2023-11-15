@@ -59,8 +59,8 @@ namespace PROMD {
         MapOrder m_orderBuy;
         MapOrder m_orderSell;
         MemoryPool m_pool;
-        int m_handleCount = 0;
-        float m_handleTick = 0.0f;
+        long m_handleCount = 0;
+        long m_handleTick = 0;
     };
 
 }

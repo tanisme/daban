@@ -114,15 +114,9 @@ namespace PROMD {
     }
 
     void MDL2Impl::ShowHandleSpeed() {
-        if (m_handleCount >= INT_MAX - 10000) {
-            m_handleCount = 0;
-            m_handleTick = 0.0f;
-        }
-
-        if (m_handleCount > 0) {
-            printf("%s %s %-11d %-8.0f %.6fms %-9ld\n",  GetTimeStr().c_str(), m_exchangeID==TORA_TSTP_EXD_SSE?"SH":"SZ",
-                   m_handleCount, m_handleTick, m_handleTick / m_handleCount, m_pool.GetTotalCnt());
-        }
+        if (m_handleCount <= 0) return;
+        printf("%s %s %-9ld %-9ld %.6fms %-9ld\n",  GetTimeStr().c_str(), m_exchangeID==TORA_TSTP_EXD_SSE?"SH":"SZ",
+               m_handleCount, m_handleTick, (1.0*m_handleTick) / m_handleCount, m_pool.GetTotalCnt());
     }
 
     const char *MDL2Impl::GetExchangeName(TTORATstpExchangeIDType ExchangeID) {
@@ -212,7 +206,6 @@ namespace PROMD {
 
     void MDL2Impl::OnRtnOrderDetail(CTORATstpLev2OrderDetailField *pOrderDetail) {
         if (!pOrderDetail) return;
-
         auto start = GetMs();
         OrderDetail(pOrderDetail->SecurityID, pOrderDetail->Side, pOrderDetail->OrderNO, pOrderDetail->Price, pOrderDetail->Volume, pOrderDetail->ExchangeID, pOrderDetail->OrderStatus);
         m_handleTick += GetMs() - start;
