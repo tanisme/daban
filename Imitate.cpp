@@ -93,7 +93,7 @@ namespace test {
         m_md->ShowOrderBook(SecurityID);
     }
 
-    void Imitate::SplitSecurityFile(std::string srcDataDir, bool isOrder) {
+    int Imitate::SplitSecurityFile(std::string srcDataDir, bool isOrder) {
         if (isOrder) {
             srcDataDir += "/OrderDetail.csv";
         } else {
@@ -103,9 +103,10 @@ namespace test {
         std::ifstream ifs(srcDataDir, std::ios::in);
         if (!ifs.is_open()) {
             printf("srcDataFile csv open failed!!! path%s\n", srcDataDir.c_str());
-            return;
+            return 0;
         }
 
+        auto cnt = 0;
         std::string line;
         std::vector<std::string> res;
         std::unordered_map<std::string, int> writeCount;
@@ -115,9 +116,10 @@ namespace test {
             Stringsplit(line, ',', res);
 
             if ((int) res.size() != 15) {
-                printf("读取%s文件 有错误数据 列数:%d 内容:%s\n", isOrder ? "订单" : "成交", (int) res.size(), line.c_str());
+                //printf("读取%s文件 有错误数据 列数:%d 内容:%s\n", isOrder ? "订单" : "成交", (int) res.size(), line.c_str());
             } else {
                 std::string SecurityID = res.at(1);
+                if (SecurityID.c_str()[0] == '0' || SecurityID.c_str()[0] == '6') cnt++;
                 FILE *pf = nullptr;
                 if (isOrder) {
                     auto iter = m_watchOrderFILE.find(SecurityID);
@@ -144,6 +146,7 @@ namespace test {
             }
             line.clear();
         }
+        return cnt;
     }
 
     void Imitate::LDParseSecurityFile(TTORATstpSecurityIDType CalSecurityID) {
@@ -218,9 +221,8 @@ namespace test {
         //}
     }
 
-    bool Imitate::TestOrderBook(std::string& srcDataDir, std::string& watchsecurity, bool shnewversion, bool createfile) {
+    bool Imitate::TestOrderBook(std::string& srcDataDir, std::string& watchsecurity, bool createfile) {
         m_md = new PROMD::MDL2Impl(nullptr, PROMD::TORA_TSTP_EXD_COMM);
-        m_shnewversion = shnewversion;
 
         trim(watchsecurity);
         if (watchsecurity.length() <= 0) {
@@ -243,6 +245,7 @@ namespace test {
             printf("开始生成订单簿 %s\n", GetTimeStr().c_str());
 
             if (createfile) {
+                auto orderCnt = 0, tradeCnt = 0;
                 for (auto iter : tempSecurity) {
                     std::string orderFileName = dstDataDir + iter + "_o.txt";
                     std::string tradeFileName = dstDataDir + iter + "_t.txt";
@@ -260,10 +263,11 @@ namespace test {
                     m_watchOrderFILE[iter] = opf;
                     m_watchTradeFILE[iter] = tpf;
                 }
-                SplitSecurityFile(srcDataDir, true);
-                SplitSecurityFile(srcDataDir, false);
+                orderCnt = SplitSecurityFile(srcDataDir, true);
+                tradeCnt = SplitSecurityFile(srcDataDir, false);
                 for (auto iter = m_watchOrderFILE.begin(); iter != m_watchOrderFILE.end(); ++iter) if (iter->second) fclose(iter->second);
                 for (auto iter = m_watchTradeFILE.begin(); iter != m_watchTradeFILE.end(); ++iter) if (iter->second) fclose(iter->second);
+                printf("ordercnt:%d tradecnt:%d\n", orderCnt, tradeCnt);
             }
 
             for (auto iter : tempSecurity) {

@@ -55,6 +55,7 @@ struct stSecurity {
     TORASTOCKAPI::TTORATstpSecurityIDType SecurityID;
     TORASTOCKAPI::TTORATstpSecurityNameType SecurityName;
     TORASTOCKAPI::TTORATstpExchangeIDType ExchangeID;
+    TORASTOCKAPI::TTORATstpSecurityTypeType SecurityType;
     TORASTOCKAPI::TTORATstpPriceType UpperLimitPrice;
     TORASTOCKAPI::TTORATstpPriceType LowerLimitPrice;
 };

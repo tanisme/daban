@@ -70,14 +70,11 @@ void CApplication::OnTime(const boost::system::error_code& error) {
     }
 
     for (auto& iter : m_watchSecurity) {
-        if (iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
-            if (m_shMD) {
-                m_shMD->ShowOrderBook((char*)iter.first.c_str());
-            }
-        } else if (iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
-            if (m_szMD) {
-                m_szMD->ShowOrderBook((char*)iter.first.c_str());
-            }
+        if (m_shMD && iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
+            m_shMD->ShowOrderBook((char*)iter.first.c_str());
+        }
+        if (m_szMD && iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
+            m_szMD->ShowOrderBook((char*)iter.first.c_str());
         }
     }
 
@@ -92,7 +89,10 @@ void CApplication::OnTime(const boost::system::error_code& error) {
 void CApplication::MDOnInited(PROMD::TTORATstpExchangeIDType exchangeID) {
     auto cnt = 0;
     for (auto &iter: m_TD->m_marketSecurity) {
-        if (exchangeID == iter.second->ExchangeID) {
+        if (exchangeID == iter.second->ExchangeID &&
+            (iter.second->SecurityType == PROTD::TORA_TSTP_STP_SHAShares ||
+             //iter.second->SecurityType == PROTD::TORA_TSTP_STP_SHKC ||
+             iter.second->SecurityType == PROTD::TORA_TSTP_STP_SZMainAShares)) {
             cnt++;
             PROMD::TTORATstpSecurityIDType Security = {0};
             strncpy(Security, iter.first.c_str(), sizeof(Security));
@@ -109,7 +109,7 @@ void CApplication::MDOnInited(PROMD::TTORATstpExchangeIDType exchangeID) {
             }
         }
     }
-    printf("%s subcount:%d total:%d\n", exchangeID==PROMD::TORA_TSTP_EXD_SSE?"SH":"SZ", cnt, (int)m_TD->m_marketSecurity.size());
+    printf("%s subcount:%d total:%d\n", PROMD::MDL2Impl::GetExchangeName(exchangeID), cnt, (int)m_TD->m_marketSecurity.size());
 }
 
 void CApplication::MDPostPrice(stPostPrice& postPrice) {

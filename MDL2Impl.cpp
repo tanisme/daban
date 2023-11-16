@@ -46,9 +46,8 @@ namespace PROMD {
                 return false;
             }
         }
-        printf("MD::Start Bind %s %s cpucore[%s]\n",
-               isTest?"tcp":"udp",
-               m_exchangeID == TORA_TSTP_EXD_SSE?"SH":"SZ",
+        printf("MD::Start Bind %s %s cpucore[%s]\n", isTest?"tcp":"udp",
+               GetExchangeName(m_exchangeID),
                m_exchangeID == TORA_TSTP_EXD_SSE?m_pApp->m_shCpucore.c_str():m_pApp->m_szCpucore.c_str());
         return true;
     }

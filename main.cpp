@@ -46,13 +46,13 @@ int main() {
     ifs.close();
     vm.clear();
 
-    //if (srcdatapath.length() > 0) {
-    //    printf("-------------------该程序功能为生成订单簿-------------------\n");
-    //    test::Imitate imitate;
-    //    imitate.TestOrderBook(srcdatapath, watchsecurity, isshmdnewversion, true);
-    //    printf("-------------------生成所有合约订单簿完成-------------------\n");
-    //    return 0;
-    //}
+    if (srcdatapath.length() > 0) {
+        printf("-------------------该程序功能为生成订单簿-------------------\n");
+        test::Imitate imitate;
+        imitate.TestOrderBook(srcdatapath, watchsecurity, true);
+        printf("-------------------生成所有合约订单簿完成-------------------\n");
+        return 0;
+    }
 
     boost::asio::io_context io_context;
     CApplication app(io_context);

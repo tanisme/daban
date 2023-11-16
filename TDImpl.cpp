@@ -72,23 +72,27 @@ namespace PROTD {
     }
 
     void TDImpl::OnRspQrySecurity(CTORATstpSecurityField *pSecurity, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
-        if (pSecurity && (pSecurity->SecurityType == TORA_TSTP_STP_SZMainAShares ||
-                        pSecurity->SecurityType == TORA_TSTP_STP_SHAShares ||
-                        pSecurity->SecurityType == TORA_TSTP_STP_SHKC)) {
-            auto iter = m_marketSecurity.find(pSecurity->SecurityID);
-            if (iter == m_marketSecurity.end()) {
-                auto security = m_pool.Malloc<stSecurity>(sizeof(stSecurity));
-                if (security) {
-                    strcpy(security->SecurityID, pSecurity->SecurityID);
-                    strcpy(security->SecurityName, pSecurity->SecurityName);
-                    security->ExchangeID = pSecurity->ExchangeID;
-                    security->UpperLimitPrice = pSecurity->UpperLimitPrice;
-                    security->LowerLimitPrice = pSecurity->LowerLimitPrice;
-                    m_marketSecurity[security->SecurityID] = security;
-
-                    if (m_pApp->m_watchSecurity.find(security->SecurityID) != m_pApp->m_watchSecurity.end()) {
-                        m_pApp->m_watchSecurity[security->SecurityID]->ExchangeID = security->ExchangeID;
+        if (pSecurity) {
+            {
+                auto iter = m_marketSecurity.find(pSecurity->SecurityID);
+                if (iter == m_marketSecurity.end()) {
+                    auto security = m_pool.Malloc<stSecurity>(sizeof(stSecurity));
+                    if (security) {
+                        strcpy(security->SecurityID, pSecurity->SecurityID);
+                        strcpy(security->SecurityName, pSecurity->SecurityName);
+                        security->ExchangeID = pSecurity->ExchangeID;
+                        security->SecurityType = pSecurity->SecurityType;
+                        security->UpperLimitPrice = pSecurity->UpperLimitPrice;
+                        security->LowerLimitPrice = pSecurity->LowerLimitPrice;
+                        m_marketSecurity[security->SecurityID] = security;
                     }
+                }
+            }
+
+            {
+                auto iter = m_pApp->m_watchSecurity.find(pSecurity->SecurityID);
+                if (iter != m_pApp->m_watchSecurity.end()) {
+                    iter->second->ExchangeID = pSecurity->ExchangeID;
                 }
             }
         }
