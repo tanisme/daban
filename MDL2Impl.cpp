@@ -114,7 +114,7 @@ namespace PROMD {
 
     void MDL2Impl::ShowHandleSpeed() {
         if (m_handleCount <= 0) return;
-        printf("%s %s %-9ld %-9ld %.6fms %-9ld\n",  GetTimeStr().c_str(), m_exchangeID==TORA_TSTP_EXD_SSE?"SH":"SZ",
+        printf("%s %s %-9ld %-9ld %.6fus %-9ld\n",  GetTimeStr().c_str(), m_exchangeID==TORA_TSTP_EXD_SSE?"SH":"SZ",
                m_handleCount, m_handleTick, (1.0*m_handleTick) / m_handleCount, m_pool.GetTotalCnt());
     }
 
@@ -207,7 +207,7 @@ namespace PROMD {
         if (!pOrderDetail) return;
         auto start = GetMs();
         OrderDetail(pOrderDetail->SecurityID, pOrderDetail->Side, pOrderDetail->OrderNO, pOrderDetail->Price, pOrderDetail->Volume, pOrderDetail->ExchangeID, pOrderDetail->OrderStatus);
-        m_handleTick += GetMs() - start;
+        m_handleTick += (GetMs() - start);
         m_handleCount++;
     }
 
@@ -215,7 +215,7 @@ namespace PROMD {
         if (!pTransaction) return;
         auto start = GetMs();
         Transaction(pTransaction->SecurityID, pTransaction->ExchangeID, pTransaction->TradeVolume, pTransaction->ExecType, pTransaction->BuyNo, pTransaction->SellNo, pTransaction->TradePrice, pTransaction->TradeTime);
-        m_handleTick += GetMs() - start;
+        m_handleTick += (GetMs() - start);
         m_handleCount++;
     }
 
@@ -223,7 +223,7 @@ namespace PROMD {
         if (!pTick) return;
         auto start = GetMs();
         NGTSTick(pTick->SecurityID, pTick->TickType, pTick->BuyNo, pTick->SellNo, pTick->Price, pTick->Volume, pTick->Side, pTick->TickTime);
-        m_handleTick += GetMs() - start;
+        m_handleTick += (GetMs() - start);
         m_handleCount++;
     }
 

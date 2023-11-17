@@ -69,19 +69,19 @@ void CApplication::OnTime(const boost::system::error_code& error) {
         }
     }
 
-    for (auto& iter : m_watchSecurity) {
-        if (m_shMD && iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
-            m_shMD->ShowOrderBook((char*)iter.first.c_str());
-        }
-        if (m_szMD && iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
-            m_szMD->ShowOrderBook((char*)iter.first.c_str());
-        }
-    }
+    //for (auto& iter : m_watchSecurity) {
+    //    if (m_shMD && iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
+    //        m_shMD->ShowOrderBook((char*)iter.first.c_str());
+    //    }
+    //    if (m_szMD && iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
+    //        m_szMD->ShowOrderBook((char*)iter.first.c_str());
+    //    }
+    //}
 
     if (m_shMD) m_shMD->ShowHandleSpeed();
     if (m_szMD) m_szMD->ShowHandleSpeed();
 
-    m_timer.expires_from_now(boost::posix_time::milliseconds(60000));
+    m_timer.expires_from_now(boost::posix_time::milliseconds(6000));
     m_timer.async_wait(boost::bind(&CApplication::OnTime, this, boost::asio::placeholders::error));
 }
 

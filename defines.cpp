@@ -56,7 +56,7 @@ std::string GetThreadID() {
 
 long long int GetMs() {
     auto now = std::chrono::system_clock::now();
-    auto ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+    auto ms = std::chrono::time_point_cast<std::chrono::microseconds>(now);
     auto val = ms.time_since_epoch().count();
     return val;
     //auto val = std::chrono::high_resolution_clock::now();
