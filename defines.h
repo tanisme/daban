@@ -42,6 +42,13 @@ struct stPriceOrdersList {
 };
 typedef std::unordered_map<int, std::list<stPriceOrdersList> > MapOrderList;
 
+// map
+struct stPriceOrdersMap {
+    TORALEV2API::TTORATstpPriceType Price;
+    std::unordered_map<TORALEV2API::TTORATstpLongSequenceType, std::list<stOrder*>> Orders;
+};
+typedef std::unordered_map<int, std::list<stPriceOrdersMap> > MapOrderMap;
+
 struct stPostPrice {
     TORALEV2API::TTORATstpSecurityIDType SecurityID;
     TORALEV2API::TTORATstpPriceType AskPrice1;

@@ -18,6 +18,7 @@ namespace PROMD {
         int ReqMarketData(TTORATstpSecurityIDType SecurityID, TTORATstpExchangeIDType ExchangeID, int type, bool isSub = true);
         void ShowOrderBook(TTORATstpSecurityIDType SecurityID);
         void ShowOrderBookList(TTORATstpSecurityIDType SecurityID);
+        void ShowOrderBookMap(TTORATstpSecurityIDType SecurityID);
         void ShowHandleSpeed();
         static const char *GetExchangeName(TTORATstpExchangeIDType ExchangeID);
 
@@ -43,13 +44,20 @@ namespace PROMD {
         void OnRtnNGTSTick(CTORATstpLev2NGTSTickField *pTick) override;
 
     private:
-        void InsertOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side);
-        bool ModifyOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side);
-        void PostPrice(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price);
+        // vector
+        void InsertOrderVector(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side);
+        bool ModifyOrderVector(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side);
+        void PostPriceVector(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price);
 
+        // list
         void InsertOrderList(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side);
         void ModifyOrderList(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side);
         void PostPriceList(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price);
+
+        // map
+        void InsertOrderMap(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side);
+        void ModifyOrderMap(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side);
+        void PostPriceMap(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price);
     private:
         int m_version = 1;
         int m_reqID = 1;
@@ -61,6 +69,9 @@ namespace PROMD {
         MapOrder m_orderSell;
         MapOrderList m_orderBuyList;
         MapOrderList m_orderSellList;
+        MapOrderMap m_orderBuyMap;
+        MapOrderMap m_orderSellMap;
+
         MemoryPool m_pool;
         long long int m_handleCount = 0;
         long long int m_handleTick = 0;
