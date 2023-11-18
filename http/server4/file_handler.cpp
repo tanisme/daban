@@ -66,7 +66,7 @@ namespace http {
             int ServiceNo =reqvalue.isMember("ServiceNo")?reqvalue["ServiceNo"].asInt():0;
             printf("ServiceNo %d\n", ServiceNo);
 
-            if (ServiceNo == SERVICE_ADDSTRATEGYREQ) {
+            if (ServiceNo == 1) {
                 if (!reqvalue.isMember("securityid") || !reqvalue.isMember("type")) return;
                 stStrategy strategy = {0};
                 strcpy(strategy.SecurityID, reqvalue["securityid"].asString().c_str());
@@ -77,10 +77,10 @@ namespace http {
                 strategy.params.p4 = reqvalue.isMember("p4")?reqvalue["p4"].asDouble():0.0;
                 strategy.params.p5 = reqvalue.isMember("p5")?reqvalue["p5"].asDouble():0.0;
                 m_app->m_ioc.post(boost::bind(&CApplication::AddStrategy, m_app, strategy));
-            } else if (ServiceNo == SERVICE_DELSTRATEGYREQ) {
+            } else if (ServiceNo == 2) {
                 int type = reqvalue["idx"].asInt();
                 //m_app->m_ioc.post(boost::bind(&CApplication::AddStrategy, m_app, strategy));
-            } else if (ServiceNo == SERVICE_QRYSTRATEGYREQ) {
+            } else if (ServiceNo == 3) {
                 // 查询策略
                 for (auto& iter : m_app->m_strategys) {
                     for (auto& iter1 : iter.second) {

@@ -12,13 +12,6 @@
 #include "TORA/TORATstpLev2MdApi.h"
 #include "TORA/TORATstpTraderApi.h"
 
-#define SERVICE_ADDSTRATEGYREQ      1   // 增加策略请求
-#define SERVICE_ADDSTRATEGYRSP      2
-#define SERVICE_DELSTRATEGYREQ      3   // 删除策略请求
-#define SERVICE_DELSTRATEGYRSP      4
-#define SERVICE_QRYSTRATEGYREQ      5   // 查询策略请求
-#define SERVICE_QRYSTRATEGYRSP      6
-
 struct stStrategy {
     int idx;
     TORALEV2API::TTORATstpSecurityIDType SecurityID;
@@ -35,13 +28,14 @@ struct stOrder {
     TORALEV2API::TTORATstpLongVolumeType Volume;
 };
 
+// vector
 struct stPriceOrders {
     TORALEV2API::TTORATstpPriceType Price;
     std::vector<stOrder*> Orders;
 };
-
 typedef std::unordered_map<std::string, std::vector<stPriceOrders> > MapOrder;
 
+// list
 struct stPriceOrdersList {
     TORALEV2API::TTORATstpPriceType Price;
     std::list<stOrder*> Orders;

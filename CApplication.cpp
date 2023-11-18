@@ -34,23 +34,20 @@ bool CApplication::Init(std::string& watchSecurity, std::string& currentExchange
         strcpy(security->SecurityID, iter.c_str());
         m_watchSecurity[security->SecurityID] = security;
     }
-
     trim(currentExchangeID);
     std::vector<std::string> vtExchangeID;
     Stringsplit(currentExchangeID, ',', vtExchangeID);
     for (auto iter : vtExchangeID) {
         m_supportExchangeID[iter.c_str()[0]] = true;
     }
-
     if (m_supportExchangeID.empty()) {
         printf("currentExchangeID config file not setted!!!\n");
         return false;
     }
-
-    if (!LoadStrategy()) {
-        printf("LoadStrategy Failed!!!\n");
-        return false;
-    }
+    //if (!LoadStrategy()) {
+    //    printf("LoadStrategy Failed!!!\n");
+    //    return false;
+    //}
     return true;
 }
 
@@ -58,7 +55,7 @@ void CApplication::Start() {
     m_TD = new PROTD::TDImpl(this);
     m_TD->Start();
 
-    m_timer.expires_from_now(boost::posix_time::milliseconds(3000));
+    m_timer.expires_from_now(boost::posix_time::milliseconds(5000));
     m_timer.async_wait(boost::bind(&CApplication::OnTime, this, boost::asio::placeholders::error));
 }
 

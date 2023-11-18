@@ -51,7 +51,6 @@ namespace PROTD {
             printf("TD::OnRspUserLogin Failed!!! ErrMsg:%s\n", pRspInfo->ErrorMsg);
             return;
         }
-
         memcpy(&m_loginField, pRspUserLoginField, sizeof(m_loginField));
 
         CTORATstpQryShareholderAccountField Req = {0};
@@ -88,7 +87,7 @@ namespace PROTD {
             }
 
             if (m_pApp->m_watchSecurity.find(pSecurity->SecurityID) != m_pApp->m_watchSecurity.end()) {
-                iter->second->ExchangeID = pSecurity->ExchangeID;
+                m_pApp->m_watchSecurity[pSecurity->SecurityID]->ExchangeID = pSecurity->ExchangeID;
             }
         }
 
