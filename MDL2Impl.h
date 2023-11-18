@@ -14,10 +14,10 @@ namespace PROMD {
         explicit MDL2Impl(CApplication *pApp, TTORATstpExchangeIDType ExchangeID);
         ~MDL2Impl();
 
-        void Clear();
-        bool Start(bool isTest = true);
+        bool Start(bool isTest, int version);
         int ReqMarketData(TTORATstpSecurityIDType SecurityID, TTORATstpExchangeIDType ExchangeID, int type, bool isSub = true);
         void ShowOrderBook(TTORATstpSecurityIDType SecurityID);
+        void ShowOrderBookList(TTORATstpSecurityIDType SecurityID);
         void ShowHandleSpeed();
         static const char *GetExchangeName(TTORATstpExchangeIDType ExchangeID);
 
@@ -43,14 +43,15 @@ namespace PROMD {
         void OnRtnNGTSTick(CTORATstpLev2NGTSTickField *pTick) override;
 
     private:
-        void ClearOrder(TTORATstpLSideType Side);
         void InsertOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side);
         bool ModifyOrder(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side);
         void ResetOrder(TTORATstpSecurityIDType SecurityID, TTORATstpTradeBSFlagType Side);
         void FixOrder(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price, TTORATstpTimeStampType Time);
         void PostPrice(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price);
-
+        void InsertOrderList(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side);
+        void ModifyOrderList(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side);
     private:
+        int m_version = 1;
         int m_reqID = 1;
         bool m_isInited = false;
         CTORATstpLev2MdApi *m_pApi = nullptr;
@@ -58,9 +59,11 @@ namespace PROMD {
         TTORATstpExchangeIDType m_exchangeID;
         MapOrder m_orderBuy;
         MapOrder m_orderSell;
+        MapOrderList m_orderBuyList;
+        MapOrderList m_orderSellList;
         MemoryPool m_pool;
-        long m_handleCount = 0;
-        long m_handleTick = 0;
+        long long int m_handleCount = 0;
+        long long int m_handleTick = 0;
     };
 
 }

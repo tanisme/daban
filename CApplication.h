@@ -36,6 +36,7 @@ public:
     bool ModStrategy(stStrategy* strategy);
 
 public:
+    int m_version = 1;
     bool m_isTest = true;
     bool m_isStrategyOpen = false;
     bool m_isSHMDNewVersion = true;

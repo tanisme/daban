@@ -6,8 +6,6 @@ namespace test {
     using namespace TORALEV2API;
 
     void Imitate::SplitSecurityFileOrderQuot(std::string &dstDataDir, TTORATstpSecurityIDType SecurityID) {
-        m_md->Clear();
-
         std::string file = dstDataDir + SecurityID + "_o.txt";
         std::ifstream ifs(file, std::ios::in);
         if (!ifs.is_open()) {

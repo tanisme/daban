@@ -42,6 +42,12 @@ struct stPriceOrders {
 
 typedef std::unordered_map<std::string, std::vector<stPriceOrders> > MapOrder;
 
+struct stPriceOrdersList {
+    TORALEV2API::TTORATstpPriceType Price;
+    std::list<stOrder*> Orders;
+};
+typedef std::unordered_map<int, std::list<stPriceOrdersList> > MapOrderList;
+
 struct stPostPrice {
     TORALEV2API::TTORATstpSecurityIDType SecurityID;
     TORALEV2API::TTORATstpPriceType AskPrice1;
@@ -60,21 +66,12 @@ struct stSecurity {
     TORASTOCKAPI::TTORATstpPriceType LowerLimitPrice;
 };
 
-struct stUnfindOrder {
-    TORALEV2API::TTORATstpSecurityIDType SecurityID;
-    TORALEV2API::TTORATstpLongSequenceType OrderNo;
-    TORALEV2API::TTORATstpLongVolumeType Volume;
-    TORALEV2API::TTORATstpTradeBSFlagType Side;
-    TORALEV2API::TTORATstpTimeStampType Time;
-    int Type;   // 0-trade 1-deleteorder
-};
-
 void Stringsplit(const std::string &str, const char split, std::vector<std::string> &res);
 std::string GetTimeStr();
 int GetNowTick();
 int GetClockTick();
 void trim(std::string &s);
 std::string GetThreadID();
-long long int GetMs();
+long long int GetUs();
 
 #endif //DABAN_DEFINES_H

@@ -54,12 +54,9 @@ std::string GetThreadID() {
     return ss.str();
 }
 
-long long int GetMs() {
-    auto now = std::chrono::system_clock::now();
-    auto ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
-    auto val = ms.time_since_epoch().count();
-    return val;
-    //auto val = std::chrono::high_resolution_clock::now();
-    //auto item = val.time_since_epoch().count();
-    //return item;
+long long int GetUs() {
+    auto now = std::chrono::high_resolution_clock::now();
+    auto duration = now.time_since_epoch();
+    auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(duration);
+    return microseconds.count();
 }

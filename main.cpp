@@ -7,6 +7,7 @@
 
 int main() {
     std::string cfgfile = "daban.ini";
+    int version = 1;
     bool istest = true, isstrategyopen = false, isshmdnewversion = true;
     std::string dbfile = "database.db";
     std::string shcpucore = "", szcpucore = "", currentexchangeid = "";
@@ -15,6 +16,7 @@ int main() {
     std::string srcdatapath = "", watchsecurity = "";
     boost::program_options::options_description cfgdesc("Config file options");
     cfgdesc.add_options()
+            ("daban.version", boost::program_options::value<int>(&version), "daban.version")
             ("daban.istest", boost::program_options::value<bool>(&istest), "daban.istest")
             ("daban.isstrategyopen", boost::program_options::value<bool>(&isstrategyopen), "daban.isstrategyopen")
             ("daban.isshmdnewversion", boost::program_options::value<bool>(&isshmdnewversion), "daban.isshmdnewversion")
@@ -46,16 +48,17 @@ int main() {
     ifs.close();
     vm.clear();
 
-    if (srcdatapath.length() > 0) {
-        printf("-------------------该程序功能为生成订单簿-------------------\n");
-        test::Imitate imitate;
-        imitate.TestOrderBook(srcdatapath, watchsecurity, true);
-        printf("-------------------生成所有合约订单簿完成-------------------\n");
-        return 0;
-    }
+    //if (srcdatapath.length() > 0) {
+    //    printf("-------------------该程序功能为生成订单簿-------------------\n");
+    //    test::Imitate imitate;
+    //    imitate.TestOrderBook(srcdatapath, watchsecurity, true);
+    //    printf("-------------------生成所有合约订单簿完成-------------------\n");
+    //    return 0;
+    //}
 
     boost::asio::io_context io_context;
     CApplication app(io_context);
+    app.m_version = version;
     app.m_isTest = istest;
     app.m_isStrategyOpen = isstrategyopen;
     app.m_isSHMDNewVersion = isshmdnewversion;

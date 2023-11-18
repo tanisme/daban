@@ -30,7 +30,7 @@ bool CApplication::Init(std::string& watchSecurity, std::string& currentExchange
     std::vector<std::string> vtSecurity;
     Stringsplit(watchSecurity, ',', vtSecurity);
     for (auto iter : vtSecurity) {
-        stSecurity* security = m_pool.Malloc<stSecurity>(sizeof(stSecurity));
+        auto security = m_pool.Malloc<stSecurity>(sizeof(stSecurity));
         strcpy(security->SecurityID, iter.c_str());
         m_watchSecurity[security->SecurityID] = security;
     }
@@ -158,12 +158,16 @@ void CApplication::MDPostPrice(stPostPrice& postPrice) {
 /***************************************TD***************************************/
 void CApplication::TDOnInited() {
     if (m_supportExchangeID.find(PROMD::TORA_TSTP_EXD_SSE) != m_supportExchangeID.end()) {
-        m_shMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SSE);
-        m_shMD->Start(m_isTest);
+        if (!m_shMD) {
+            m_shMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SSE);
+            m_shMD->Start(m_isTest, m_version);
+        }
     }
     if (m_supportExchangeID.find(PROMD::TORA_TSTP_EXD_SZSE) != m_supportExchangeID.end()) {
-        m_szMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SZSE);
-        m_szMD->Start(m_isTest);
+        if (!m_szMD) {
+            m_szMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SZSE);
+            m_szMD->Start(m_isTest, m_version);
+        }
     }
 }
 

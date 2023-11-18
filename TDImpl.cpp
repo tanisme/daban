@@ -73,27 +73,22 @@ namespace PROTD {
 
     void TDImpl::OnRspQrySecurity(CTORATstpSecurityField *pSecurity, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
         if (pSecurity) {
-            {
-                auto iter = m_marketSecurity.find(pSecurity->SecurityID);
-                if (iter == m_marketSecurity.end()) {
-                    auto security = m_pool.Malloc<stSecurity>(sizeof(stSecurity));
-                    if (security) {
-                        strcpy(security->SecurityID, pSecurity->SecurityID);
-                        strcpy(security->SecurityName, pSecurity->SecurityName);
-                        security->ExchangeID = pSecurity->ExchangeID;
-                        security->SecurityType = pSecurity->SecurityType;
-                        security->UpperLimitPrice = pSecurity->UpperLimitPrice;
-                        security->LowerLimitPrice = pSecurity->LowerLimitPrice;
-                        m_marketSecurity[security->SecurityID] = security;
-                    }
+            auto iter = m_marketSecurity.find(pSecurity->SecurityID);
+            if (iter == m_marketSecurity.end()) {
+                auto security = m_pool.Malloc<stSecurity>(sizeof(stSecurity));
+                if (security) {
+                    strcpy(security->SecurityID, pSecurity->SecurityID);
+                    strcpy(security->SecurityName, pSecurity->SecurityName);
+                    security->ExchangeID = pSecurity->ExchangeID;
+                    security->SecurityType = pSecurity->SecurityType;
+                    security->UpperLimitPrice = pSecurity->UpperLimitPrice;
+                    security->LowerLimitPrice = pSecurity->LowerLimitPrice;
+                    m_marketSecurity[security->SecurityID] = security;
                 }
             }
 
-            {
-                auto iter = m_pApp->m_watchSecurity.find(pSecurity->SecurityID);
-                if (iter != m_pApp->m_watchSecurity.end()) {
-                    iter->second->ExchangeID = pSecurity->ExchangeID;
-                }
+            if (m_pApp->m_watchSecurity.find(pSecurity->SecurityID) != m_pApp->m_watchSecurity.end()) {
+                iter->second->ExchangeID = pSecurity->ExchangeID;
             }
         }
 
