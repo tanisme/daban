@@ -33,21 +33,21 @@ struct stPriceOrders {
     TORALEV2API::TTORATstpPriceType Price;
     std::vector<stOrder*> Orders;
 };
-typedef std::unordered_map<std::string, std::vector<stPriceOrders> > MapOrder;
+typedef std::unordered_map<std::string, std::vector<stPriceOrders> > MapOrderV;
 
 // list
 struct stPriceOrdersList {
     TORALEV2API::TTORATstpPriceType Price;
     std::list<stOrder*> Orders;
 };
-typedef std::unordered_map<int, std::list<stPriceOrdersList> > MapOrderList;
+typedef std::unordered_map<std::string, std::list<stPriceOrdersList> > MapOrderL;
 
 // map
 struct stPriceOrdersMap {
     TORALEV2API::TTORATstpPriceType Price;
     std::unordered_map<TORALEV2API::TTORATstpLongSequenceType, std::list<stOrder*>> Orders;
 };
-typedef std::unordered_map<int, std::list<stPriceOrdersMap> > MapOrderMap;
+typedef std::unordered_map<std::string, std::list<stPriceOrdersMap> > MapOrderM;
 
 struct stPostPrice {
     TORALEV2API::TTORATstpSecurityIDType SecurityID;

@@ -88,7 +88,7 @@ namespace test {
         }
         ifs.close();
         printf("生成%s订单簿 处理完成所有成交 共%lld条\n", SecurityID, i);
-        m_md->ShowOrderBook(SecurityID);
+        m_md->ShowOrderBookV(SecurityID);
     }
 
     int Imitate::SplitSecurityFile(std::string srcDataDir, bool isOrder) {

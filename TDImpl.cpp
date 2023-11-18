@@ -16,7 +16,7 @@ namespace PROTD {
         }
     }
 
-    bool TDImpl::Start() {
+    bool TDImpl::Start(bool isTest) {
         m_pApi = CTORATstpTraderApi::CreateTstpTraderApi();
         if (!m_pApi) return false;
 

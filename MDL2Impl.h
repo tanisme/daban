@@ -16,9 +16,9 @@ namespace PROMD {
 
         bool Start(bool isTest, int version);
         int ReqMarketData(TTORATstpSecurityIDType SecurityID, TTORATstpExchangeIDType ExchangeID, int type, bool isSub = true);
-        void ShowOrderBook(TTORATstpSecurityIDType SecurityID);
-        void ShowOrderBookList(TTORATstpSecurityIDType SecurityID);
-        void ShowOrderBookMap(TTORATstpSecurityIDType SecurityID);
+        void ShowOrderBookV(TTORATstpSecurityIDType SecurityID);
+        void ShowOrderBookL(TTORATstpSecurityIDType SecurityID);
+        void ShowOrderBookM(TTORATstpSecurityIDType SecurityID);
         void ShowHandleSpeed();
         static const char *GetExchangeName(TTORATstpExchangeIDType ExchangeID);
 
@@ -45,19 +45,18 @@ namespace PROMD {
 
     private:
         // vector
-        void InsertOrderVector(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side);
-        bool ModifyOrderVector(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side);
-        void PostPriceVector(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price);
-
+        void InsertOrderV(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side);
+        void ModifyOrderV(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side);
+        void PostPriceV(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price);
         // list
-        void InsertOrderList(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side);
-        void ModifyOrderList(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side);
-        void PostPriceList(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price);
-
+        void InsertOrderL(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side);
+        void ModifyOrderL(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side);
+        void PostPriceL(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price);
         // map
-        void InsertOrderMap(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side);
-        void ModifyOrderMap(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side);
-        void PostPriceMap(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price);
+        void InsertOrderM(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side);
+        void ModifyOrderM(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side);
+        void PostPriceM(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price);
+
     private:
         int m_version = 1;
         int m_reqID = 1;
@@ -65,12 +64,12 @@ namespace PROMD {
         CTORATstpLev2MdApi *m_pApi = nullptr;
         CApplication *m_pApp = nullptr;
         TTORATstpExchangeIDType m_exchangeID;
-        MapOrder m_orderBuy;
-        MapOrder m_orderSell;
-        MapOrderList m_orderBuyList;
-        MapOrderList m_orderSellList;
-        MapOrderMap m_orderBuyMap;
-        MapOrderMap m_orderSellMap;
+        MapOrderV m_orderBuyV;
+        MapOrderV m_orderSellV;
+        MapOrderL m_orderBuyL;
+        MapOrderL m_orderSellL;
+        MapOrderM m_orderBuyM;
+        MapOrderM m_orderSellM;
 
         MemoryPool m_pool;
         long long int m_handleCount = 0;

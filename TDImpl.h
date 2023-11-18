@@ -14,7 +14,7 @@ namespace PROTD {
         explicit TDImpl(CApplication *pApp);
         ~TDImpl();
 
-        bool Start();
+        bool Start(bool isTest);
         bool IsInited() const { return m_isInited; }
         CTORATstpTraderApi *GetApi() const { return m_pApi; }
 

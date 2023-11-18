@@ -6,19 +6,19 @@ CApplication::CApplication(boost::asio::io_context& ioc)
 }
 
 CApplication::~CApplication() {
-    if (m_shMD != nullptr) {
+    if (m_shMD) {
         m_shMD->GetApi()->Join();
         m_shMD->GetApi()->Release();
         delete m_shMD;
     }
 
-    if (m_szMD != nullptr) {
+    if (m_szMD) {
         m_szMD->GetApi()->Join();
         m_szMD->GetApi()->Release();
         delete m_szMD;
     }
 
-    if (m_TD != nullptr) {
+    if (m_TD) {
         m_TD->GetApi()->Join();
         m_TD->GetApi()->Release();
         delete m_TD;
@@ -29,21 +29,23 @@ bool CApplication::Init(std::string& watchSecurity, std::string& currentExchange
     trim(watchSecurity);
     std::vector<std::string> vtSecurity;
     Stringsplit(watchSecurity, ',', vtSecurity);
-    for (auto iter : vtSecurity) {
+    for (auto& iter : vtSecurity) {
         auto security = m_pool.Malloc<stSecurity>(sizeof(stSecurity));
         strcpy(security->SecurityID, iter.c_str());
         m_watchSecurity[security->SecurityID] = security;
     }
+
     trim(currentExchangeID);
     std::vector<std::string> vtExchangeID;
     Stringsplit(currentExchangeID, ',', vtExchangeID);
-    for (auto iter : vtExchangeID) {
+    for (auto& iter : vtExchangeID) {
         m_supportExchangeID[iter.c_str()[0]] = true;
     }
     if (m_supportExchangeID.empty()) {
         printf("currentExchangeID config file not setted!!!\n");
         return false;
     }
+
     //if (!LoadStrategy()) {
     //    printf("LoadStrategy Failed!!!\n");
     //    return false;
@@ -53,7 +55,7 @@ bool CApplication::Init(std::string& watchSecurity, std::string& currentExchange
 
 void CApplication::Start() {
     m_TD = new PROTD::TDImpl(this);
-    m_TD->Start();
+    m_TD->Start(m_isTest);
 
     m_timer.expires_from_now(boost::posix_time::milliseconds(5000));
     m_timer.async_wait(boost::bind(&CApplication::OnTime, this, boost::asio::placeholders::error));
@@ -68,17 +70,29 @@ void CApplication::OnTime(const boost::system::error_code& error) {
 
     //for (auto& iter : m_watchSecurity) {
     //    if (m_shMD && iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
-    //        m_shMD->ShowOrderBook((char*)iter.first.c_str());
+    //        if (m_version == 0) {
+    //            m_shMD->ShowOrderBookV((char*)iter.first.c_str());
+    //        } else if (m_version == 1) {
+    //            m_shMD->ShowOrderBookL((char*)iter.first.c_str());
+    //        } else if (m_version == 2) {
+    //            m_shMD->ShowOrderBookM((char*)iter.first.c_str());
+    //        }
     //    }
     //    if (m_szMD && iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
-    //        m_szMD->ShowOrderBook((char*)iter.first.c_str());
+    //        if (m_version == 0) {
+    //            m_szMD->ShowOrderBookV((char*)iter.first.c_str());
+    //        } else if (m_version == 1) {
+    //            m_szMD->ShowOrderBookL((char*)iter.first.c_str());
+    //        } else if (m_version == 2) {
+    //            m_szMD->ShowOrderBookM((char*)iter.first.c_str());
+    //        }
     //    }
     //}
 
     if (m_shMD) m_shMD->ShowHandleSpeed();
     if (m_szMD) m_szMD->ShowHandleSpeed();
 
-    m_timer.expires_from_now(boost::posix_time::milliseconds(6000));
+    m_timer.expires_from_now(boost::posix_time::milliseconds(5000));
     m_timer.async_wait(boost::bind(&CApplication::OnTime, this, boost::asio::placeholders::error));
 }
 
@@ -88,7 +102,7 @@ void CApplication::MDOnInited(PROMD::TTORATstpExchangeIDType exchangeID) {
     for (auto &iter: m_TD->m_marketSecurity) {
         if (exchangeID == iter.second->ExchangeID &&
             (iter.second->SecurityType == PROTD::TORA_TSTP_STP_SHAShares ||
-             //iter.second->SecurityType == PROTD::TORA_TSTP_STP_SHKC ||
+             iter.second->SecurityType == PROTD::TORA_TSTP_STP_SHKC ||
              iter.second->SecurityType == PROTD::TORA_TSTP_STP_SZMainAShares)) {
             cnt++;
             PROMD::TTORATstpSecurityIDType Security = {0};
@@ -154,17 +168,15 @@ void CApplication::MDPostPrice(stPostPrice& postPrice) {
 
 /***************************************TD***************************************/
 void CApplication::TDOnInited() {
-    if (m_supportExchangeID.find(PROMD::TORA_TSTP_EXD_SSE) != m_supportExchangeID.end()) {
-        if (!m_shMD) {
-            m_shMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SSE);
-            m_shMD->Start(m_isTest, m_version);
-        }
+    auto iterH = m_supportExchangeID.find(PROMD::TORA_TSTP_EXD_SSE);
+    if (iterH != m_supportExchangeID.end() && !m_shMD) {
+        m_shMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SSE);
+        m_shMD->Start(m_isTest, m_version);
     }
-    if (m_supportExchangeID.find(PROMD::TORA_TSTP_EXD_SZSE) != m_supportExchangeID.end()) {
-        if (!m_szMD) {
-            m_szMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SZSE);
-            m_szMD->Start(m_isTest, m_version);
-        }
+    auto iterZ = m_supportExchangeID.find(PROMD::TORA_TSTP_EXD_SZSE);
+    if (iterZ != m_supportExchangeID.end() && !m_szMD) {
+        m_szMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SZSE);
+        m_szMD->Start(m_isTest, m_version);
     }
 }
 

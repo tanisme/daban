@@ -22,12 +22,12 @@ int main() {
             ("daban.isshmdnewversion", boost::program_options::value<bool>(&isshmdnewversion), "daban.isshmdnewversion")
             ("daban.currentexchangeid", boost::program_options::value<std::string>(&currentexchangeid), "daban.currentexchangeid")
             ("daban.dbfile", boost::program_options::value<std::string>(&dbfile), "daban.dbfile")
-            ("daban.shcpucore", boost::program_options::value<std::string>(&shcpucore), "daban.shcpucore")
-            ("daban.szcpucore", boost::program_options::value<std::string>(&szcpucore), "daban.szcpucore")
             ("daban.tdaddr", boost::program_options::value<std::string>(&tdaddr), "daban.tdaddr")
             ("daban.tdaccount", boost::program_options::value<std::string>(&tdaccount), "daban.tdaccount")
             ("daban.tdpassword", boost::program_options::value<std::string>(&tdpassword), "daban.tdpassword")
             ("daban.watchsecurity", boost::program_options::value<std::string>(&watchsecurity), "daban.watchsecurity")
+            ("daban.shcpucore", boost::program_options::value<std::string>(&shcpucore), "daban.shcpucore")
+            ("daban.szcpucore", boost::program_options::value<std::string>(&szcpucore), "daban.szcpucore")
             ("ceshi.testshmdaddr", boost::program_options::value<std::string>(&testshmdaddr), "ceshi.testshmdaddr")
             ("ceshi.testszmdaddr", boost::program_options::value<std::string>(&testszmdaddr), "ceshi.testszmdaddr")
             ("shipan.shmdaddr", boost::program_options::value<std::string>(&shmdaddr), "shipan.shmdaddr")
@@ -63,11 +63,11 @@ int main() {
     app.m_isStrategyOpen = isstrategyopen;
     app.m_isSHMDNewVersion = isshmdnewversion;
     app.m_dbFile = dbfile;
-    app.m_shCpucore = shcpucore;
-    app.m_szCpucore = szcpucore;
     app.m_TDAddr = tdaddr;
     app.m_TDAccount = tdaccount;
     app.m_TDPassword = tdpassword;
+    app.m_shCpucore = shcpucore;
+    app.m_szCpucore = szcpucore;
     app.m_testSHMDAddr = testshmdaddr;
     app.m_testSZMDAddr = testszmdaddr;
     app.m_shMDAddr = shmdaddr;

@@ -41,8 +41,7 @@ namespace PROMD {
                 return false;
             }
         }
-        printf("MD::Start Bind %s %s cpucore[%s]\n", isTest?"tcp":"udp",
-               GetExchangeName(m_exchangeID),
+        printf("MD::Start Bind %s %s cpucore[%s]\n", isTest?"tcp":"udp", GetExchangeName(m_exchangeID),
                m_exchangeID == TORA_TSTP_EXD_SSE?m_pApp->m_shCpucore.c_str():m_pApp->m_szCpucore.c_str());
         return true;
     }
@@ -66,7 +65,7 @@ namespace PROMD {
 
     void MDL2Impl::ShowHandleSpeed() {
         if (m_handleCount <= 0) return;
-        printf("%s %s %-10lld %-10lld %.6fus %-9ld\n",  GetTimeStr().c_str(), GetExchangeName(m_exchangeID),
+        printf("%s %s %-10lld %-10lld %.6fus %-9ld\n", GetTimeStr().c_str(), GetExchangeName(m_exchangeID),
                m_handleCount, m_handleTick, (1.0*m_handleTick) / m_handleCount, m_pool.GetTotalCnt());
     }
 
@@ -160,7 +159,7 @@ namespace PROMD {
         auto start = GetUs();
         OrderDetail(pOrderDetail->SecurityID, pOrderDetail->Side, pOrderDetail->OrderNO, pOrderDetail->Price, pOrderDetail->Volume, pOrderDetail->ExchangeID, pOrderDetail->OrderStatus);
         auto duration = GetUs() - start;
-        if (duration <= 0) duration = 1;
+        if (duration <= 0) duration = 1; // default 1us
         m_handleTick += duration;
         m_handleCount++;
     }
@@ -193,28 +192,28 @@ namespace PROMD {
         if (ExchangeID == TORA_TSTP_EXD_SSE) {
             if (OrderStatus == TORA_TSTP_LOS_Add) {
                 if (m_version == 0) {
-                    InsertOrderVector(SecurityID, OrderNO, Price, Volume, Side);
+                    InsertOrderV(SecurityID, OrderNO, Price, Volume, Side);
                 } else if (m_version == 1) {
-                    InsertOrderList(SecurityID, OrderNO, Price, Volume, Side);
+                    InsertOrderL(SecurityID, OrderNO, Price, Volume, Side);
                 } else if (m_version == 2) {
-                    InsertOrderMap(SecurityID, OrderNO, Price, Volume, Side);
+                    InsertOrderM(SecurityID, OrderNO, Price, Volume, Side);
                 }
             } else if (OrderStatus == TORA_TSTP_LOS_Delete) {
                 if (m_version == 0) {
-                    ModifyOrderVector(SecurityID, 0, OrderNO, Side);
+                    ModifyOrderV(SecurityID, 0, OrderNO, Side);
                 } else if (m_version == 1) {
-                    ModifyOrderList(SecurityID, 0, OrderNO, Side);
+                    ModifyOrderL(SecurityID, 0, OrderNO, Side);
                 } else if (m_version == 2) {
-                    ModifyOrderMap(SecurityID, 0, OrderNO, Side);
+                    ModifyOrderM(SecurityID, 0, OrderNO, Side);
                 }
             }
         } else if (ExchangeID == TORA_TSTP_EXD_SZSE) {
             if (m_version == 0) {
-                InsertOrderVector(SecurityID, OrderNO, Price, Volume, Side);
+                InsertOrderV(SecurityID, OrderNO, Price, Volume, Side);
             } else if (m_version == 1) {
-                InsertOrderList(SecurityID, OrderNO, Price, Volume, Side);
+                InsertOrderL(SecurityID, OrderNO, Price, Volume, Side);
             } else if (m_version == 2) {
-                InsertOrderMap(SecurityID, OrderNO, Price, Volume, Side);
+                InsertOrderM(SecurityID, OrderNO, Price, Volume, Side);
             }
         }
     }
@@ -224,50 +223,50 @@ namespace PROMD {
                                TTORATstpPriceType TradePrice, TTORATstpTimeStampType TradeTime) {
         if (ExchangeID == TORA_TSTP_EXD_SSE) {
             if (m_version == 0) {
-                ModifyOrderVector(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
-                ModifyOrderVector(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
-                PostPriceVector(SecurityID, TradePrice);
+                ModifyOrderV(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
+                ModifyOrderV(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
+                PostPriceV(SecurityID, TradePrice);
             } else if (m_version == 1) {
-                ModifyOrderList(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
-                ModifyOrderList(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
-                PostPriceList(SecurityID, TradePrice);
+                ModifyOrderL(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
+                ModifyOrderL(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
+                PostPriceL(SecurityID, TradePrice);
             } else if (m_version == 2) {
-                ModifyOrderMap(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
-                ModifyOrderMap(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
-                PostPriceMap(SecurityID, TradePrice);
+                ModifyOrderM(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
+                ModifyOrderM(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
+                PostPriceM(SecurityID, TradePrice);
             }
         } else if (ExchangeID == TORA_TSTP_EXD_SZSE) {
             if (ExecType == TORA_TSTP_ECT_Fill) {
                 if (m_version == 0) {
-                    ModifyOrderVector(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
-                    ModifyOrderVector(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
-                    PostPriceVector(SecurityID, TradePrice);
+                    ModifyOrderV(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
+                    ModifyOrderV(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
+                    PostPriceV(SecurityID, TradePrice);
                 } else if (m_version == 1) {
-                    ModifyOrderList(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
-                    ModifyOrderList(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
-                    PostPriceList(SecurityID, TradePrice);
+                    ModifyOrderL(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
+                    ModifyOrderL(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
+                    PostPriceL(SecurityID, TradePrice);
                 } else if (m_version == 2) {
-                    ModifyOrderMap(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
-                    ModifyOrderMap(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
-                    PostPriceMap(SecurityID, TradePrice);
+                    ModifyOrderM(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
+                    ModifyOrderM(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
+                    PostPriceM(SecurityID, TradePrice);
                 }
             } else if (ExecType == TORA_TSTP_ECT_Cancel) {
                 if (BuyNo > 0) {
                     if (m_version == 0) {
-                        ModifyOrderVector(SecurityID, 0, BuyNo, TORA_TSTP_LSD_Buy);
+                        ModifyOrderV(SecurityID, 0, BuyNo, TORA_TSTP_LSD_Buy);
                     } else if (m_version == 1) {
-                        ModifyOrderList(SecurityID, 0, BuyNo, TORA_TSTP_LSD_Buy);
+                        ModifyOrderL(SecurityID, 0, BuyNo, TORA_TSTP_LSD_Buy);
                     } else if (m_version == 2) {
-                        ModifyOrderMap(SecurityID, 0, BuyNo, TORA_TSTP_LSD_Buy);
+                        ModifyOrderM(SecurityID, 0, BuyNo, TORA_TSTP_LSD_Buy);
                     }
                 }
                 if (SellNo > 0) {
                     if (m_version == 0) {
-                        ModifyOrderVector(SecurityID, 0, SellNo, TORA_TSTP_LSD_Sell);
+                        ModifyOrderV(SecurityID, 0, SellNo, TORA_TSTP_LSD_Sell);
                     } else if (m_version == 1) {
-                        ModifyOrderList(SecurityID, 0, SellNo, TORA_TSTP_LSD_Sell);
+                        ModifyOrderL(SecurityID, 0, SellNo, TORA_TSTP_LSD_Sell);
                     } else if (m_version == 2) {
-                        ModifyOrderMap(SecurityID, 0, SellNo, TORA_TSTP_LSD_Sell);
+                        ModifyOrderM(SecurityID, 0, SellNo, TORA_TSTP_LSD_Sell);
                     }
                 }
             }
@@ -279,39 +278,39 @@ namespace PROMD {
                             TTORATstpLSideType Side, TTORATstpTimeStampType TickTime) {
         if (TickType == TORA_TSTP_LTT_Add) {
             if (m_version == 0) {
-                InsertOrderVector(SecurityID, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Price, Volume, Side);
+                InsertOrderV(SecurityID, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Price, Volume, Side);
             } else if (m_version == 1) {
-                InsertOrderList(SecurityID, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Price, Volume, Side);
+                InsertOrderL(SecurityID, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Price, Volume, Side);
             } else if (m_version == 2) {
-                InsertOrderMap(SecurityID, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Price, Volume, Side);
+                InsertOrderM(SecurityID, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Price, Volume, Side);
             }
         } else if (TickType == TORA_TSTP_LTT_Delete) {
             if (m_version == 0) {
-                ModifyOrderVector(SecurityID, 0, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Side);
+                ModifyOrderV(SecurityID, 0, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Side);
             } else if (m_version == 1) {
-                ModifyOrderList(SecurityID, 0, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Side);
+                ModifyOrderL(SecurityID, 0, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Side);
             } else if (m_version == 2) {
-                ModifyOrderMap(SecurityID, 0, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Side);
+                ModifyOrderM(SecurityID, 0, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Side);
             }
         } else if (TickType == TORA_TSTP_LTT_Trade) {
             if (m_version == 0) {
-                ModifyOrderVector(SecurityID, Volume, BuyNo, TORA_TSTP_LSD_Buy);
-                ModifyOrderVector(SecurityID, Volume, SellNo, TORA_TSTP_LSD_Sell);
-                PostPriceVector(SecurityID, Price);
+                ModifyOrderV(SecurityID, Volume, BuyNo, TORA_TSTP_LSD_Buy);
+                ModifyOrderV(SecurityID, Volume, SellNo, TORA_TSTP_LSD_Sell);
+                PostPriceV(SecurityID, Price);
             } else if (m_version == 1) {
-                ModifyOrderList(SecurityID, Volume, BuyNo, TORA_TSTP_LSD_Buy);
-                ModifyOrderList(SecurityID, Volume, SellNo, TORA_TSTP_LSD_Sell);
-                PostPriceList(SecurityID, Price);
+                ModifyOrderL(SecurityID, Volume, BuyNo, TORA_TSTP_LSD_Buy);
+                ModifyOrderL(SecurityID, Volume, SellNo, TORA_TSTP_LSD_Sell);
+                PostPriceL(SecurityID, Price);
             } else if (m_version == 2) {
-                ModifyOrderMap(SecurityID, Volume, BuyNo, TORA_TSTP_LSD_Buy);
-                ModifyOrderMap(SecurityID, Volume, SellNo, TORA_TSTP_LSD_Sell);
-                PostPriceMap(SecurityID, Price);
+                ModifyOrderM(SecurityID, Volume, BuyNo, TORA_TSTP_LSD_Buy);
+                ModifyOrderM(SecurityID, Volume, SellNo, TORA_TSTP_LSD_Sell);
+                PostPriceM(SecurityID, Price);
             }
         }
     }
 
     /******************************Vector******************************/
-    void MDL2Impl::InsertOrderVector(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side) {
+    void MDL2Impl::InsertOrderV(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side) {
         auto order = m_pool.Malloc<stOrder>(sizeof(stOrder));
         order->OrderNo = OrderNO;
         order->Volume = Volume;
@@ -320,10 +319,9 @@ namespace PROMD {
         priceOrder.Orders.emplace_back(order);
         priceOrder.Price = Price;
 
-        MapOrder &mapOrder = Side == TORA_TSTP_LSD_Buy ? m_orderBuy : m_orderSell;
+        auto &mapOrder = Side == TORA_TSTP_LSD_Buy ? m_orderBuyV : m_orderSellV;
         auto iter = mapOrder.find(SecurityID);
         if (iter == mapOrder.end()) {
-            mapOrder[SecurityID] = std::vector<stPriceOrders>();
             mapOrder[SecurityID].emplace_back(priceOrder);
         } else if (iter->second.empty()) {
             iter->second.emplace_back(priceOrder);
@@ -359,10 +357,10 @@ namespace PROMD {
         }
     }
 
-    bool MDL2Impl::ModifyOrderVector(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side) {
-        auto &mapOrder = Side == TORA_TSTP_LSD_Buy ? m_orderBuy : m_orderSell;
+    void MDL2Impl::ModifyOrderV(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side) {
+        auto &mapOrder = Side == TORA_TSTP_LSD_Buy ? m_orderBuyV : m_orderSellV;
         auto iter = mapOrder.find(SecurityID);
-        if (iter == mapOrder.end()) return false;
+        if (iter == mapOrder.end()) return;
 
         for (auto iterVecOrder = iter->second.begin(); iterVecOrder != iter->second.end();) {
             for (auto iterOrder = iterVecOrder->Orders.begin(); iterOrder != iterVecOrder->Orders.end();) {
@@ -387,21 +385,20 @@ namespace PROMD {
                 ++iterVecOrder;
             }
         }
-        return true;
     }
 
-    void MDL2Impl::ShowOrderBook(TTORATstpSecurityIDType SecurityID) {
-        if (m_orderBuy.find(SecurityID) == m_orderBuy.end() && m_orderSell.find(SecurityID) == m_orderSell.end()) return;
+    void MDL2Impl::ShowOrderBookV(TTORATstpSecurityIDType SecurityID) {
+        if (m_orderBuyV.find(SecurityID) == m_orderBuyV.end() &&
+            m_orderSellV.find(SecurityID) == m_orderSellV.end()) return;
 
         std::stringstream stream;
-        stream << "\n";
         stream << "--------- " << SecurityID << " " << GetTimeStr() << "---------\n";
 
         char buffer[512] = {0};
         int showPankouCount = 5;
         {
-            auto iter = m_orderSell.find(SecurityID);
-            if (iter != m_orderSell.end()) {
+            auto iter = m_orderSellV.find(SecurityID);
+            if (iter != m_orderSellV.end()) {
                 auto size = (int) iter->second.size();
                 if (showPankouCount < size) size = showPankouCount;
                 for (auto i = size; i > 0; i--) {
@@ -416,8 +413,8 @@ namespace PROMD {
         }
 
         {
-            auto iter = m_orderBuy.find(SecurityID);
-            if (iter != m_orderBuy.end()) {
+            auto iter = m_orderBuyV.find(SecurityID);
+            if (iter != m_orderBuyV.end()) {
                 auto size = (int) iter->second.size();
                 if (showPankouCount < size) size = showPankouCount;
                 for (auto i = 1; i <= size; i++) {
@@ -433,7 +430,7 @@ namespace PROMD {
         printf("%s\n", stream.str().c_str());
     }
 
-    void MDL2Impl::PostPriceVector(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price) {
+    void MDL2Impl::PostPriceV(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price) {
         if (!m_pApp || !m_pApp->m_isStrategyOpen) return;
 
         TTORATstpPriceType BidPrice1 = 0.0;
@@ -443,26 +440,22 @@ namespace PROMD {
         TTORATstpPriceType TradePrice = Price;
 
         {
-            auto iter = m_orderSell.find(SecurityID);
-            if (iter != m_orderSell.end() && !iter->second.empty()) {
+            auto iter = m_orderSellV.find(SecurityID);
+            if (iter != m_orderSellV.end() && !iter->second.empty()) {
                 auto size = (int) iter->second.begin()->Orders.size();
                 TTORATstpLongVolumeType Volume = 0;
-                for (auto i = 0; i < size; ++i) {
-                    Volume += iter->second.begin()->Orders.at(i)->Volume;
-                }
+                for (auto i = 0; i < size; ++i) Volume += iter->second.begin()->Orders.at(i)->Volume;
                 AskPrice1 = iter->second.begin()->Price;
                 AskVolume1 = Volume;
             }
         }
 
         {
-            auto iter = m_orderBuy.find(SecurityID);
-            if (iter != m_orderBuy.end() && !iter->second.empty()) {
+            auto iter = m_orderBuyV.find(SecurityID);
+            if (iter != m_orderBuyV.end() && !iter->second.empty()) {
                 auto size = (int) iter->second.begin()->Orders.size();
                 TTORATstpLongVolumeType Volume = 0;
-                for (auto i = 0; i < size; ++i) {
-                    Volume += iter->second.begin()->Orders.at(i)->Volume;
-                }
+                for (auto i = 0; i < size; ++i) Volume += iter->second.begin()->Orders.at(i)->Volume;
                 BidPrice1 = iter->second.begin()->Price;
                 BidVolume1 = Volume;
             }
@@ -479,9 +472,7 @@ namespace PROMD {
     }
 
     /******************************List******************************/
-    void MDL2Impl::InsertOrderList(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side) {
-        int SecurityIDInt = atoi(SecurityID);
-
+    void MDL2Impl::InsertOrderL(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side) {
         auto order = m_pool.Malloc<stOrder>(sizeof(stOrder));
         order->OrderNo = OrderNO;
         order->Volume = Volume;
@@ -491,11 +482,11 @@ namespace PROMD {
         priceOrder.Price = Price;
 
         auto added = false;
-        auto &mapOrder = Side == TORA_TSTP_LSD_Buy ? m_orderBuyList : m_orderSellList;
-        auto iter = mapOrder.find(SecurityIDInt);
+        auto &mapOrder = Side == TORA_TSTP_LSD_Buy ? m_orderBuyL : m_orderSellL;
+        auto iter = mapOrder.find(SecurityID);
         if (iter == mapOrder.end()) {
-            mapOrder[SecurityIDInt] = std::list<stPriceOrdersList>();
-            iter = mapOrder.find(SecurityIDInt);
+            mapOrder[SecurityID] = std::list<stPriceOrdersList>();
+            iter = mapOrder.find(SecurityID);
         } else if (!iter->second.empty()) {
             for (auto iterOrderList = iter->second.begin(); iterOrderList != iter->second.end(); ++iterOrderList) {
                 auto curPrice = iterOrderList->Price;
@@ -527,10 +518,9 @@ namespace PROMD {
         }
     }
 
-    void MDL2Impl::ModifyOrderList(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side) {
-        int SecurityIDInt = atoi(SecurityID);
-        auto &mapOrder = Side == TORA_TSTP_LSD_Buy ? m_orderBuyList : m_orderSellList;
-        auto iter = mapOrder.find(SecurityIDInt);
+    void MDL2Impl::ModifyOrderL(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side) {
+        auto &mapOrder = Side == TORA_TSTP_LSD_Buy ? m_orderBuyL : m_orderSellL;
+        auto iter = mapOrder.find(SecurityID);
         if (iter == mapOrder.end()) return;
 
         for (auto iterOrderList = iter->second.begin(); iterOrderList != iter->second.end();) {
@@ -560,19 +550,18 @@ namespace PROMD {
         }
     }
 
-    void MDL2Impl::ShowOrderBookList(TTORATstpSecurityIDType SecurityID) {
-        int SecurityIDInt = atoi(SecurityID);
-        if (m_orderBuyList.find(SecurityIDInt) == m_orderBuyList.end() && m_orderSellList.find(SecurityIDInt) == m_orderSellList.end()) return;
+    void MDL2Impl::ShowOrderBookL(TTORATstpSecurityIDType SecurityID) {
+        if (m_orderBuyL.find(SecurityID) == m_orderBuyL.end() &&
+            m_orderSellL.find(SecurityID) == m_orderSellL.end()) return;
 
         std::stringstream stream;
-        stream << "\n";
         stream << "--------- " << SecurityID << " " << GetTimeStr() << "---------\n";
 
         char buffer[512] = {0};
         {
             std::vector<std::string> temp;
-            auto iter = m_orderSellList.find(SecurityIDInt);
-            if (iter != m_orderSellList.end()) {
+            auto iter = m_orderSellL.find(SecurityID);
+            if (iter != m_orderSellL.end()) {
                 int i = 1;
                 for (auto iter1: iter->second) {
                     memset(buffer, 0, sizeof(buffer));
@@ -596,8 +585,8 @@ namespace PROMD {
 
         {
             std::vector<std::string> temp;
-            auto iter = m_orderBuyList.find(SecurityIDInt);
-            if (iter != m_orderBuyList.end()) {
+            auto iter = m_orderBuyL.find(SecurityID);
+            if (iter != m_orderBuyL.end()) {
                 int i = 1;
                 for (auto iter1: iter->second) {
                     memset(buffer, 0, sizeof(buffer));
@@ -621,7 +610,7 @@ namespace PROMD {
         printf("%s\n", stream.str().c_str());
     }
 
-    void MDL2Impl::PostPriceList(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price) {
+    void MDL2Impl::PostPriceL(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price) {
         if (!m_pApp || !m_pApp->m_isStrategyOpen) return;
 
         TTORATstpPriceType BidPrice1 = 0.0;
@@ -631,8 +620,8 @@ namespace PROMD {
         TTORATstpPriceType TradePrice = Price;
 
         {
-            auto iter = m_orderSell.find(SecurityID);
-            if (iter != m_orderSell.end() && !iter->second.empty()) {
+            auto iter = m_orderSellV.find(SecurityID);
+            if (iter != m_orderSellV.end() && !iter->second.empty()) {
                 auto size = (int) iter->second.begin()->Orders.size();
                 TTORATstpLongVolumeType Volume = 0;
                 for (auto i = 0; i < size; ++i) {
@@ -644,8 +633,8 @@ namespace PROMD {
         }
 
         {
-            auto iter = m_orderBuy.find(SecurityID);
-            if (iter != m_orderBuy.end() && !iter->second.empty()) {
+            auto iter = m_orderBuyV.find(SecurityID);
+            if (iter != m_orderBuyV.end() && !iter->second.empty()) {
                 auto size = (int) iter->second.begin()->Orders.size();
                 TTORATstpLongVolumeType Volume = 0;
                 for (auto i = 0; i < size; ++i) {
@@ -667,19 +656,18 @@ namespace PROMD {
     }
 
     /******************************Map******************************/
-    void MDL2Impl::InsertOrderMap(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side) {
-        int SecurityIDInt = atoi(SecurityID);
+    void MDL2Impl::InsertOrderM(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side) {
         auto order = m_pool.Malloc<stOrder>(sizeof(stOrder));
         order->OrderNo = OrderNO;
         order->Volume = Volume;
 
         Price *= 100;
         auto added = false;
-        auto &mapOrder = Side == TORA_TSTP_LSD_Buy ? m_orderBuyMap : m_orderSellMap;
-        auto iter = mapOrder.find(SecurityIDInt);
+        auto &mapOrder = Side == TORA_TSTP_LSD_Buy ? m_orderBuyM : m_orderSellM;
+        auto iter = mapOrder.find(SecurityID);
         if (iter == mapOrder.end()) {
-            mapOrder[SecurityIDInt] = std::list<stPriceOrdersMap>();
-            iter = mapOrder.find(SecurityIDInt);
+            mapOrder[SecurityID] = std::list<stPriceOrdersMap>();
+            iter = mapOrder.find(SecurityID);
         } else if (!iter->second.empty()) {
             for (auto iterOrderList = iter->second.begin(); iterOrderList != iter->second.end(); ++iterOrderList) {
                 auto curPrice = iterOrderList->Price;
@@ -729,10 +717,9 @@ namespace PROMD {
         }
     }
 
-    void MDL2Impl::ModifyOrderMap(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side) {
-        int SecurityIDInt = atoi(SecurityID);
-        auto &mapOrder = Side == TORA_TSTP_LSD_Buy ? m_orderBuyMap : m_orderSellMap;
-        auto iter = mapOrder.find(SecurityIDInt);
+    void MDL2Impl::ModifyOrderM(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side) {
+        auto &mapOrder = Side == TORA_TSTP_LSD_Buy ? m_orderBuyM : m_orderSellM;
+        auto iter = mapOrder.find(SecurityID);
         if (iter == mapOrder.end()) return;
 
         for (auto iterOrderList = iter->second.begin(); iterOrderList != iter->second.end();) {
@@ -752,7 +739,6 @@ namespace PROMD {
                     iterOrderList->Orders.erase(OrderNo);
                 }
                 nb = true;
-                //break;
             }
             if (iterOrderList->Orders.empty()) {
                 iterOrderList = iter->second.erase(iterOrderList);
@@ -763,9 +749,8 @@ namespace PROMD {
         }
     }
 
-    void MDL2Impl::ShowOrderBookMap(TTORATstpSecurityIDType SecurityID) {
-        int SecurityIDInt = atoi(SecurityID);
-        if (m_orderBuyMap.find(SecurityIDInt) == m_orderBuyMap.end() && m_orderSellMap.find(SecurityIDInt) == m_orderSellMap.end()) return;
+    void MDL2Impl::ShowOrderBookM(TTORATstpSecurityIDType SecurityID) {
+        if (m_orderBuyM.find(SecurityID) == m_orderBuyM.end() && m_orderSellM.find(SecurityID) == m_orderSellM.end()) return;
 
         std::stringstream stream;
         stream << "\n";
@@ -775,8 +760,8 @@ namespace PROMD {
         int showPankouCount = 5;
         {
             std::vector<std::string> temp;
-            auto iter = m_orderSellMap.find(SecurityIDInt);
-            if (iter != m_orderSellMap.end()) {
+            auto iter = m_orderSellM.find(SecurityID);
+            if (iter != m_orderSellM.end()) {
                 int i = 1;
                 if (i > showPankouCount) i = showPankouCount;
                 for (auto iter1: iter->second) {
@@ -789,7 +774,7 @@ namespace PROMD {
                             cnt++;
                         }
                     }
-                    sprintf(buffer, "S%d\t%d\t\t%lld\t%d\n", i, iter1.Price, totalVolume, cnt);
+                    sprintf(buffer, "S%d\t%.3f\t\t%lld\t%d\n", i, iter1.Price, totalVolume, cnt);
                     temp.emplace_back(buffer);
                     if (i++ >= 5) break;
                 }
@@ -802,8 +787,8 @@ namespace PROMD {
         {
 
             std::vector<std::string> temp;
-            auto iter = m_orderBuyMap.find(SecurityIDInt);
-            if (iter != m_orderBuyMap.end()) {
+            auto iter = m_orderBuyM.find(SecurityID);
+            if (iter != m_orderBuyM.end()) {
                 int i = 1;
                 if (i > showPankouCount) i = showPankouCount;
                 for (auto iter1: iter->second) {
@@ -816,7 +801,7 @@ namespace PROMD {
                             cnt++;
                         }
                     }
-                    sprintf(buffer, "B%d\t%d\t\t%lld\t%d\n", i, iter1.Price, totalVolume, cnt);
+                    sprintf(buffer, "B%d\t%.3f\t\t%lld\t%d\n", i, iter1.Price, totalVolume, cnt);
                     temp.emplace_back(buffer);
                     if (i++ >= 5) break;
                 }
@@ -828,7 +813,7 @@ namespace PROMD {
         printf("%s\n", stream.str().c_str());
     }
 
-    void MDL2Impl::PostPriceMap(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price) {
+    void MDL2Impl::PostPriceM(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price) {
         if (!m_pApp || !m_pApp->m_isStrategyOpen) return;
 
         TTORATstpPriceType BidPrice1 = 0.0;
@@ -838,8 +823,8 @@ namespace PROMD {
         TTORATstpPriceType TradePrice = Price;
 
         {
-            auto iter = m_orderSell.find(SecurityID);
-            if (iter != m_orderSell.end() && !iter->second.empty()) {
+            auto iter = m_orderSellV.find(SecurityID);
+            if (iter != m_orderSellV.end() && !iter->second.empty()) {
                 auto size = (int) iter->second.begin()->Orders.size();
                 TTORATstpLongVolumeType Volume = 0;
                 for (auto i = 0; i < size; ++i) {
@@ -851,8 +836,8 @@ namespace PROMD {
         }
 
         {
-            auto iter = m_orderBuy.find(SecurityID);
-            if (iter != m_orderBuy.end() && !iter->second.empty()) {
+            auto iter = m_orderBuyV.find(SecurityID);
+            if (iter != m_orderBuyV.end() && !iter->second.empty()) {
                 auto size = (int) iter->second.begin()->Orders.size();
                 TTORATstpLongVolumeType Volume = 0;
                 for (auto i = 0; i < size; ++i) {
