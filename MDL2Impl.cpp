@@ -65,8 +65,8 @@ namespace PROMD {
 
     void MDL2Impl::ShowHandleSpeed() {
         if (m_handleCount <= 0) return;
-        printf("%s %s %-10lld %-10lld %.6fus %-9ld\n", GetTimeStr().c_str(), GetExchangeName(m_exchangeID),
-               m_handleCount, m_handleTick, (1.0*m_handleTick) / m_handleCount, m_pool.GetTotalCnt());
+        printf("%s %s %-10lld %-10lld %.6fus %-9ld ver:%d\n", GetTimeStr().c_str(), GetExchangeName(m_exchangeID),
+               m_handleCount, m_handleTick, (1.0*m_handleTick) / m_handleCount, m_pool.GetTotalCnt(), m_version);
     }
 
     const char *MDL2Impl::GetExchangeName(TTORATstpExchangeIDType ExchangeID) {
