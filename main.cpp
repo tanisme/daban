@@ -51,7 +51,7 @@ int main() {
     if (srcdatapath.length() > 0) {
         printf("-------------------该程序功能为生成订单簿-------------------\n");
         test::Imitate imitate;
-        imitate.TestOrderBook(srcdatapath, watchsecurity, true);
+        imitate.TestOrderBook(srcdatapath, watchsecurity, false);
         printf("-------------------生成所有合约订单簿完成-------------------\n");
         return 0;
     }
