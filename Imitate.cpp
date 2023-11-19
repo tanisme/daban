@@ -221,6 +221,7 @@ namespace test {
 
     bool Imitate::TestOrderBook(std::string& srcDataDir, std::string& watchsecurity, bool createfile) {
         m_md = new PROMD::MDL2Impl(nullptr, PROMD::TORA_TSTP_EXD_COMM);
+        m_md->SetVersion(3);
 
         trim(watchsecurity);
         if (watchsecurity.length() <= 0) {

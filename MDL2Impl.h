@@ -21,6 +21,7 @@ namespace PROMD {
         void ShowOrderBookM(TTORATstpSecurityIDType SecurityID);
         void ShowHandleSpeed();
         static const char *GetExchangeName(TTORATstpExchangeIDType ExchangeID);
+        void SetVersion(int val) { m_version = val; }
 
         bool IsInited() const { return m_isInited; }
         CTORATstpLev2MdApi *GetApi() const { return m_pApi; }

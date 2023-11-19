@@ -22,6 +22,7 @@ namespace test {
         void LDParseSecurityFile(TTORATstpSecurityIDType CalSecurityID);
 
     private:
+        int m_version = 2;
         PROMD::MDL2Impl* m_md = nullptr;
         std::unordered_map<std::string, bool> m_watchSecurity;
         std::unordered_map<std::string, FILE*> m_watchOrderFILE;
