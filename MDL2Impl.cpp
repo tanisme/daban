@@ -661,7 +661,6 @@ namespace PROMD {
         order->OrderNo = OrderNO;
         order->Volume = Volume;
 
-        Price *= 100;
         auto added = false;
         auto &mapOrder = Side == TORA_TSTP_LSD_Buy ? m_orderBuyM : m_orderSellM;
         auto iter = mapOrder.find(SecurityID);
