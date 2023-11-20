@@ -102,7 +102,7 @@ void CApplication::MDOnInited(PROMD::TTORATstpExchangeIDType exchangeID) {
     for (auto &iter: m_TD->m_marketSecurity) {
         if (exchangeID == iter.second->ExchangeID &&
             (iter.second->SecurityType == PROTD::TORA_TSTP_STP_SHAShares ||
-             iter.second->SecurityType == PROTD::TORA_TSTP_STP_SHKC ||
+             //iter.second->SecurityType == PROTD::TORA_TSTP_STP_SHKC ||
              iter.second->SecurityType == PROTD::TORA_TSTP_STP_SZMainAShares)) {
             cnt++;
             PROMD::TTORATstpSecurityIDType Security = {0};

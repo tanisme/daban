@@ -7,7 +7,7 @@
 
 int main() {
     std::string cfgfile = "daban.ini";
-    int version = 1;
+    int version = 2;
     bool istest = true, isstrategyopen = false, isshmdnewversion = true;
     std::string dbfile = "database.db";
     std::string shcpucore = "", szcpucore = "", currentexchangeid = "";
