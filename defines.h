@@ -4,6 +4,7 @@
 #include <ctime>
 #include <fstream>
 #include <sstream>
+#include <map>
 #include <unordered_map>
 #include <vector>
 #include <list>
@@ -37,11 +38,7 @@ struct stPriceOrders {
 typedef std::unordered_map<std::string, std::vector<stPriceOrders> > MapOrderV;
 
 // list
-struct stPriceOrdersList {
-    TORALEV2API::TTORATstpPriceType Price;
-    std::list<stOrder*> Orders;
-};
-typedef std::unordered_map<std::string, std::list<stPriceOrdersList> > MapOrderL;
+typedef std::unordered_map<std::string, std::map<int, std::vector<stOrder*>> > MapOrderL;
 
 // map
 struct stPriceOrdersMap {

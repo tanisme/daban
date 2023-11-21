@@ -477,45 +477,15 @@ namespace PROMD {
         order->OrderNo = OrderNO;
         order->Volume = Volume;
 
-        stPriceOrdersList priceOrder = {0};
-        priceOrder.Orders.emplace_back(order);
-        priceOrder.Price = Price;
+        int PriceInt = (int)(Price * 100);
 
         auto added = false;
         auto &mapOrder = Side == TORA_TSTP_LSD_Buy ? m_orderBuyL : m_orderSellL;
         auto iter = mapOrder.find(SecurityID);
         if (iter == mapOrder.end()) {
-            mapOrder[SecurityID] = std::list<stPriceOrdersList>();
-            iter = mapOrder.find(SecurityID);
-        } else if (!iter->second.empty()) {
-            for (auto iterOrderList = iter->second.begin(); iterOrderList != iter->second.end(); ++iterOrderList) {
-                auto curPrice = iterOrderList->Price;
-                if (Side == TORA_TSTP_LSD_Buy) {
-                    if (Price > curPrice + 0.0001) {
-                        iter->second.insert(iterOrderList, priceOrder);
-                        added = true;
-                        break;
-                    } else if (Price > curPrice - 0.0001) {
-                        iterOrderList->Orders.emplace_back(order);
-                        added = true;
-                        break;
-                    }
-                } else if (Side == TORA_TSTP_LSD_Sell) {
-                    if (Price < curPrice - 0.0001) {
-                        iter->second.insert(iterOrderList, priceOrder);
-                        added = true;
-                        break;
-                    } else if (Price < curPrice + 0.0001) {
-                        iterOrderList->Orders.emplace_back(order);
-                        added = true;
-                        break;
-                    }
-                }
-            }
+            mapOrder[SecurityID] = std::map<int, std::vector<stOrder*> >();
         }
-        if (!added) {
-            iter->second.emplace_back(priceOrder);
-        }
+        mapOrder[SecurityID][PriceInt].emplace_back(order);
     }
 
     void MDL2Impl::ModifyOrderL(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side) {
@@ -524,15 +494,13 @@ namespace PROMD {
         if (iter == mapOrder.end()) return;
 
         for (auto iterOrderList = iter->second.begin(); iterOrderList != iter->second.end();) {
-            auto nb = false;
-            for (auto order = iterOrderList->Orders.begin(); order != iterOrderList->Orders.end();) {
+            for (auto order = iterOrderList->second.begin(); order != iterOrderList->second.end();) {
                 if ((*order)->OrderNo == OrderNo) {
                     if (Volume > 0) (*order)->Volume -= Volume;
                     if (Volume == 0 || (*order)->Volume <= 0) {
                         auto tmp = (*order);
-                        order = iterOrderList->Orders.erase(order);
+                        order = iterOrderList->second.erase(order);
                         m_pool.Free<stOrder>(tmp, sizeof(stOrder));
-                        nb = true;
                     } else {
                         ++order;
                     }
@@ -541,12 +509,11 @@ namespace PROMD {
                 }
             }
 
-            if (iterOrderList->Orders.empty()) {
+            if (iterOrderList->second.empty()) {
                 iterOrderList = iter->second.erase(iterOrderList);
             } else {
                 ++iterOrderList;
             }
-            if (nb) break;
         }
     }
 
@@ -566,14 +533,14 @@ namespace PROMD {
                 for (auto iter1: iter->second) {
                     memset(buffer, 0, sizeof(buffer));
                     TTORATstpLongVolumeType totalVolume = 0;
-                    for (auto iter2 : iter1.Orders) {
+                    for (auto iter2 : iter1.second) {
                         totalVolume += iter2->Volume;
                     }
                     auto left = totalVolume % 100;
                     auto cnt = totalVolume / 100;
                     if (left >= 50) cnt++;
                     totalVolume = cnt;
-                    sprintf(buffer, "S%d\t%.2f\t\t%lld\t%d\n", i, iter1.Price, totalVolume, (int)iter1.Orders.size());
+                    sprintf(buffer, "S%d\t%.2f\t\t%lld\t%d\n", i, iter1.first/100.0, totalVolume, (int)iter1.second.size());
                     temp.emplace_back(buffer);
                     if (i++ >= 5) break;
                 }
@@ -591,14 +558,14 @@ namespace PROMD {
                 for (auto iter1: iter->second) {
                     memset(buffer, 0, sizeof(buffer));
                     TTORATstpLongVolumeType totalVolume = 0;
-                    for (auto iter2 : iter1.Orders) {
+                    for (auto iter2 : iter1.second) {
                         totalVolume += iter2->Volume;
                     }
                     auto left = totalVolume % 100;
                     auto cnt = totalVolume / 100;
                     if (left >= 50) cnt++;
                     totalVolume = cnt;
-                    sprintf(buffer, "B%d\t%.2f\t\t%lld\t%d\n", i, iter1.Price, totalVolume, (int)iter1.Orders.size());
+                    sprintf(buffer, "B%d\t%.2f\t\t%lld\t%d\n", i, iter1.first/100.0, totalVolume, (int)iter1.second.size());
                     temp.emplace_back(buffer);
                     if (i++ >= 5) break;
                 }
