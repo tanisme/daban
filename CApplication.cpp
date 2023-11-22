@@ -68,31 +68,31 @@ void CApplication::OnTime(const boost::system::error_code& error) {
         }
     }
 
-    for (auto& iter : m_watchSecurity) {
-        if (m_shMD && iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
-            if (m_version == 0) {
-                m_shMD->ShowOrderBookV((char*)iter.first.c_str());
-            } else if (m_version == 1) {
-                m_shMD->ShowOrderBookL((char*)iter.first.c_str());
-            } else if (m_version == 2) {
-                m_shMD->ShowOrderBookM((char*)iter.first.c_str());
-            }
-        }
-        if (m_szMD && iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
-            if (m_version == 0) {
-                m_szMD->ShowOrderBookV((char*)iter.first.c_str());
-            } else if (m_version == 1) {
-                m_szMD->ShowOrderBookL((char*)iter.first.c_str());
-            } else if (m_version == 2) {
-                m_szMD->ShowOrderBookM((char*)iter.first.c_str());
-            }
-        }
-    }
+    //for (auto& iter : m_watchSecurity) {
+    //    if (m_shMD && iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
+    //        if (m_version == 0) {
+    //            m_shMD->ShowOrderBookV((char*)iter.first.c_str());
+    //        } else if (m_version == 1) {
+    //            m_shMD->ShowOrderBookL((char*)iter.first.c_str());
+    //        } else if (m_version == 2) {
+    //            m_shMD->ShowOrderBookM((char*)iter.first.c_str());
+    //        }
+    //    }
+    //    if (m_szMD && iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
+    //        if (m_version == 0) {
+    //            m_szMD->ShowOrderBookV((char*)iter.first.c_str());
+    //        } else if (m_version == 1) {
+    //            m_szMD->ShowOrderBookL((char*)iter.first.c_str());
+    //        } else if (m_version == 2) {
+    //            m_szMD->ShowOrderBookM((char*)iter.first.c_str());
+    //        }
+    //    }
+    //}
 
     if (m_shMD) m_shMD->ShowHandleSpeed();
     if (m_szMD) m_szMD->ShowHandleSpeed();
 
-    m_timer.expires_from_now(boost::posix_time::milliseconds(60000));
+    m_timer.expires_from_now(boost::posix_time::milliseconds(6000));
     m_timer.async_wait(boost::bind(&CApplication::OnTime, this, boost::asio::placeholders::error));
 }
 

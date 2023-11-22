@@ -3,6 +3,8 @@
 
 #include "defines.h"
 #include "MemoryPool.h"
+#include <memory>
+#include <boost/lockfree/spsc_queue.hpp>
 
 class CApplication;
 
@@ -58,6 +60,8 @@ namespace PROMD {
         void ModifyOrderM(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side);
         void PostPriceM(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price);
 
+        void HandleData(stNotifyData* data);
+        void Run();
     private:
         int m_version = 1;
         int m_reqID = 1;
@@ -72,8 +76,15 @@ namespace PROMD {
         MapOrderM m_orderBuyM;
         MapOrderM m_orderSellM;
 
+        std::atomic_bool m_stop;
+        boost::lockfree::spsc_queue<stNotifyData*, boost::lockfree::capacity<1024>> m_data;
+        std::list<stNotifyData*> m_dataList;
+        std::mutex m_dataMtx;
+        std::thread* m_pthread;
+
         MemoryPool m_pool;
-        long long int m_handleCount = 0;
+        long long int m_addQueueCount = 0;
+        long long int m_delQueueCount = 0;
         long long int m_handleTick = 0;
     };
 

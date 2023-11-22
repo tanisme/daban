@@ -65,6 +65,26 @@ struct stSecurity {
     TORASTOCKAPI::TTORATstpPriceType LowerLimitPrice;
 };
 
+struct stNotifyData {
+    int type;
+    // OrderDetail
+    TORALEV2API::TTORATstpSecurityIDType SecurityID;
+    TORALEV2API::TTORATstpLSideType Side;
+    TORALEV2API::TTORATstpLongSequenceType OrderNO;
+    TORALEV2API::TTORATstpPriceType Price;
+    TORALEV2API::TTORATstpLongVolumeType Volume;//TradeVolume
+    TORALEV2API::TTORATstpExchangeIDType ExchangeID;
+    TORALEV2API::TTORATstpLOrderStatusType OrderStatus;
+
+    // Transaction
+    TORALEV2API::TTORATstpExecTypeType ExecType;
+    TORALEV2API::TTORATstpLongSequenceType	BuyNo;
+    TORALEV2API::TTORATstpLongSequenceType	SellNo;
+
+    // NGTS
+    TORALEV2API::TTORATstpLTickTypeType TickType;
+};
+
 void Stringsplit(const std::string &str, const char split, std::vector<std::string> &res);
 std::string GetTimeStr();
 int GetNowTick();

@@ -5,6 +5,10 @@ namespace PROMD {
 
     MDL2Impl::MDL2Impl(CApplication *pApp, TTORATstpExchangeIDType ExchangeID)
             : m_pApp(pApp), m_exchangeID(ExchangeID) {
+        m_stop = false;
+        if (!m_pthread) {
+            m_pthread = new std::thread(&MDL2Impl::Run, this);
+        }
     }
 
     MDL2Impl::~MDL2Impl() {
@@ -64,9 +68,9 @@ namespace PROMD {
     }
 
     void MDL2Impl::ShowHandleSpeed() {
-        if (m_handleCount <= 0) return;
-        printf("%s %s %-10lld %-10lld %.6fus %-9ld ver:%d\n", GetTimeStr().c_str(), GetExchangeName(m_exchangeID),
-               m_handleCount, m_handleTick, (1.0*m_handleTick) / m_handleCount, m_pool.GetTotalCnt(), m_version);
+        if (m_delQueueCount <= 0) return;
+        printf("%s %s add:%-9lld handle:%-9lld us:%-9lld perus:%.6f %-9ld ver:%d\n", GetTimeStr().c_str(), GetExchangeName(m_exchangeID),
+               m_addQueueCount, m_delQueueCount, m_handleTick, (1.0*m_handleTick) / m_delQueueCount, m_pool.GetTotalCnt(), m_version);
     }
 
     const char *MDL2Impl::GetExchangeName(TTORATstpExchangeIDType ExchangeID) {
@@ -156,32 +160,74 @@ namespace PROMD {
 
     void MDL2Impl::OnRtnOrderDetail(CTORATstpLev2OrderDetailField *pOrderDetail) {
         if (!pOrderDetail) return;
-        auto start = GetUs();
-        OrderDetail(pOrderDetail->SecurityID, pOrderDetail->Side, pOrderDetail->OrderNO, pOrderDetail->Price, pOrderDetail->Volume, pOrderDetail->ExchangeID, pOrderDetail->OrderStatus);
-        auto duration = GetUs() - start;
-        if (duration <= 0) duration = 1; // default 1us
-        m_handleTick += duration;
-        m_handleCount++;
+        //auto start = GetUs();
+        //OrderDetail(pOrderDetail->SecurityID, pOrderDetail->Side, pOrderDetail->OrderNO, pOrderDetail->Price, pOrderDetail->Volume, pOrderDetail->ExchangeID, pOrderDetail->OrderStatus);
+        //auto duration = GetUs() - start;
+        //if (duration <= 0) duration = 1; // default 1us
+        //m_handleTick += duration;
+        //m_addQueueCount++;
+
+        auto data = m_pool.Malloc<stNotifyData>(sizeof(stNotifyData));
+        data->type = 1;
+        strcpy(data->SecurityID, pOrderDetail->SecurityID);
+        data->Side = pOrderDetail->Side;
+        data->OrderNO = pOrderDetail->OrderNO;
+        data->Price = pOrderDetail->Price;
+        data->Volume = pOrderDetail->Volume;
+        data->ExchangeID = pOrderDetail->ExchangeID;
+        data->OrderStatus = pOrderDetail->OrderStatus;
+        m_data.push(data);
+        //std::unique_lock<std::mutex> lock(m_dataMtx);
+        //m_dataList.push_back(data);
+        m_addQueueCount++;
     }
 
     void MDL2Impl::OnRtnTransaction(CTORATstpLev2TransactionField *pTransaction) {
         if (!pTransaction) return;
-        auto start = GetUs();
-        Transaction(pTransaction->SecurityID, pTransaction->ExchangeID, pTransaction->TradeVolume, pTransaction->ExecType, pTransaction->BuyNo, pTransaction->SellNo, pTransaction->TradePrice, pTransaction->TradeTime);
-        auto duration = GetUs() - start;
-        if (duration <= 0) duration = 1;
-        m_handleTick += duration;
-        m_handleCount++;
+        //auto start = GetUs();
+        //Transaction(pTransaction->SecurityID, pTransaction->ExchangeID, pTransaction->TradeVolume, pTransaction->ExecType, pTransaction->BuyNo, pTransaction->SellNo, pTransaction->TradePrice, pTransaction->TradeTime);
+        //auto duration = GetUs() - start;
+        //if (duration <= 0) duration = 1;
+        //m_handleTick += duration;
+        //m_addQueueCount++;
+
+        auto data = m_pool.Malloc<stNotifyData>(sizeof(stNotifyData));
+        data->type = 2;
+        strcpy(data->SecurityID, pTransaction->SecurityID);
+        data->ExecType = pTransaction->ExecType;
+        data->ExchangeID = pTransaction->ExchangeID;
+        data->Price = pTransaction->TradePrice;
+        data->Volume = pTransaction->TradeVolume;
+        data->BuyNo = pTransaction->BuyNo;
+        data->SellNo = pTransaction->SellNo;
+        m_data.push(data);
+//        std::unique_lock<std::mutex> lock(m_dataMtx);
+//        m_dataList.push_back(data);
+        m_addQueueCount++;
     }
 
     void MDL2Impl::OnRtnNGTSTick(CTORATstpLev2NGTSTickField *pTick) {
         if (!pTick) return;
-        auto start = GetUs();
-        NGTSTick(pTick->SecurityID, pTick->TickType, pTick->BuyNo, pTick->SellNo, pTick->Price, pTick->Volume, pTick->Side, pTick->TickTime);
-        auto duration = GetUs() - start;
-        if (duration <= 0) duration = 1;
-        m_handleTick += duration;
-        m_handleCount++;
+        //auto start = GetUs();
+        //NGTSTick(pTick->SecurityID, pTick->TickType, pTick->BuyNo, pTick->SellNo, pTick->Price, pTick->Volume, pTick->Side, pTick->TickTime);
+        //auto duration = GetUs() - start;
+        //if (duration <= 0) duration = 1;
+        //m_handleTick += duration;
+        //m_addQueueCount++;
+
+        auto data = m_pool.Malloc<stNotifyData>(sizeof(stNotifyData));
+        data->type = 3;
+        strcpy(data->SecurityID, pTick->SecurityID);
+        data->Side = pTick->Side;
+        data->TickType = pTick->TickType;
+        data->Price = pTick->Price;
+        data->Volume = pTick->Volume;
+        data->BuyNo = pTick->BuyNo;
+        data->SellNo = pTick->SellNo;
+        m_data.push(data);
+        //std::unique_lock<std::mutex> lock(m_dataMtx);
+        //m_dataList.push_back(data);
+        m_addQueueCount++;
     }
 
     /************************************HandleOrderBook***************************************/
@@ -822,6 +868,51 @@ namespace PROMD {
         p.AskVolume1 = AskVolume1;
         p.TradePrice = TradePrice;
         m_pApp->m_ioc.post(boost::bind(&CApplication::MDPostPrice, m_pApp, p));
+    }
+
+    void MDL2Impl::Run() {
+        while (!m_stop) {
+            stNotifyData* data = nullptr;
+            m_data.pop(data);
+            if (data) {
+                auto start = GetUs();
+                HandleData(data);
+                auto duration = GetUs() - start;
+                if (duration <= 0) duration = 1; // default 1us
+                m_delQueueCount++;
+                m_handleTick += duration;
+                m_pool.Free(data, sizeof(stNotifyData));
+            }
+            //std::list<stNotifyData*> dataList;
+            //{
+            //    std::unique_lock<std::mutex> lock(m_dataMtx);
+            //    dataList.swap(m_dataList);
+            //    m_dataList.clear();
+            //    if (dataList.empty()) continue;
+            //}
+
+            //for (auto iter = dataList.begin(); iter != dataList.end(); ++iter) {
+            //    auto start = GetUs();
+            //    auto data = *iter;
+            //    HandleData(data);
+            //    auto duration = GetUs() - start;
+            //    if (duration <= 0) duration = 1; // default 1us
+            //    m_delQueueCount++;
+            //    m_handleTick += duration;
+            //    m_pool.Free(data, sizeof(stNotifyData));
+            //}
+        }
+    }
+
+    void MDL2Impl::HandleData(stNotifyData *data) {
+        if (!data) return;
+        if (data->type == 1) {
+            OrderDetail(data->SecurityID, data->Side, data->OrderNO, data->Price, data->Volume, data->ExchangeID, data->OrderStatus);
+        } else if (data->type == 2) {
+            Transaction(data->SecurityID, data->ExchangeID, data->Volume, data->ExecType, data->BuyNo, data->SellNo, data->Price, 0);
+        } else if (data->type == 3) {
+            NGTSTick(data->SecurityID, data->TickType, data->BuyNo, data->SellNo, data->Price, data->Volume, data->Side, 0);
+        }
     }
 
 }
