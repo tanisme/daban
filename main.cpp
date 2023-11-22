@@ -7,7 +7,7 @@
 
 int main() {
     std::string cfgfile = "daban.ini";
-    int version = 2;
+    int version = 2, useQueueVersion = 0;
     bool istest = true, isstrategyopen = false, isshmdnewversion = true;
     std::string dbfile = "database.db";
     std::string shcpucore = "", szcpucore = "", currentexchangeid = "";
@@ -19,6 +19,7 @@ int main() {
             ("daban.version", boost::program_options::value<int>(&version), "daban.version")
             ("daban.istest", boost::program_options::value<bool>(&istest), "daban.istest")
             ("daban.isstrategyopen", boost::program_options::value<bool>(&isstrategyopen), "daban.isstrategyopen")
+            ("daban.usequeueversion", boost::program_options::value<int>(&useQueueVersion), "daban.usequeueversion")
             ("daban.isshmdnewversion", boost::program_options::value<bool>(&isshmdnewversion), "daban.isshmdnewversion")
             ("daban.currentexchangeid", boost::program_options::value<std::string>(&currentexchangeid), "daban.currentexchangeid")
             ("daban.dbfile", boost::program_options::value<std::string>(&dbfile), "daban.dbfile")
@@ -60,6 +61,7 @@ int main() {
     CApplication app(io_context);
     app.m_version = version;
     app.m_isTest = istest;
+    app.m_isUseQueue = useQueueVersion;
     app.m_isStrategyOpen = isstrategyopen;
     app.m_isSHMDNewVersion = isshmdnewversion;
     app.m_dbFile = dbfile;
@@ -75,11 +77,6 @@ int main() {
     app.m_szMDAddr = szmdaddr;
     app.m_szMDInterface = szmdinterface;
     app.Init(watchsecurity, currentexchangeid);
-
-    //if (httpurl.length() > 0) {
-    //    http::server4::server(io_context, std::string(httpurl, 0, httpurl.find(':')),
-    //                          httpurl.substr(httpurl.find(':') + 1), http::server4::file_handler(&app))();
-    //}
 
     app.Start();
     io_context.run();

@@ -39,11 +39,6 @@ add_executable(daban
         CApplication.cpp
         MDL2Impl.cpp
         TDImpl.cpp
-        http/server4/file_handler.cpp
-        http/server4/mime_types.cpp
-        http/server4/reply.cpp
-        http/server4/request_parser.cpp
-        http/server4/server.cpp
         Imitate.cpp
         defines.cpp
         MemoryPool.cpp

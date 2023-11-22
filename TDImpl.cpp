@@ -19,7 +19,6 @@ namespace PROTD {
     bool TDImpl::Start(bool isTest) {
         m_pApi = CTORATstpTraderApi::CreateTstpTraderApi();
         if (!m_pApi) return false;
-
         m_pApi->RegisterSpi(this);
         m_pApi->RegisterFront((char *) m_pApp->m_TDAddr.c_str());
         m_pApi->SubscribePrivateTopic(TORA_TERT_QUICK);
@@ -35,8 +34,6 @@ namespace PROTD {
         Req.LogInAccountType = TORA_TSTP_LACT_AccountID;
         strcpy(Req.LogInAccount, m_pApp->m_TDAccount.c_str());
         strcpy(Req.Password, m_pApp->m_TDPassword.c_str());
-        //strcpy(Req.UserProductInfo, "notthisone");
-        //strcpy(Req.TerminalInfo, "PC;IIP=123.112.154.118;IPORT=50361;LIP=192.168.118.107;MAC=54EE750B1713FCF8AE5CBD58;HD=TF655AY91GHRVL;@notthisone");
         m_pApi->ReqUserLogin(&Req, ++m_reqID);
     }
 

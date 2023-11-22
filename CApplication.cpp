@@ -38,9 +38,7 @@ bool CApplication::Init(std::string& watchSecurity, std::string& currentExchange
     trim(currentExchangeID);
     std::vector<std::string> vtExchangeID;
     Stringsplit(currentExchangeID, ',', vtExchangeID);
-    for (auto& iter : vtExchangeID) {
-        m_supportExchangeID[iter.c_str()[0]] = true;
-    }
+    for (auto& iter : vtExchangeID) m_supportExchangeID[iter.c_str()[0]] = true;
     if (m_supportExchangeID.empty()) {
         printf("currentExchangeID config file not setted!!!\n");
         return false;
@@ -54,8 +52,10 @@ bool CApplication::Init(std::string& watchSecurity, std::string& currentExchange
 }
 
 void CApplication::Start() {
-    m_TD = new PROTD::TDImpl(this);
-    m_TD->Start(m_isTest);
+    if (!m_TD) {
+        m_TD = new PROTD::TDImpl(this);
+        m_TD->Start(m_isTest);
+    }
 
     m_timer.expires_from_now(boost::posix_time::milliseconds(5000));
     m_timer.async_wait(boost::bind(&CApplication::OnTime, this, boost::asio::placeholders::error));
@@ -168,15 +168,15 @@ void CApplication::MDPostPrice(stPostPrice& postPrice) {
 
 /***************************************TD***************************************/
 void CApplication::TDOnInited() {
-    auto iterH = m_supportExchangeID.find(PROMD::TORA_TSTP_EXD_SSE);
-    if (iterH != m_supportExchangeID.end() && !m_shMD) {
+    auto iterSH = m_supportExchangeID.find(PROMD::TORA_TSTP_EXD_SSE);
+    if (iterSH != m_supportExchangeID.end() && !m_shMD) {
         m_shMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SSE);
-        m_shMD->Start(m_isTest, m_version);
+        m_shMD->Start(m_isTest, m_version, m_isUseQueue);
     }
-    auto iterZ = m_supportExchangeID.find(PROMD::TORA_TSTP_EXD_SZSE);
-    if (iterZ != m_supportExchangeID.end() && !m_szMD) {
+    auto iterSZ = m_supportExchangeID.find(PROMD::TORA_TSTP_EXD_SZSE);
+    if (iterSZ != m_supportExchangeID.end() && !m_szMD) {
         m_szMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SZSE);
-        m_szMD->Start(m_isTest, m_version);
+        m_szMD->Start(m_isTest, m_version, m_isUseQueue);
     }
 }
 

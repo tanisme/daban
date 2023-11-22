@@ -38,6 +38,7 @@ public:
 public:
     int m_version = 1;
     bool m_isTest = true;
+    int m_isUseQueue = 0;
     bool m_isStrategyOpen = false;
     bool m_isSHMDNewVersion = true;
     std::string m_dbFile;

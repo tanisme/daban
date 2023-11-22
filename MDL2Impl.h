@@ -16,7 +16,7 @@ namespace PROMD {
         explicit MDL2Impl(CApplication *pApp, TTORATstpExchangeIDType ExchangeID);
         ~MDL2Impl();
 
-        bool Start(bool isTest, int version);
+        bool Start(bool isTest, int version, int useQueueVersion);
         int ReqMarketData(TTORATstpSecurityIDType SecurityID, TTORATstpExchangeIDType ExchangeID, int type, bool isSub = true);
         void ShowOrderBookV(TTORATstpSecurityIDType SecurityID);
         void ShowOrderBookL(TTORATstpSecurityIDType SecurityID);
@@ -24,6 +24,7 @@ namespace PROMD {
         void ShowHandleSpeed();
         static const char *GetExchangeName(TTORATstpExchangeIDType ExchangeID);
         void SetVersion(int val) { m_version = val; }
+        void SetUseQueueVersion(int val) { m_useQueueVersion = val;}
 
         bool IsInited() const { return m_isInited; }
         CTORATstpLev2MdApi *GetApi() const { return m_pApi; }
@@ -62,8 +63,10 @@ namespace PROMD {
 
         void HandleData(stNotifyData* data);
         void Run();
+
     private:
         int m_version = 1;
+        int m_useQueueVersion = 0;
         int m_reqID = 1;
         bool m_isInited = false;
         CTORATstpLev2MdApi *m_pApi = nullptr;
