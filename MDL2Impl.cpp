@@ -14,15 +14,12 @@ namespace PROMD {
         }
     }
 
-    bool MDL2Impl::Start(bool isTest, int version, int useQueueVersion) {
+    bool MDL2Impl::Start(bool isTest, int version) {
         m_version = version;
-        m_useQueueVersion = useQueueVersion;
 
-        if (m_useQueueVersion > 0) {
-            m_stop = false;
-            if (!m_pthread) {
-                m_pthread = new std::thread(&MDL2Impl::Run, this);
-            }
+        m_stop = false;
+        if (!m_pthread) {
+            m_pthread = new std::thread(&MDL2Impl::Run, this);
         }
         if (isTest) { // tcp
             m_pApi = CTORATstpLev2MdApi::CreateTstpLev2MdApi();
@@ -73,11 +70,9 @@ namespace PROMD {
 
     void MDL2Impl::ShowHandleSpeed() {
         long long int cnt = 0;
-        if (m_useQueueVersion == 0) cnt = m_addQueueCount;
-        if (m_useQueueVersion == 1 || m_useQueueVersion == 2) cnt = m_delQueueCount;
         if (cnt <= 0) cnt = 1;
-        printf("%s %s add:%-9lld handle:%-9lld us:%-9lld perus:%.6f %-9ld ver:%d qver:%d\n", GetTimeStr().c_str(), GetExchangeName(m_exchangeID),
-               m_addQueueCount, m_delQueueCount, m_handleTick, (1.0*m_handleTick) / cnt, m_pool.GetTotalCnt(), m_version, m_useQueueVersion);
+        printf("%s %s add:%-9lld handle:%-9lld us:%-9lld perus:%.6f %-9ld ver:%d\n", GetTimeStr().c_str(), GetExchangeName(m_exchangeID),
+               m_addQueueCount, m_delQueueCount, m_handleTick, (1.0*m_handleTick) / cnt, m_pool.GetTotalCnt(), m_version);
     }
 
     const char *MDL2Impl::GetExchangeName(TTORATstpExchangeIDType ExchangeID) {
@@ -169,86 +164,53 @@ namespace PROMD {
 
     void MDL2Impl::OnRtnOrderDetail(CTORATstpLev2OrderDetailField *pOrderDetail) {
         if (!pOrderDetail) return;
-        if (m_useQueueVersion == 0) {
-            auto start = GetUs();
-            OrderDetail(pOrderDetail->SecurityID, pOrderDetail->Side, pOrderDetail->OrderNO, pOrderDetail->Price, pOrderDetail->Volume, pOrderDetail->ExchangeID, pOrderDetail->OrderStatus);
-            auto duration = GetUs() - start;
-            if (duration <= 0) duration = 1; // default 1us
-            m_handleTick += duration;
-        } else if (m_useQueueVersion > 0){
-            auto data = m_pool.Malloc<stNotifyData>(sizeof(stNotifyData));
-            data->type = 1;
-            strcpy(data->SecurityID, pOrderDetail->SecurityID);
-            data->Side = pOrderDetail->Side;
-            data->OrderNO = pOrderDetail->OrderNO;
-            data->Price = pOrderDetail->Price;
-            data->Volume = pOrderDetail->Volume;
-            data->ExchangeID = pOrderDetail->ExchangeID;
-            data->OrderStatus = pOrderDetail->OrderStatus;
-            if (m_useQueueVersion == 1) {
-                m_data.push(data);
-            } else if (m_useQueueVersion == 2) {
-                std::unique_lock<std::mutex> lock(m_dataMtx);
-                m_dataList.push_back(data);
-            }
-        }
+        auto data = m_pool.Malloc<stNotifyData>(sizeof(stNotifyData));
+        data->type = 1;
+        strcpy(data->SecurityID, pOrderDetail->SecurityID);
+        data->Side = pOrderDetail->Side;
+        data->OrderNO = pOrderDetail->OrderNO;
+        data->Price = pOrderDetail->Price;
+        data->Volume = pOrderDetail->Volume;
+        data->ExchangeID = pOrderDetail->ExchangeID;
+        data->OrderStatus = pOrderDetail->OrderStatus;
         m_addQueueCount++;
+        //m_data.push(data);
+        std::unique_lock<std::mutex> lock(m_dataMtx);
+        m_dataList.push_back(data);
     }
 
     void MDL2Impl::OnRtnTransaction(CTORATstpLev2TransactionField *pTransaction) {
         if (!pTransaction) return;
-        if (m_useQueueVersion == 0) {
-            auto start = GetUs();
-            Transaction(pTransaction->SecurityID, pTransaction->ExchangeID, pTransaction->TradeVolume, pTransaction->ExecType, pTransaction->BuyNo, pTransaction->SellNo, pTransaction->TradePrice, pTransaction->TradeTime);
-            auto duration = GetUs() - start;
-            if (duration <= 0) duration = 1;
-            m_handleTick += duration;
-        } else if (m_useQueueVersion > 0){
-            auto data = m_pool.Malloc<stNotifyData>(sizeof(stNotifyData));
-            data->type = 2;
-            strcpy(data->SecurityID, pTransaction->SecurityID);
-            data->ExecType = pTransaction->ExecType;
-            data->ExchangeID = pTransaction->ExchangeID;
-            data->Price = pTransaction->TradePrice;
-            data->Volume = pTransaction->TradeVolume;
-            data->BuyNo = pTransaction->BuyNo;
-            data->SellNo = pTransaction->SellNo;
-            if (m_useQueueVersion == 1) {
-                m_data.push(data);
-            } else if (m_useQueueVersion == 2) {
-                std::unique_lock<std::mutex> lock(m_dataMtx);
-                m_dataList.push_back(data);
-            }
-        }
+        auto data = m_pool.Malloc<stNotifyData>(sizeof(stNotifyData));
+        data->type = 2;
+        strcpy(data->SecurityID, pTransaction->SecurityID);
+        data->ExecType = pTransaction->ExecType;
+        data->ExchangeID = pTransaction->ExchangeID;
+        data->Price = pTransaction->TradePrice;
+        data->Volume = pTransaction->TradeVolume;
+        data->BuyNo = pTransaction->BuyNo;
+        data->SellNo = pTransaction->SellNo;
         m_addQueueCount++;
+        //m_data.push(data);
+        std::unique_lock<std::mutex> lock(m_dataMtx);
+        m_dataList.push_back(data);
     }
 
     void MDL2Impl::OnRtnNGTSTick(CTORATstpLev2NGTSTickField *pTick) {
         if (!pTick) return;
-        if (m_useQueueVersion == 0) {
-            auto start = GetUs();
-            NGTSTick(pTick->SecurityID, pTick->TickType, pTick->BuyNo, pTick->SellNo, pTick->Price, pTick->Volume, pTick->Side, pTick->TickTime);
-            auto duration = GetUs() - start;
-            if (duration <= 0) duration = 1;
-            m_handleTick += duration;
-        } else if (m_useQueueVersion > 0){
-            auto data = m_pool.Malloc<stNotifyData>(sizeof(stNotifyData));
-            data->type = 3;
-            strcpy(data->SecurityID, pTick->SecurityID);
-            data->Side = pTick->Side;
-            data->TickType = pTick->TickType;
-            data->Price = pTick->Price;
-            data->Volume = pTick->Volume;
-            data->BuyNo = pTick->BuyNo;
-            data->SellNo = pTick->SellNo;
-            if (m_useQueueVersion == 1) {
-                m_data.push(data);
-            } else if (m_useQueueVersion == 2) {
-                std::unique_lock<std::mutex> lock(m_dataMtx);
-                m_dataList.push_back(data);
-            }
-        }
+        auto data = m_pool.Malloc<stNotifyData>(sizeof(stNotifyData));
+        data->type = 3;
+        strcpy(data->SecurityID, pTick->SecurityID);
+        data->Side = pTick->Side;
+        data->TickType = pTick->TickType;
+        data->Price = pTick->Price;
+        data->Volume = pTick->Volume;
+        data->BuyNo = pTick->BuyNo;
+        data->SellNo = pTick->SellNo;
         m_addQueueCount++;
+        //m_data.push(data);
+        std::unique_lock<std::mutex> lock(m_dataMtx);
+        m_dataList.push_back(data);
     }
 
     /************************************HandleOrderBook***************************************/
@@ -261,16 +223,12 @@ namespace PROMD {
                 if (m_version == 0) {
                     InsertOrderV(SecurityID, OrderNO, Price, Volume, Side);
                 } else if (m_version == 1) {
-                    InsertOrderL(SecurityID, OrderNO, Price, Volume, Side);
-                } else if (m_version == 2) {
                     InsertOrderM(SecurityID, OrderNO, Price, Volume, Side);
                 }
             } else if (OrderStatus == TORA_TSTP_LOS_Delete) {
                 if (m_version == 0) {
                     ModifyOrderV(SecurityID, 0, OrderNO, Side);
                 } else if (m_version == 1) {
-                    ModifyOrderL(SecurityID, 0, OrderNO, Side);
-                } else if (m_version == 2) {
                     ModifyOrderM(SecurityID, 0, OrderNO, Side);
                 }
             }
@@ -278,8 +236,6 @@ namespace PROMD {
             if (m_version == 0) {
                 InsertOrderV(SecurityID, OrderNO, Price, Volume, Side);
             } else if (m_version == 1) {
-                InsertOrderL(SecurityID, OrderNO, Price, Volume, Side);
-            } else if (m_version == 2) {
                 InsertOrderM(SecurityID, OrderNO, Price, Volume, Side);
             }
         }
@@ -294,10 +250,6 @@ namespace PROMD {
                 ModifyOrderV(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
                 PostPriceV(SecurityID, TradePrice);
             } else if (m_version == 1) {
-                ModifyOrderL(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
-                ModifyOrderL(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
-                PostPriceL(SecurityID, TradePrice);
-            } else if (m_version == 2) {
                 ModifyOrderM(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
                 ModifyOrderM(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
                 PostPriceM(SecurityID, TradePrice);
@@ -309,10 +261,6 @@ namespace PROMD {
                     ModifyOrderV(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
                     PostPriceV(SecurityID, TradePrice);
                 } else if (m_version == 1) {
-                    ModifyOrderL(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
-                    ModifyOrderL(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
-                    PostPriceL(SecurityID, TradePrice);
-                } else if (m_version == 2) {
                     ModifyOrderM(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
                     ModifyOrderM(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
                     PostPriceM(SecurityID, TradePrice);
@@ -322,8 +270,6 @@ namespace PROMD {
                     if (m_version == 0) {
                         ModifyOrderV(SecurityID, 0, BuyNo, TORA_TSTP_LSD_Buy);
                     } else if (m_version == 1) {
-                        ModifyOrderL(SecurityID, 0, BuyNo, TORA_TSTP_LSD_Buy);
-                    } else if (m_version == 2) {
                         ModifyOrderM(SecurityID, 0, BuyNo, TORA_TSTP_LSD_Buy);
                     }
                 }
@@ -331,8 +277,6 @@ namespace PROMD {
                     if (m_version == 0) {
                         ModifyOrderV(SecurityID, 0, SellNo, TORA_TSTP_LSD_Sell);
                     } else if (m_version == 1) {
-                        ModifyOrderL(SecurityID, 0, SellNo, TORA_TSTP_LSD_Sell);
-                    } else if (m_version == 2) {
                         ModifyOrderM(SecurityID, 0, SellNo, TORA_TSTP_LSD_Sell);
                     }
                 }
@@ -347,16 +291,12 @@ namespace PROMD {
             if (m_version == 0) {
                 InsertOrderV(SecurityID, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Price, Volume, Side);
             } else if (m_version == 1) {
-                InsertOrderL(SecurityID, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Price, Volume, Side);
-            } else if (m_version == 2) {
                 InsertOrderM(SecurityID, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Price, Volume, Side);
             }
         } else if (TickType == TORA_TSTP_LTT_Delete) {
             if (m_version == 0) {
                 ModifyOrderV(SecurityID, 0, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Side);
             } else if (m_version == 1) {
-                ModifyOrderL(SecurityID, 0, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Side);
-            } else if (m_version == 2) {
                 ModifyOrderM(SecurityID, 0, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Side);
             }
         } else if (TickType == TORA_TSTP_LTT_Trade) {
@@ -365,10 +305,6 @@ namespace PROMD {
                 ModifyOrderV(SecurityID, Volume, SellNo, TORA_TSTP_LSD_Sell);
                 PostPriceV(SecurityID, Price);
             } else if (m_version == 1) {
-                ModifyOrderL(SecurityID, Volume, BuyNo, TORA_TSTP_LSD_Buy);
-                ModifyOrderL(SecurityID, Volume, SellNo, TORA_TSTP_LSD_Sell);
-                PostPriceL(SecurityID, Price);
-            } else if (m_version == 2) {
                 ModifyOrderM(SecurityID, Volume, BuyNo, TORA_TSTP_LSD_Buy);
                 ModifyOrderM(SecurityID, Volume, SellNo, TORA_TSTP_LSD_Sell);
                 PostPriceM(SecurityID, Price);
@@ -434,7 +370,12 @@ namespace PROMD {
             for (auto iterOrder = iterVecOrder->Orders.begin(); iterOrder != iterVecOrder->Orders.end();) {
                 if ((*iterOrder)->OrderNo == OrderNo) {
                     if (Volume > 0) {
-                        (*iterOrder)->Volume -= Volume;
+                        if ((*iterOrder)->Volume >= Volume) {
+                            (*iterOrder)->Volume -= Volume;
+                            nb = true;
+                        } else {
+                            Volume -= (*iterOrder)->Volume;
+                        }
                     } else {
                         nb = true;
                     }
@@ -528,156 +469,6 @@ namespace PROMD {
                 auto size = (int) iter->second.begin()->Orders.size();
                 TTORATstpLongVolumeType Volume = 0;
                 for (auto i = 0; i < size; ++i) Volume += iter->second.begin()->Orders.at(i)->Volume;
-                BidPrice1 = iter->second.begin()->Price;
-                BidVolume1 = Volume;
-            }
-        }
-
-        stPostPrice p = {0};
-        strcpy(p.SecurityID, SecurityID);
-        p.BidVolume1 = BidVolume1;
-        p.BidPrice1 = BidPrice1;
-        p.AskPrice1 = AskPrice1;
-        p.AskVolume1 = AskVolume1;
-        p.TradePrice = TradePrice;
-        m_pApp->m_ioc.post(boost::bind(&CApplication::MDPostPrice, m_pApp, p));
-    }
-
-    /******************************List******************************/
-    void MDL2Impl::InsertOrderL(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side) {
-        auto order = m_pool.Malloc<stOrder>(sizeof(stOrder));
-        order->OrderNo = OrderNO;
-        order->Volume = Volume;
-
-        int PriceInt = (int)(Price * 100);
-
-        auto &mapOrder = Side == TORA_TSTP_LSD_Buy ? m_orderBuyL : m_orderSellL;
-        auto iter = mapOrder.find(SecurityID);
-        if (iter == mapOrder.end()) {
-            mapOrder[SecurityID] = std::map<int, std::vector<stOrder*> >();
-        }
-        mapOrder[SecurityID][PriceInt].emplace_back(order);
-    }
-
-    void MDL2Impl::ModifyOrderL(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side) {
-        auto &mapOrder = Side == TORA_TSTP_LSD_Buy ? m_orderBuyL : m_orderSellL;
-        auto iter = mapOrder.find(SecurityID);
-        if (iter == mapOrder.end()) return;
-
-        for (auto iterOrderList = iter->second.begin(); iterOrderList != iter->second.end();) {
-            for (auto order = iterOrderList->second.begin(); order != iterOrderList->second.end();) {
-                if ((*order)->OrderNo == OrderNo) {
-                    if (Volume > 0) (*order)->Volume -= Volume;
-                    if (Volume == 0 || (*order)->Volume <= 0) {
-                        auto tmp = (*order);
-                        order = iterOrderList->second.erase(order);
-                        m_pool.Free<stOrder>(tmp, sizeof(stOrder));
-                    } else {
-                        ++order;
-                    }
-                } else {
-                    ++order;
-                }
-            }
-
-            if (iterOrderList->second.empty()) {
-                iterOrderList = iter->second.erase(iterOrderList);
-            } else {
-                ++iterOrderList;
-            }
-        }
-    }
-
-    void MDL2Impl::ShowOrderBookL(TTORATstpSecurityIDType SecurityID) {
-        if (m_orderBuyL.find(SecurityID) == m_orderBuyL.end() &&
-            m_orderSellL.find(SecurityID) == m_orderSellL.end()) return;
-
-        std::stringstream stream;
-        stream << "--------- " << SecurityID << " " << GetTimeStr() << "---------\n";
-
-        char buffer[512] = {0};
-        {
-            std::vector<std::string> temp;
-            auto iter = m_orderSellL.find(SecurityID);
-            if (iter != m_orderSellL.end()) {
-                int i = 1;
-                for (auto iter1: iter->second) {
-                    memset(buffer, 0, sizeof(buffer));
-                    TTORATstpLongVolumeType totalVolume = 0;
-                    for (auto iter2 : iter1.second) {
-                        totalVolume += iter2->Volume;
-                    }
-                    auto left = totalVolume % 100;
-                    auto cnt = totalVolume / 100;
-                    if (left >= 50) cnt++;
-                    totalVolume = cnt;
-                    sprintf(buffer, "S%d\t%.2f\t\t%lld\t%d\n", i, iter1.first/100.0, totalVolume, (int)iter1.second.size());
-                    temp.emplace_back(buffer);
-                    if (i++ >= 5) break;
-                }
-                for (auto it = temp.rbegin(); it != temp.rend(); ++it) {
-                    stream << (*it);
-                }
-            }
-        }
-
-        {
-            std::vector<std::string> temp;
-            auto iter = m_orderBuyL.find(SecurityID);
-            if (iter != m_orderBuyL.end()) {
-                int i = 1;
-                for (auto iter1: iter->second) {
-                    memset(buffer, 0, sizeof(buffer));
-                    TTORATstpLongVolumeType totalVolume = 0;
-                    for (auto iter2 : iter1.second) {
-                        totalVolume += iter2->Volume;
-                    }
-                    auto left = totalVolume % 100;
-                    auto cnt = totalVolume / 100;
-                    if (left >= 50) cnt++;
-                    totalVolume = cnt;
-                    sprintf(buffer, "B%d\t%.2f\t\t%lld\t%d\n", i, iter1.first/100.0, totalVolume, (int)iter1.second.size());
-                    temp.emplace_back(buffer);
-                    if (i++ >= 5) break;
-                }
-                for (auto it = temp.begin(); it != temp.end(); ++it) {
-                    stream << (*it);
-                }
-            }
-        }
-        printf("%s\n", stream.str().c_str());
-    }
-
-    void MDL2Impl::PostPriceL(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price) {
-        if (!m_pApp || !m_pApp->m_isStrategyOpen) return;
-
-        TTORATstpPriceType BidPrice1 = 0.0;
-        TTORATstpLongVolumeType BidVolume1 = 0;
-        TTORATstpPriceType AskPrice1 = 0.0;
-        TTORATstpLongVolumeType AskVolume1 = 0;
-        TTORATstpPriceType TradePrice = Price;
-
-        {
-            auto iter = m_orderSellV.find(SecurityID);
-            if (iter != m_orderSellV.end() && !iter->second.empty()) {
-                auto size = (int) iter->second.begin()->Orders.size();
-                TTORATstpLongVolumeType Volume = 0;
-                for (auto i = 0; i < size; ++i) {
-                    Volume += iter->second.begin()->Orders.at(i)->Volume;
-                }
-                AskPrice1 = iter->second.begin()->Price;
-                AskVolume1 = Volume;
-            }
-        }
-
-        {
-            auto iter = m_orderBuyV.find(SecurityID);
-            if (iter != m_orderBuyV.end() && !iter->second.empty()) {
-                auto size = (int) iter->second.begin()->Orders.size();
-                TTORATstpLongVolumeType Volume = 0;
-                for (auto i = 0; i < size; ++i) {
-                    Volume += iter->second.begin()->Orders.at(i)->Volume;
-                }
                 BidPrice1 = iter->second.begin()->Price;
                 BidVolume1 = Volume;
             }
@@ -897,38 +688,37 @@ namespace PROMD {
 
     void MDL2Impl::Run() {
         while (!m_stop) {
-            if (m_useQueueVersion == 1) {
-                stNotifyData* data = nullptr;
-                m_data.pop(data);
-                if (data) {
-                    auto start = GetUs();
-                    HandleData(data);
-                    auto duration = GetUs() - start;
-                    if (duration <= 0) duration = 1; // default 1us
-                    m_delQueueCount++;
-                    m_handleTick += duration;
-                    m_pool.Free(data, sizeof(stNotifyData));
-                }
-            } else if (m_useQueueVersion == 2) {
-                std::list<stNotifyData*> dataList;
-                {
-                    std::unique_lock<std::mutex> lock(m_dataMtx);
-                    dataList.swap(m_dataList);
-                    m_dataList.clear();
-                    if (dataList.empty()) continue;
-                }
-
+#if 0
+            stNotifyData* data = nullptr;
+            m_data.pop(data);
+            if (data) {
                 auto start = GetUs();
-                for (auto iter = dataList.begin(); iter != dataList.end(); ++iter) {
-                    auto data = *iter;
-                    HandleData(data);
-                    m_delQueueCount++;
-                    m_pool.Free(data, sizeof(stNotifyData));
-                }
+                HandleData(data);
                 auto duration = GetUs() - start;
                 if (duration <= 0) duration = 1; // default 1us
+                m_delQueueCount++;
                 m_handleTick += duration;
+                m_pool.Free(data, sizeof(stNotifyData));
             }
+#endif
+            std::list<stNotifyData *> dataList;
+            {
+                std::unique_lock<std::mutex> lock(m_dataMtx);
+                dataList.swap(m_dataList);
+                m_dataList.clear();
+            }
+
+            if (dataList.empty()) continue;
+            auto start = GetUs();
+            for (auto iter = dataList.begin(); iter != dataList.end(); ++iter) {
+                auto data = *iter;
+                HandleData(data);
+                m_delQueueCount++;
+                m_pool.Free(data, sizeof(stNotifyData));
+            }
+            auto duration = GetUs() - start;
+            if (duration <= 0) duration = 1; // default 1us
+            m_handleTick += duration;
         }
     }
 

@@ -7,7 +7,7 @@
 
 int main() {
     std::string cfgfile = "daban.ini";
-    int version = 2, useQueueVersion = 0;
+    int version = 2;
     bool istest = true, isstrategyopen = false;
     std::string dbfile = "database.db";
     std::string shcpucore = "", szcpucore = "", currentexchangeid = "";
@@ -19,7 +19,6 @@ int main() {
             ("daban.version", boost::program_options::value<int>(&version), "daban.version")
             ("daban.istest", boost::program_options::value<bool>(&istest), "daban.istest")
             ("daban.isstrategyopen", boost::program_options::value<bool>(&isstrategyopen), "daban.isstrategyopen")
-            ("daban.usequeueversion", boost::program_options::value<int>(&useQueueVersion), "daban.usequeueversion")
             ("daban.currentexchangeid", boost::program_options::value<std::string>(&currentexchangeid), "daban.currentexchangeid")
             ("daban.dbfile", boost::program_options::value<std::string>(&dbfile), "daban.dbfile")
             ("daban.tdaddr", boost::program_options::value<std::string>(&tdaddr), "daban.tdaddr")
@@ -60,7 +59,6 @@ int main() {
     CApplication app(io_context);
     app.m_version = version;
     app.m_isTest = istest;
-    app.m_isUseQueue = useQueueVersion;
     app.m_isStrategyOpen = isstrategyopen;
     app.m_dbFile = dbfile;
     app.m_TDAddr = tdaddr;

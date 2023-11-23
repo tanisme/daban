@@ -38,7 +38,6 @@ public:
 public:
     int m_version = 1;
     bool m_isTest = true;
-    int m_isUseQueue = 0;
     bool m_isStrategyOpen = false;
     std::string m_dbFile;
     std::string m_TDAddr = "tcp://210.14.72.21:4400";

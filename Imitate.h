@@ -17,12 +17,12 @@ namespace test {
 
     private:
         int SplitSecurityFile(std::string srcDataDir, bool isOrder);
-        void SplitSecurityFileOrderQuot(std::string &dstDataDir, TTORATstpSecurityIDType SecurityID);
-        void SplitSecurityFileTradeQuot(std::string &dstDataDir, TTORATstpSecurityIDType SecurityID);
-        void LDParseSecurityFile(TTORATstpSecurityIDType CalSecurityID);
+        int SplitSecurityFileOrderQuot(std::string &dstDataDir, TTORATstpSecurityIDType SecurityID);
+        int SplitSecurityFileTradeQuot(std::string &dstDataDir, TTORATstpSecurityIDType SecurityID);
 
     private:
         int m_version = 2;
+        std::list<stNotifyData*> m_dataList;
         PROMD::MDL2Impl* m_md = nullptr;
         std::unordered_map<std::string, bool> m_watchSecurity;
         std::unordered_map<std::string, FILE*> m_watchOrderFILE;

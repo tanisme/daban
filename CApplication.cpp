@@ -166,12 +166,12 @@ void CApplication::TDOnInited() {
     auto iterSH = m_supportExchangeID.find(PROMD::TORA_TSTP_EXD_SSE);
     if (iterSH != m_supportExchangeID.end() && !m_shMD) {
         m_shMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SSE);
-        m_shMD->Start(m_isTest, m_version, m_isUseQueue);
+        m_shMD->Start(m_isTest, m_version);
     }
     auto iterSZ = m_supportExchangeID.find(PROMD::TORA_TSTP_EXD_SZSE);
     if (iterSZ != m_supportExchangeID.end() && !m_szMD) {
         m_szMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SZSE);
-        m_szMD->Start(m_isTest, m_version, m_isUseQueue);
+        m_szMD->Start(m_isTest, m_version);
     }
 }
 

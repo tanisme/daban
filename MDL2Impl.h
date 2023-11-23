@@ -16,15 +16,13 @@ namespace PROMD {
         explicit MDL2Impl(CApplication *pApp, TTORATstpExchangeIDType ExchangeID);
         ~MDL2Impl();
 
-        bool Start(bool isTest, int version, int useQueueVersion);
+        bool Start(bool isTest, int version);
         int ReqMarketData(TTORATstpSecurityIDType SecurityID, TTORATstpExchangeIDType ExchangeID, int type, bool isSub = true);
         void ShowOrderBookV(TTORATstpSecurityIDType SecurityID);
-        void ShowOrderBookL(TTORATstpSecurityIDType SecurityID);
         void ShowOrderBookM(TTORATstpSecurityIDType SecurityID);
         void ShowHandleSpeed();
         static const char *GetExchangeName(TTORATstpExchangeIDType ExchangeID);
         void SetVersion(int val) { m_version = val; }
-        void SetUseQueueVersion(int val) { m_useQueueVersion = val;}
 
         bool IsInited() const { return m_isInited; }
         CTORATstpLev2MdApi *GetApi() const { return m_pApi; }
@@ -52,10 +50,6 @@ namespace PROMD {
         void InsertOrderV(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side);
         void ModifyOrderV(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side);
         void PostPriceV(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price);
-        // list
-        void InsertOrderL(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side);
-        void ModifyOrderL(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side);
-        void PostPriceL(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price);
         // map
         void InsertOrderM(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side);
         void ModifyOrderM(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side);
@@ -66,7 +60,6 @@ namespace PROMD {
 
     private:
         int m_version = 1;
-        int m_useQueueVersion = 0;
         int m_reqID = 1;
         bool m_isInited = false;
         CTORATstpLev2MdApi *m_pApi = nullptr;
