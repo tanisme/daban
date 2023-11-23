@@ -37,13 +37,10 @@ struct stPriceOrders {
 };
 typedef std::unordered_map<std::string, std::vector<stPriceOrders> > MapOrderV;
 
-// list
-typedef std::unordered_map<std::string, std::map<int, std::vector<stOrder*>> > MapOrderL;
-
 // map
 struct stPriceOrdersMap {
     TORALEV2API::TTORATstpPriceType Price;
-    std::unordered_map<TORALEV2API::TTORATstpLongSequenceType, std::list<stOrder*>> Orders;
+    std::unordered_map<TORALEV2API::TTORATstpLongSequenceType, stOrder*> Orders;
 };
 typedef std::unordered_map<std::string, std::list<stPriceOrdersMap> > MapOrderM;
 

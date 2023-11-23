@@ -173,6 +173,16 @@ namespace PROMD {
         data->ExchangeID = pOrderDetail->ExchangeID;
         data->OrderStatus = pOrderDetail->OrderStatus;
         m_addQueueCount++;
+        //if (m_seq.find(pOrderDetail->MainSeq) == m_seq.end()) {
+        //    m_seq[pOrderDetail->MainSeq] = pOrderDetail->SubSeq;
+        //} else {
+        //    auto subseq = m_seq[pOrderDetail->MainSeq] + 1;
+        //    if (subseq != pOrderDetail->SubSeq) {
+        //        printf("丢单了 %d\n", subseq);
+        //        m_seq[pOrderDetail->MainSeq] = pOrderDetail->SubSeq;
+        //    }
+        //}
+        //printf("OnRtnOrderDetail %s MainSeq:%d SubSeq:%d\n",pOrderDetail->SecurityID, pOrderDetail->MainSeq, pOrderDetail->SubSeq);
         //m_data.push(data);
         std::unique_lock<std::mutex> lock(m_dataMtx);
         m_dataList.push_back(data);
@@ -190,6 +200,7 @@ namespace PROMD {
         data->BuyNo = pTransaction->BuyNo;
         data->SellNo = pTransaction->SellNo;
         m_addQueueCount++;
+        //printf("OnRtnTransaction SubSeq:%lld %s\n", pTransaction->SubSeq, pTransaction->SecurityID);
         //m_data.push(data);
         std::unique_lock<std::mutex> lock(m_dataMtx);
         m_dataList.push_back(data);
@@ -207,6 +218,7 @@ namespace PROMD {
         data->BuyNo = pTick->BuyNo;
         data->SellNo = pTick->SellNo;
         m_addQueueCount++;
+        //printf("OnRtnNGTSTick SubSeq:%lld %s\n", pTick->SubSeq, pTick->SecurityID);
         //m_data.push(data);
         std::unique_lock<std::mutex> lock(m_dataMtx);
         m_dataList.push_back(data);
@@ -499,36 +511,28 @@ namespace PROMD {
             for (auto iterOrderList = iter->second.begin(); iterOrderList != iter->second.end(); ++iterOrderList) {
                 auto curPrice = iterOrderList->Price;
                 if (Side == TORA_TSTP_LSD_Buy) {
-                    if (Price > curPrice) {
+                    if (Price > curPrice + 0.000001) {
                         stPriceOrdersMap priceOrder = {0};
-                        priceOrder.Orders[OrderNO] = std::list<stOrder*>();
-                        priceOrder.Orders[OrderNO].push_back(order);
                         priceOrder.Price = Price;
+                        priceOrder.Orders[OrderNO] = order;
                         iter->second.insert(iterOrderList, priceOrder);
                         added = true;
                         break;
-                    } else if (Price == curPrice) {
-                        if (iterOrderList->Orders.find(OrderNO) == iterOrderList->Orders.end()) {
-                            iterOrderList->Orders[OrderNO] = std::list<stOrder*>();
-                        }
-                        iterOrderList->Orders[OrderNO].emplace_back(order);
+                    } else if (Price > curPrice - 0.000001) {
+                        iterOrderList->Orders[OrderNO] = order;
                         added = true;
                         break;
                     }
                 } else if (Side == TORA_TSTP_LSD_Sell) {
                     if (Price < curPrice) {
                         stPriceOrdersMap priceOrder = {0};
-                        priceOrder.Orders[OrderNO] = std::list<stOrder*>();
-                        priceOrder.Orders[OrderNO].push_back(order);
                         priceOrder.Price = Price;
+                        priceOrder.Orders[OrderNO] = order;
                         iter->second.insert(iterOrderList, priceOrder);
                         added = true;
                         break;
                     } else if (Price == curPrice) {
-                        if (iterOrderList->Orders.find(OrderNO) == iterOrderList->Orders.end()) {
-                            iterOrderList->Orders[OrderNO] = std::list<stOrder*>();
-                        }
-                        iterOrderList->Orders[OrderNO].emplace_back(order);
+                        iterOrderList->Orders[OrderNO] = order;
                         added = true;
                         break;
                     }
@@ -537,9 +541,8 @@ namespace PROMD {
         }
         if (!added) {
             stPriceOrdersMap priceOrder = {0};
-            priceOrder.Orders[OrderNO] = std::list<stOrder*>();
-            priceOrder.Orders[OrderNO].push_back(order);
             priceOrder.Price = Price;
+            priceOrder.Orders[OrderNO] = order;
             iter->second.emplace_back(priceOrder);
         }
     }
@@ -550,29 +553,22 @@ namespace PROMD {
         if (iter == mapOrder.end()) return;
 
         for (auto iterOrderList = iter->second.begin(); iterOrderList != iter->second.end();) {
-            auto nb = false;
             if (iterOrderList->Orders.find(OrderNo) != iterOrderList->Orders.end()) {
-                for (auto order = iterOrderList->Orders[OrderNo].begin(); order != iterOrderList->Orders[OrderNo].end();) {
-                    if (Volume > 0) (*order)->Volume -= Volume;
-                    if (Volume == 0 || (*order)->Volume <= 0) {
-                        auto tmp = (*order);
-                        order = iterOrderList->Orders[OrderNo].erase(order);
-                        m_pool.Free<stOrder>(tmp, sizeof(stOrder));
-                    } else {
-                        ++order;
-                    }
+                if (Volume > 0) {
+                    iterOrderList->Orders[OrderNo]->Volume -= Volume;
                 }
-                if (iterOrderList->Orders[OrderNo].empty()) {
+                if (Volume == 0 || iterOrderList->Orders[OrderNo]->Volume <= 0) {
+                    auto tmp = iterOrderList->Orders[OrderNo];
                     iterOrderList->Orders.erase(OrderNo);
+                    m_pool.Free<stOrder>(tmp, sizeof(stOrder));
                 }
-                nb = true;
-            }
-            if (iterOrderList->Orders.empty()) {
-                iterOrderList = iter->second.erase(iterOrderList);
+                if (iterOrderList->Orders.empty()) {
+                    iterOrderList = iter->second.erase(iterOrderList);
+                }
+                break;
             } else {
                 ++iterOrderList;
             }
-            if (nb) break;
         }
     }
 
@@ -596,10 +592,8 @@ namespace PROMD {
                     memset(buffer, 0, sizeof(buffer));
                     TTORATstpLongVolumeType totalVolume = 0;
                     for (auto iter2 : iter1.Orders) {
-                        for (auto iter3 : iter2.second) {
-                            totalVolume += iter3->Volume;
-                            cnt++;
-                        }
+                        totalVolume += iter2.second->Volume;
+                        cnt++;
                     }
                     sprintf(buffer, "S%d\t%.3f\t\t%lld\t%d\n", i, iter1.Price, totalVolume, cnt);
                     temp.emplace_back(buffer);
@@ -623,10 +617,8 @@ namespace PROMD {
                     memset(buffer, 0, sizeof(buffer));
                     TTORATstpLongVolumeType totalVolume = 0;
                     for (auto iter2 : iter1.Orders) {
-                        for (auto iter3 : iter2.second) {
-                            totalVolume += iter3->Volume;
-                            cnt++;
-                        }
+                        totalVolume += iter2.second->Volume;
+                        cnt++;
                     }
                     sprintf(buffer, "B%d\t%.3f\t\t%lld\t%d\n", i, iter1.Price, totalVolume, cnt);
                     temp.emplace_back(buffer);

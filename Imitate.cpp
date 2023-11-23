@@ -76,13 +76,11 @@ namespace test {
         }
         ifs.close();
         printf("生成%s订单簿 处理完成所有成交 共%d条\n", SecurityID, i);
-        //if (m_version == 0) {
-        //    m_md->ShowOrderBookV(SecurityID);
-        //} else if (m_version == 1) {
-        //    m_md->ShowOrderBookL(SecurityID);
-        //} else if (m_version == 2) {
-        //    m_md->ShowOrderBookM(SecurityID);
-        //}
+        if (m_version == 0) {
+            m_md->ShowOrderBookV(SecurityID);
+        } else if (m_version == 1) {
+            m_md->ShowOrderBookM(SecurityID);
+        }
         return i;
     }
 
@@ -140,7 +138,7 @@ namespace test {
 
     bool Imitate::TestOrderBook(std::string& srcDataDir, std::string& watchsecurity, bool createfile) {
         m_md = new PROMD::MDL2Impl(nullptr, PROMD::TORA_TSTP_EXD_COMM);
-        m_md->SetVersion(0);
+        m_md->SetVersion(1);
 
         trim(watchsecurity);
         if (watchsecurity.length() <= 0) {

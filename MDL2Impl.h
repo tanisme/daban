@@ -67,8 +67,6 @@ namespace PROMD {
         TTORATstpExchangeIDType m_exchangeID;
         MapOrderV m_orderBuyV;
         MapOrderV m_orderSellV;
-        MapOrderL m_orderBuyL;
-        MapOrderL m_orderSellL;
         MapOrderM m_orderBuyM;
         MapOrderM m_orderSellM;
 
@@ -76,8 +74,9 @@ namespace PROMD {
         boost::lockfree::spsc_queue<stNotifyData*, boost::lockfree::capacity<1024>> m_data;
         std::list<stNotifyData*> m_dataList;
         std::mutex m_dataMtx;
-        std::thread* m_pthread;
+        std::thread* m_pthread = nullptr;
 
+        std::unordered_map<int, int> m_seq;
         MemoryPool m_pool;
         long long int m_addQueueCount = 0;
         long long int m_delQueueCount = 0;
