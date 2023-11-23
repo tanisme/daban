@@ -69,10 +69,9 @@ namespace PROMD {
     }
 
     void MDL2Impl::ShowHandleSpeed() {
-        long long int cnt = 0;
-        if (cnt <= 0) cnt = 1;
-        printf("%s %s add:%-9lld handle:%-9lld us:%-9lld perus:%.6f %-9ld ver:%d\n", GetTimeStr().c_str(), GetExchangeName(m_exchangeID),
-               m_addQueueCount, m_delQueueCount, m_handleTick, (1.0*m_handleTick) / cnt, m_pool.GetTotalCnt(), m_version);
+        if (m_delQueueCount <= 0) return;
+        printf("%s %s add:%-9lld del:%-9lld us:%-9lld perus:%.6f %-9ld ver:%d\n", GetTimeStr().c_str(), GetExchangeName(m_exchangeID),
+               m_addQueueCount, m_delQueueCount, m_handleTick, (1.0*m_handleTick) / m_delQueueCount, m_pool.GetTotalCnt(), m_version);
     }
 
     const char *MDL2Impl::GetExchangeName(TTORATstpExchangeIDType ExchangeID) {
@@ -708,16 +707,17 @@ namespace PROMD {
                 m_dataList.clear();
             }
 
-            if (dataList.empty()) continue;
+            auto size = (long long int)dataList.size();
+            if (size <= 0) continue;
             auto start = GetUs();
             for (auto iter = dataList.begin(); iter != dataList.end(); ++iter) {
                 auto data = *iter;
                 HandleData(data);
-                m_delQueueCount++;
                 m_pool.Free(data, sizeof(stNotifyData));
             }
             auto duration = GetUs() - start;
             if (duration <= 0) duration = 1; // default 1us
+            m_delQueueCount += size;
             m_handleTick += duration;
         }
     }
