@@ -108,12 +108,7 @@ void CApplication::MDOnInited(PROMD::TTORATstpExchangeIDType exchangeID) {
             PROMD::TTORATstpSecurityIDType Security = {0};
             strncpy(Security, iter.first.c_str(), sizeof(Security));
             if (iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
-                if (m_isSHMDNewVersion) {
-                    m_shMD->ReqMarketData(Security, iter.second->ExchangeID, 3);
-                } else {
-                    m_shMD->ReqMarketData(Security, iter.second->ExchangeID, 1);
-                    m_shMD->ReqMarketData(Security, iter.second->ExchangeID, 2);
-                }
+                m_shMD->ReqMarketData(Security, iter.second->ExchangeID, 3);
             } else if (iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
                 m_szMD->ReqMarketData(Security, iter.second->ExchangeID, 1);
                 m_szMD->ReqMarketData(Security, iter.second->ExchangeID, 2);

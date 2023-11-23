@@ -87,14 +87,14 @@ namespace test {
             i++;
         }
         ifs.close();
-        printf("生成%s订单簿 处理完成所有成交 共%lld条\n", SecurityID, i);
-        if (m_version == 0) {
-            m_md->ShowOrderBookV(SecurityID);
-        } else if (m_version == 1) {
-            m_md->ShowOrderBookL(SecurityID);
-        } else if (m_version == 2) {
-            m_md->ShowOrderBookM(SecurityID);
-        }
+        //printf("生成%s订单簿 处理完成所有成交 共%lld条\n", SecurityID, i);
+        //if (m_version == 0) {
+        //    m_md->ShowOrderBookV(SecurityID);
+        //} else if (m_version == 1) {
+        //    m_md->ShowOrderBookL(SecurityID);
+        //} else if (m_version == 2) {
+        //    m_md->ShowOrderBookM(SecurityID);
+        //}
     }
 
     int Imitate::SplitSecurityFile(std::string srcDataDir, bool isOrder) {
@@ -228,6 +228,7 @@ namespace test {
     bool Imitate::TestOrderBook(std::string& srcDataDir, std::string& watchsecurity, bool createfile) {
         m_md = new PROMD::MDL2Impl(nullptr, PROMD::TORA_TSTP_EXD_COMM);
         m_md->SetVersion(2);
+        m_md->SetUseQueueVersion(2);
 
         trim(watchsecurity);
         if (watchsecurity.length() <= 0) {

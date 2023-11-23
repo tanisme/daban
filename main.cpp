@@ -8,7 +8,7 @@
 int main() {
     std::string cfgfile = "daban.ini";
     int version = 2, useQueueVersion = 0;
-    bool istest = true, isstrategyopen = false, isshmdnewversion = true;
+    bool istest = true, isstrategyopen = false;
     std::string dbfile = "database.db";
     std::string shcpucore = "", szcpucore = "", currentexchangeid = "";
     std::string testshmdaddr = "", testszmdaddr = "", shmdaddr = "", shmdinterface = "", szmdaddr = "", szmdinterface = "";
@@ -20,7 +20,6 @@ int main() {
             ("daban.istest", boost::program_options::value<bool>(&istest), "daban.istest")
             ("daban.isstrategyopen", boost::program_options::value<bool>(&isstrategyopen), "daban.isstrategyopen")
             ("daban.usequeueversion", boost::program_options::value<int>(&useQueueVersion), "daban.usequeueversion")
-            ("daban.isshmdnewversion", boost::program_options::value<bool>(&isshmdnewversion), "daban.isshmdnewversion")
             ("daban.currentexchangeid", boost::program_options::value<std::string>(&currentexchangeid), "daban.currentexchangeid")
             ("daban.dbfile", boost::program_options::value<std::string>(&dbfile), "daban.dbfile")
             ("daban.tdaddr", boost::program_options::value<std::string>(&tdaddr), "daban.tdaddr")
@@ -63,7 +62,6 @@ int main() {
     app.m_isTest = istest;
     app.m_isUseQueue = useQueueVersion;
     app.m_isStrategyOpen = isstrategyopen;
-    app.m_isSHMDNewVersion = isshmdnewversion;
     app.m_dbFile = dbfile;
     app.m_TDAddr = tdaddr;
     app.m_TDAccount = tdaccount;

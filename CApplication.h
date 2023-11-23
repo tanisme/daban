@@ -40,7 +40,6 @@ public:
     bool m_isTest = true;
     int m_isUseQueue = 0;
     bool m_isStrategyOpen = false;
-    bool m_isSHMDNewVersion = true;
     std::string m_dbFile;
     std::string m_TDAddr = "tcp://210.14.72.21:4400";
     std::string m_TDAccount = "00030557";
@@ -62,9 +61,9 @@ public:
     std::unordered_map<std::string, std::vector<stStrategy*> > m_strategys;
 
 private:
+    PROTD::TDImpl *m_TD = nullptr;
     PROMD::MDL2Impl *m_shMD = nullptr;
     PROMD::MDL2Impl *m_szMD = nullptr;
-    PROTD::TDImpl *m_TD = nullptr;
     SQLite3::ptr m_db = nullptr;
 };
 

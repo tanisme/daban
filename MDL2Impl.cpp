@@ -76,8 +76,8 @@ namespace PROMD {
         if (m_useQueueVersion == 0) cnt = m_addQueueCount;
         if (m_useQueueVersion == 1 || m_useQueueVersion == 2) cnt = m_delQueueCount;
         if (cnt <= 0) cnt = 1;
-        printf("%s %s add:%-9lld handle:%-9lld us:%-9lld perus:%.6f %-9ld ver:%d\n", GetTimeStr().c_str(), GetExchangeName(m_exchangeID),
-               m_addQueueCount, m_delQueueCount, m_handleTick, (1.0*m_handleTick) / cnt, m_pool.GetTotalCnt(), m_version);
+        printf("%s %s add:%-9lld handle:%-9lld us:%-9lld perus:%.6f %-9ld ver:%d qver:%d\n", GetTimeStr().c_str(), GetExchangeName(m_exchangeID),
+               m_addQueueCount, m_delQueueCount, m_handleTick, (1.0*m_handleTick) / cnt, m_pool.GetTotalCnt(), m_version, m_useQueueVersion);
     }
 
     const char *MDL2Impl::GetExchangeName(TTORATstpExchangeIDType ExchangeID) {
@@ -169,13 +169,13 @@ namespace PROMD {
 
     void MDL2Impl::OnRtnOrderDetail(CTORATstpLev2OrderDetailField *pOrderDetail) {
         if (!pOrderDetail) return;
-        if (m_useQueueVersion <= 0) {
+        if (m_useQueueVersion == 0) {
             auto start = GetUs();
             OrderDetail(pOrderDetail->SecurityID, pOrderDetail->Side, pOrderDetail->OrderNO, pOrderDetail->Price, pOrderDetail->Volume, pOrderDetail->ExchangeID, pOrderDetail->OrderStatus);
             auto duration = GetUs() - start;
             if (duration <= 0) duration = 1; // default 1us
             m_handleTick += duration;
-        } else {
+        } else if (m_useQueueVersion > 0){
             auto data = m_pool.Malloc<stNotifyData>(sizeof(stNotifyData));
             data->type = 1;
             strcpy(data->SecurityID, pOrderDetail->SecurityID);
@@ -197,13 +197,13 @@ namespace PROMD {
 
     void MDL2Impl::OnRtnTransaction(CTORATstpLev2TransactionField *pTransaction) {
         if (!pTransaction) return;
-        if (m_useQueueVersion <= 0) {
+        if (m_useQueueVersion == 0) {
             auto start = GetUs();
             Transaction(pTransaction->SecurityID, pTransaction->ExchangeID, pTransaction->TradeVolume, pTransaction->ExecType, pTransaction->BuyNo, pTransaction->SellNo, pTransaction->TradePrice, pTransaction->TradeTime);
             auto duration = GetUs() - start;
             if (duration <= 0) duration = 1;
             m_handleTick += duration;
-        } else {
+        } else if (m_useQueueVersion > 0){
             auto data = m_pool.Malloc<stNotifyData>(sizeof(stNotifyData));
             data->type = 2;
             strcpy(data->SecurityID, pTransaction->SecurityID);
@@ -225,13 +225,13 @@ namespace PROMD {
 
     void MDL2Impl::OnRtnNGTSTick(CTORATstpLev2NGTSTickField *pTick) {
         if (!pTick) return;
-        if (m_useQueueVersion <= 0) {
+        if (m_useQueueVersion == 0) {
             auto start = GetUs();
             NGTSTick(pTick->SecurityID, pTick->TickType, pTick->BuyNo, pTick->SellNo, pTick->Price, pTick->Volume, pTick->Side, pTick->TickTime);
             auto duration = GetUs() - start;
             if (duration <= 0) duration = 1;
             m_handleTick += duration;
-        } else {
+        } else if (m_useQueueVersion > 0){
             auto data = m_pool.Malloc<stNotifyData>(sizeof(stNotifyData));
             data->type = 3;
             strcpy(data->SecurityID, pTick->SecurityID);
