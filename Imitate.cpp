@@ -76,9 +76,9 @@ namespace test {
         }
         ifs.close();
         printf("生成%s订单簿 处理完成所有成交 共%d条\n", SecurityID, i);
-        if (m_version == 0) {
+        if (m_md->GetUseVec()) {
             m_md->ShowOrderBookV(SecurityID);
-        } else if (m_version == 1) {
+        } else {
             m_md->ShowOrderBookM(SecurityID);
         }
         return i;

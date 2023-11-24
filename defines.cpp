@@ -20,8 +20,8 @@ std::string GetTimeStr() {
     auto t = time(nullptr);
     auto* now = localtime(&t);
     char time[32] = {0};
-    sprintf(time, "%04d-%02d-%02d %02d:%02d:%02d", now->tm_year+1900, now->tm_mon+1,
-            now->tm_mday, now->tm_hour, now->tm_min, now->tm_sec);
+    //sprintf(time, "%04d-%02d-%02d %02d:%02d:%02d", now->tm_year+1900, now->tm_mon+1, now->tm_mday, now->tm_hour, now->tm_min, now->tm_sec);
+    sprintf(time, "%02d:%02d:%02d", now->tm_hour, now->tm_min, now->tm_sec);
     return std::string(time);
 }
 

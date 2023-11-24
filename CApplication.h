@@ -36,7 +36,7 @@ public:
     bool ModStrategy(stStrategy* strategy);
 
 public:
-    int m_version = 1;
+    bool m_useVec = true;
     bool m_isTest = true;
     bool m_isStrategyOpen = false;
     std::string m_dbFile;

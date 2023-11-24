@@ -70,16 +70,16 @@ void CApplication::OnTime(const boost::system::error_code& error) {
 
     for (auto& iter : m_watchSecurity) {
         if (m_shMD && iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
-            if (m_version == 0) {
+            if (m_useVec) {
                 m_shMD->ShowOrderBookV((char*)iter.first.c_str());
-            } else if (m_version == 1) {
+            } else {
                 m_shMD->ShowOrderBookM((char*)iter.first.c_str());
             }
         }
         if (m_szMD && iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
-            if (m_version == 0) {
+            if (m_useVec) {
                 m_szMD->ShowOrderBookV((char*)iter.first.c_str());
-            } else if (m_version == 1) {
+            } else {
                 m_szMD->ShowOrderBookM((char*)iter.first.c_str());
             }
         }
@@ -162,12 +162,12 @@ void CApplication::TDOnInited() {
     auto iterSH = m_supportExchangeID.find(PROMD::TORA_TSTP_EXD_SSE);
     if (iterSH != m_supportExchangeID.end() && !m_shMD) {
         m_shMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SSE);
-        m_shMD->Start(m_isTest, m_version);
+        m_shMD->Start(m_isTest, m_useVec);
     }
     auto iterSZ = m_supportExchangeID.find(PROMD::TORA_TSTP_EXD_SZSE);
     if (iterSZ != m_supportExchangeID.end() && !m_szMD) {
         m_szMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SZSE);
-        m_szMD->Start(m_isTest, m_version);
+        m_szMD->Start(m_isTest, m_useVec);
     }
 }
 

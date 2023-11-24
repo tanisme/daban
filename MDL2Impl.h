@@ -22,6 +22,7 @@ namespace PROMD {
         void ShowOrderBookM(TTORATstpSecurityIDType SecurityID);
         void ShowHandleSpeed();
         static const char *GetExchangeName(TTORATstpExchangeIDType ExchangeID);
+        bool GetUseVec() const { return m_useVec; }
         void SetUseVec(bool val) { m_useVec = val; }
 
         bool IsInited() const { return m_isInited; }

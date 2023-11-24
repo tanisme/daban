@@ -7,8 +7,7 @@
 
 int main() {
     std::string cfgfile = "daban.ini";
-    int version = 2;
-    bool istest = true, isstrategyopen = false;
+    bool istest = true, isstrategyopen = false, isusevec = true;
     std::string dbfile = "database.db";
     std::string shcpucore = "", szcpucore = "", currentexchangeid = "";
     std::string testshmdaddr = "", testszmdaddr = "", shmdaddr = "", shmdinterface = "", szmdaddr = "", szmdinterface = "";
@@ -16,7 +15,7 @@ int main() {
     std::string srcdatapath = "", watchsecurity = "";
     boost::program_options::options_description cfgdesc("Config file options");
     cfgdesc.add_options()
-            ("daban.version", boost::program_options::value<int>(&version), "daban.version")
+            ("daban.isusevec", boost::program_options::value<bool>(&isusevec), "daban.isusevec")
             ("daban.istest", boost::program_options::value<bool>(&istest), "daban.istest")
             ("daban.isstrategyopen", boost::program_options::value<bool>(&isstrategyopen), "daban.isstrategyopen")
             ("daban.currentexchangeid", boost::program_options::value<std::string>(&currentexchangeid), "daban.currentexchangeid")
@@ -57,7 +56,7 @@ int main() {
 
     boost::asio::io_context io_context;
     CApplication app(io_context);
-    app.m_version = version;
+    app.m_useVec = isusevec;
     app.m_isTest = istest;
     app.m_isStrategyOpen = isstrategyopen;
     app.m_dbFile = dbfile;
