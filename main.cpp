@@ -7,7 +7,7 @@
 
 int main() {
     std::string cfgfile = "daban.ini";
-    bool istest = true, isstrategyopen = false, isusevec = true;
+    bool istest = true, isstrategyopen = false, isusevec = true, issubwatch = false;
     std::string dbfile = "database.db";
     std::string shcpucore = "", szcpucore = "", currentexchangeid = "";
     std::string testshmdaddr = "", testszmdaddr = "", shmdaddr = "", shmdinterface = "", szmdaddr = "", szmdinterface = "";
@@ -18,6 +18,7 @@ int main() {
             ("daban.isusevec", boost::program_options::value<bool>(&isusevec), "daban.isusevec")
             ("daban.istest", boost::program_options::value<bool>(&istest), "daban.istest")
             ("daban.isstrategyopen", boost::program_options::value<bool>(&isstrategyopen), "daban.isstrategyopen")
+            ("daban.issubwatch", boost::program_options::value<bool>(&issubwatch), "daban.issubwatch")
             ("daban.currentexchangeid", boost::program_options::value<std::string>(&currentexchangeid), "daban.currentexchangeid")
             ("daban.dbfile", boost::program_options::value<std::string>(&dbfile), "daban.dbfile")
             ("daban.tdaddr", boost::program_options::value<std::string>(&tdaddr), "daban.tdaddr")
@@ -59,6 +60,7 @@ int main() {
     app.m_useVec = isusevec;
     app.m_isTest = istest;
     app.m_isStrategyOpen = isstrategyopen;
+    app.m_isSubWatch = issubwatch;
     app.m_dbFile = dbfile;
     app.m_TDAddr = tdaddr;
     app.m_TDAccount = tdaccount;

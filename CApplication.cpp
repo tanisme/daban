@@ -95,7 +95,9 @@ void CApplication::OnTime(const boost::system::error_code& error) {
 /***************************************MD***************************************/
 void CApplication::MDOnInited(PROMD::TTORATstpExchangeIDType exchangeID) {
     auto cnt = 0;
-    for (auto &iter: m_TD->m_marketSecurity) {
+    std::unordered_map<std::string, stSecurity*>& sub = m_TD->m_marketSecurity;
+    if (m_isSubWatch) { sub = m_watchSecurity; }
+    for (auto &iter: sub) {
         if (exchangeID == iter.second->ExchangeID &&
             (iter.second->SecurityType == PROTD::TORA_TSTP_STP_SHAShares ||
              //iter.second->SecurityType == PROTD::TORA_TSTP_STP_SHKC ||
