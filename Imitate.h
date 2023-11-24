@@ -13,7 +13,7 @@ namespace test {
         Imitate() = default;
         ~Imitate() = default;
 
-        bool TestOrderBook(std::string& srcDataDir, std::string& watchsecurity, bool createfile = false);
+        bool TestOrderBook(std::string& srcDataDir, std::string& watchsecurity, bool createfile = false, bool isusevec = true);
 
     private:
         int SplitSecurityFile(std::string srcDataDir, bool isOrder);

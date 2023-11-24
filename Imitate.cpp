@@ -136,9 +136,9 @@ namespace test {
         return cnt;
     }
 
-    bool Imitate::TestOrderBook(std::string& srcDataDir, std::string& watchsecurity, bool createfile) {
+    bool Imitate::TestOrderBook(std::string& srcDataDir, std::string& watchsecurity, bool createfile, bool isusevec) {
         m_md = new PROMD::MDL2Impl(nullptr, PROMD::TORA_TSTP_EXD_COMM);
-        m_md->SetUseVec(true);
+        m_md->SetUseVec(isusevec);
 
         trim(watchsecurity);
         if (watchsecurity.length() <= 0) {

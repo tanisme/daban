@@ -7,7 +7,7 @@
 
 int main() {
     std::string cfgfile = "daban.ini";
-    bool istest = true, isstrategyopen = false, isusevec = true, issubwatch = false;
+    bool istest = true, isstrategyopen = false, isusevec = true, issubwatch = false, createfile = false;
     std::string dbfile = "database.db";
     std::string shcpucore = "", szcpucore = "", currentexchangeid = "";
     std::string testshmdaddr = "", testszmdaddr = "", shmdaddr = "", shmdinterface = "", szmdaddr = "", szmdinterface = "";
@@ -33,6 +33,7 @@ int main() {
             ("shipan.shmdinterface", boost::program_options::value<std::string>(&shmdinterface), "shipan.shmdinterface")
             ("shipan.szmdaddr", boost::program_options::value<std::string>(&szmdaddr), "shipan.szmdaddr")
             ("shipan.szmdinterface", boost::program_options::value<std::string>(&szmdinterface), "shipan.szmdinterface")
+            ("csvfile.createfile", boost::program_options::value<bool>(&createfile), "csvfile.createfile")
             ("csvfile.srcdatapath", boost::program_options::value<std::string>(&srcdatapath), "csvfile.srcdatapath");
     boost::program_options::variables_map vm;
 
@@ -50,7 +51,7 @@ int main() {
     if (srcdatapath.length() > 0) {
         printf("-------------------该程序功能为生成订单簿-------------------\n");
         test::Imitate imitate;
-        imitate.TestOrderBook(srcdatapath, watchsecurity, false);
+        imitate.TestOrderBook(srcdatapath, watchsecurity, createfile, isusevec);
         printf("-------------------生成所有合约订单簿完成-------------------\n");
         return 0;
     }
