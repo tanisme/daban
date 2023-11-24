@@ -16,13 +16,13 @@ namespace PROMD {
         explicit MDL2Impl(CApplication *pApp, TTORATstpExchangeIDType ExchangeID);
         ~MDL2Impl();
 
-        bool Start(bool isTest, int version);
+        bool Start(bool isTest, bool useVec);
         int ReqMarketData(TTORATstpSecurityIDType SecurityID, TTORATstpExchangeIDType ExchangeID, int type, bool isSub = true);
         void ShowOrderBookV(TTORATstpSecurityIDType SecurityID);
         void ShowOrderBookM(TTORATstpSecurityIDType SecurityID);
         void ShowHandleSpeed();
         static const char *GetExchangeName(TTORATstpExchangeIDType ExchangeID);
-        void SetVersion(int val) { m_version = val; }
+        void SetUseVec(bool val) { m_useVec = val; }
 
         bool IsInited() const { return m_isInited; }
         CTORATstpLev2MdApi *GetApi() const { return m_pApi; }
@@ -59,7 +59,7 @@ namespace PROMD {
         void Run();
 
     private:
-        int m_version = 1;
+        bool m_useVec = true;
         int m_reqID = 1;
         bool m_isInited = false;
         CTORATstpLev2MdApi *m_pApi = nullptr;
@@ -78,6 +78,7 @@ namespace PROMD {
 
         std::unordered_map<int, int> m_seq;
         MemoryPool m_pool;
+        size_t m_waitQueueCount = 0;
         long long int m_addQueueCount = 0;
         long long int m_delQueueCount = 0;
         long long int m_handleTick = 0;

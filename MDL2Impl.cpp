@@ -14,8 +14,8 @@ namespace PROMD {
         }
     }
 
-    bool MDL2Impl::Start(bool isTest, int version) {
-        m_version = version;
+    bool MDL2Impl::Start(bool isTest, bool useVec) {
+        m_useVec = useVec;
 
         m_stop = false;
         if (!m_pthread) {
@@ -71,7 +71,7 @@ namespace PROMD {
     void MDL2Impl::ShowHandleSpeed() {
         if (m_delQueueCount <= 0) return;
         printf("%s %s add:%-9lld del:%-9lld us:%-9lld perus:%.6f %-9ld ver:%d\n", GetTimeStr().c_str(), GetExchangeName(m_exchangeID),
-               m_addQueueCount, m_delQueueCount, m_handleTick, (1.0*m_handleTick) / m_delQueueCount, m_pool.GetTotalCnt(), m_version);
+               m_addQueueCount, m_delQueueCount, m_handleTick, (1.0*m_handleTick) / m_delQueueCount, m_pool.GetTotalCnt(), m_useVec);
     }
 
     const char *MDL2Impl::GetExchangeName(TTORATstpExchangeIDType ExchangeID) {
@@ -173,12 +173,13 @@ namespace PROMD {
         data->ExchangeID = pOrderDetail->ExchangeID;
         data->OrderStatus = pOrderDetail->OrderStatus;
         m_addQueueCount++;
+        //check loss order
         //if (m_seq.find(pOrderDetail->MainSeq) == m_seq.end()) {
         //    m_seq[pOrderDetail->MainSeq] = pOrderDetail->SubSeq;
         //} else {
         //    auto subseq = m_seq[pOrderDetail->MainSeq] + 1;
         //    if (subseq != pOrderDetail->SubSeq) {
-        //        printf("丢单了 %d\n", subseq);
+        //        printf("loss order %d\n", subseq);
         //        m_seq[pOrderDetail->MainSeq] = pOrderDetail->SubSeq;
         //    }
         //}
@@ -186,6 +187,7 @@ namespace PROMD {
         //m_data.push(data);
         std::unique_lock<std::mutex> lock(m_dataMtx);
         m_dataList.push_back(data);
+        m_waitQueueCount = m_dataList.size();
     }
 
     void MDL2Impl::OnRtnTransaction(CTORATstpLev2TransactionField *pTransaction) {
@@ -204,6 +206,7 @@ namespace PROMD {
         //m_data.push(data);
         std::unique_lock<std::mutex> lock(m_dataMtx);
         m_dataList.push_back(data);
+        m_waitQueueCount = m_dataList.size();
     }
 
     void MDL2Impl::OnRtnNGTSTick(CTORATstpLev2NGTSTickField *pTick) {
@@ -222,6 +225,56 @@ namespace PROMD {
         //m_data.push(data);
         std::unique_lock<std::mutex> lock(m_dataMtx);
         m_dataList.push_back(data);
+        m_waitQueueCount = m_dataList.size();
+    }
+
+    void MDL2Impl::Run() {
+        while (!m_stop) {
+#if 0
+            stNotifyData* data = nullptr;
+            m_data.pop(data);
+            if (data) {
+                auto start = GetUs();
+                HandleData(data);
+                auto duration = GetUs() - start;
+                if (duration <= 0) duration = 1; // default 1us
+                m_delQueueCount++;
+                m_handleTick += duration;
+                m_pool.Free(data, sizeof(stNotifyData));
+            }
+#endif
+            std::list<stNotifyData*> dataList;
+            {
+                std::unique_lock<std::mutex> lock(m_dataMtx);
+                if (m_dataList.empty()) continue;
+                dataList.swap(m_dataList);
+            }
+
+            auto size = dataList.size();
+            if (size <= 0) continue;
+            auto start = GetUs();
+            for (auto iter = dataList.begin(); iter != dataList.end(); ++iter) {
+                auto data = *iter;
+                if (!data) continue;
+                HandleData(data);
+                m_pool.Free(data, sizeof(stNotifyData));
+            }
+            auto duration = GetUs() - start;
+            if (duration <= 0) duration = 1; // default 1us
+            m_delQueueCount += (long long int)size;
+            m_handleTick += duration;
+        }
+    }
+
+    void MDL2Impl::HandleData(stNotifyData *data) {
+        if (!data) return;
+        if (data->type == 1) {
+            OrderDetail(data->SecurityID, data->Side, data->OrderNO, data->Price, data->Volume, data->ExchangeID, data->OrderStatus);
+        } else if (data->type == 2) {
+            Transaction(data->SecurityID, data->ExchangeID, data->Volume, data->ExecType, data->BuyNo, data->SellNo, data->Price, 0);
+        } else if (data->type == 3) {
+            NGTSTick(data->SecurityID, data->TickType, data->BuyNo, data->SellNo, data->Price, data->Volume, data->Side, 0);
+        }
     }
 
     /************************************HandleOrderBook***************************************/
@@ -231,22 +284,22 @@ namespace PROMD {
         if (Side != TORA_TSTP_LSD_Buy && Side != TORA_TSTP_LSD_Sell) return;
         if (ExchangeID == TORA_TSTP_EXD_SSE) {
             if (OrderStatus == TORA_TSTP_LOS_Add) {
-                if (m_version == 0) {
+                if (m_useVec) {
                     InsertOrderV(SecurityID, OrderNO, Price, Volume, Side);
-                } else if (m_version == 1) {
+                } else {
                     InsertOrderM(SecurityID, OrderNO, Price, Volume, Side);
                 }
             } else if (OrderStatus == TORA_TSTP_LOS_Delete) {
-                if (m_version == 0) {
+                if (m_useVec) {
                     ModifyOrderV(SecurityID, 0, OrderNO, Side);
-                } else if (m_version == 1) {
+                } else {
                     ModifyOrderM(SecurityID, 0, OrderNO, Side);
                 }
             }
         } else if (ExchangeID == TORA_TSTP_EXD_SZSE) {
-            if (m_version == 0) {
+            if (m_useVec) {
                 InsertOrderV(SecurityID, OrderNO, Price, Volume, Side);
-            } else if (m_version == 1) {
+            } else {
                 InsertOrderM(SecurityID, OrderNO, Price, Volume, Side);
             }
         }
@@ -256,38 +309,37 @@ namespace PROMD {
                                TTORATstpExecTypeType ExecType, TTORATstpLongSequenceType BuyNo, TTORATstpLongSequenceType SellNo,
                                TTORATstpPriceType TradePrice, TTORATstpTimeStampType TradeTime) {
         if (ExchangeID == TORA_TSTP_EXD_SSE) {
-            if (m_version == 0) {
+            if (m_useVec) {
                 ModifyOrderV(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
                 ModifyOrderV(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
                 PostPriceV(SecurityID, TradePrice);
-            } else if (m_version == 1) {
+            } else {
                 ModifyOrderM(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
                 ModifyOrderM(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
                 PostPriceM(SecurityID, TradePrice);
             }
         } else if (ExchangeID == TORA_TSTP_EXD_SZSE) {
             if (ExecType == TORA_TSTP_ECT_Fill) {
-                if (m_version == 0) {
+                if (m_useVec) {
                     ModifyOrderV(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
                     ModifyOrderV(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
                     PostPriceV(SecurityID, TradePrice);
-                } else if (m_version == 1) {
+                } else {
                     ModifyOrderM(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
                     ModifyOrderM(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
                     PostPriceM(SecurityID, TradePrice);
                 }
             } else if (ExecType == TORA_TSTP_ECT_Cancel) {
                 if (BuyNo > 0) {
-                    if (m_version == 0) {
+                    if (m_useVec) {
                         ModifyOrderV(SecurityID, 0, BuyNo, TORA_TSTP_LSD_Buy);
-                    } else if (m_version == 1) {
+                    } else {
                         ModifyOrderM(SecurityID, 0, BuyNo, TORA_TSTP_LSD_Buy);
                     }
-                }
-                if (SellNo > 0) {
-                    if (m_version == 0) {
+                } else if (SellNo > 0) {
+                    if (m_useVec) {
                         ModifyOrderV(SecurityID, 0, SellNo, TORA_TSTP_LSD_Sell);
-                    } else if (m_version == 1) {
+                    } else {
                         ModifyOrderM(SecurityID, 0, SellNo, TORA_TSTP_LSD_Sell);
                     }
                 }
@@ -299,23 +351,23 @@ namespace PROMD {
                             TTORATstpLongSequenceType SellNo, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume,
                             TTORATstpLSideType Side, TTORATstpTimeStampType TickTime) {
         if (TickType == TORA_TSTP_LTT_Add) {
-            if (m_version == 0) {
+            if (m_useVec) {
                 InsertOrderV(SecurityID, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Price, Volume, Side);
-            } else if (m_version == 1) {
+            } else {
                 InsertOrderM(SecurityID, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Price, Volume, Side);
             }
         } else if (TickType == TORA_TSTP_LTT_Delete) {
-            if (m_version == 0) {
+            if (m_useVec) {
                 ModifyOrderV(SecurityID, 0, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Side);
-            } else if (m_version == 1) {
+            } else {
                 ModifyOrderM(SecurityID, 0, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Side);
             }
         } else if (TickType == TORA_TSTP_LTT_Trade) {
-            if (m_version == 0) {
+            if (m_useVec) {
                 ModifyOrderV(SecurityID, Volume, BuyNo, TORA_TSTP_LSD_Buy);
                 ModifyOrderV(SecurityID, Volume, SellNo, TORA_TSTP_LSD_Sell);
                 PostPriceV(SecurityID, Price);
-            } else if (m_version == 1) {
+            } else {
                 ModifyOrderM(SecurityID, Volume, BuyNo, TORA_TSTP_LSD_Buy);
                 ModifyOrderM(SecurityID, Volume, SellNo, TORA_TSTP_LSD_Sell);
                 PostPriceM(SecurityID, Price);
@@ -677,52 +729,5 @@ namespace PROMD {
         m_pApp->m_ioc.post(boost::bind(&CApplication::MDPostPrice, m_pApp, p));
     }
 
-    void MDL2Impl::Run() {
-        while (!m_stop) {
-#if 0
-            stNotifyData* data = nullptr;
-            m_data.pop(data);
-            if (data) {
-                auto start = GetUs();
-                HandleData(data);
-                auto duration = GetUs() - start;
-                if (duration <= 0) duration = 1; // default 1us
-                m_delQueueCount++;
-                m_handleTick += duration;
-                m_pool.Free(data, sizeof(stNotifyData));
-            }
-#endif
-            std::list<stNotifyData *> dataList;
-            {
-                std::unique_lock<std::mutex> lock(m_dataMtx);
-                dataList.swap(m_dataList);
-                m_dataList.clear();
-            }
-
-            auto size = (long long int)dataList.size();
-            if (size <= 0) continue;
-            auto start = GetUs();
-            for (auto iter = dataList.begin(); iter != dataList.end(); ++iter) {
-                auto data = *iter;
-                HandleData(data);
-                m_pool.Free(data, sizeof(stNotifyData));
-            }
-            auto duration = GetUs() - start;
-            if (duration <= 0) duration = 1; // default 1us
-            m_delQueueCount += size;
-            m_handleTick += duration;
-        }
-    }
-
-    void MDL2Impl::HandleData(stNotifyData *data) {
-        if (!data) return;
-        if (data->type == 1) {
-            OrderDetail(data->SecurityID, data->Side, data->OrderNO, data->Price, data->Volume, data->ExchangeID, data->OrderStatus);
-        } else if (data->type == 2) {
-            Transaction(data->SecurityID, data->ExchangeID, data->Volume, data->ExecType, data->BuyNo, data->SellNo, data->Price, 0);
-        } else if (data->type == 3) {
-            NGTSTick(data->SecurityID, data->TickType, data->BuyNo, data->SellNo, data->Price, data->Volume, data->Side, 0);
-        }
-    }
 
 }
