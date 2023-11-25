@@ -220,6 +220,7 @@ namespace PROMD {
         data->Volume = pTick->Volume;
         data->BuyNo = pTick->BuyNo;
         data->SellNo = pTick->SellNo;
+        data->ExchangeID = pTick->ExchangeID;
         m_addQueueCount++;
         //printf("OnRtnNGTSTick SubSeq:%lld %s\n", pTick->SubSeq, pTick->SecurityID);
         //m_data.push(data);
@@ -251,7 +252,6 @@ namespace PROMD {
             }
 
             auto size = dataList.size();
-            if (size <= 0) continue;
             auto start = GetUs();
             for (auto iter = dataList.begin(); iter != dataList.end(); ++iter) {
                 auto data = *iter;
@@ -273,7 +273,7 @@ namespace PROMD {
         } else if (data->type == 2) {
             Transaction(data->SecurityID, data->ExchangeID, data->Volume, data->ExecType, data->BuyNo, data->SellNo, data->Price, 0);
         } else if (data->type == 3) {
-            NGTSTick(data->SecurityID, data->TickType, data->BuyNo, data->SellNo, data->Price, data->Volume, data->Side, 0);
+            NGTSTick(data->SecurityID, data->ExchangeID, data->TickType, data->BuyNo, data->SellNo, data->Price, data->Volume, data->Side, 0);
         }
     }
 
@@ -282,7 +282,14 @@ namespace PROMD {
                                TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpExchangeIDType ExchangeID,
                                TTORATstpLOrderStatusType OrderStatus) {
         if (Side != TORA_TSTP_LSD_Buy && Side != TORA_TSTP_LSD_Sell) return;
-        if (ExchangeID == TORA_TSTP_EXD_SSE) {
+	if (ExchangeID == TORA_TSTP_EXD_SZSE) {
+            if (m_useVec) {
+                InsertOrderV(SecurityID, OrderNO, Price, Volume, Side);
+            } else {
+                InsertOrderM(SecurityID, OrderNO, Price, Volume, Side);
+            }
+        } 
+		else if (ExchangeID == TORA_TSTP_EXD_SSE) {
             if (OrderStatus == TORA_TSTP_LOS_Add) {
                 if (m_useVec) {
                     InsertOrderV(SecurityID, OrderNO, Price, Volume, Side);
@@ -296,29 +303,13 @@ namespace PROMD {
                     ModifyOrderM(SecurityID, 0, OrderNO, Side);
                 }
             }
-        } else if (ExchangeID == TORA_TSTP_EXD_SZSE) {
-            if (m_useVec) {
-                InsertOrderV(SecurityID, OrderNO, Price, Volume, Side);
-            } else {
-                InsertOrderM(SecurityID, OrderNO, Price, Volume, Side);
-            }
-        }
+        } 
     }
 
     void MDL2Impl::Transaction(TTORATstpSecurityIDType SecurityID, TTORATstpExchangeIDType ExchangeID, TTORATstpLongVolumeType TradeVolume,
                                TTORATstpExecTypeType ExecType, TTORATstpLongSequenceType BuyNo, TTORATstpLongSequenceType SellNo,
                                TTORATstpPriceType TradePrice, TTORATstpTimeStampType TradeTime) {
-        if (ExchangeID == TORA_TSTP_EXD_SSE) {
-            if (m_useVec) {
-                ModifyOrderV(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
-                ModifyOrderV(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
-                PostPriceV(SecurityID, TradePrice);
-            } else {
-                ModifyOrderM(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
-                ModifyOrderM(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
-                PostPriceM(SecurityID, TradePrice);
-            }
-        } else if (ExchangeID == TORA_TSTP_EXD_SZSE) {
+	if (ExchangeID == TORA_TSTP_EXD_SZSE) {
             if (ExecType == TORA_TSTP_ECT_Fill) {
                 if (m_useVec) {
                     ModifyOrderV(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
@@ -345,35 +336,48 @@ namespace PROMD {
                 }
             }
         }
+		else if (ExchangeID == TORA_TSTP_EXD_SSE) {
+            if (m_useVec) {
+                ModifyOrderV(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
+                ModifyOrderV(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
+                PostPriceV(SecurityID, TradePrice);
+            } else {
+                ModifyOrderM(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
+                ModifyOrderM(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
+                PostPriceM(SecurityID, TradePrice);
+            }
+        } 
     }
 
-    void MDL2Impl::NGTSTick(TTORATstpSecurityIDType SecurityID, TTORATstpLTickTypeType TickType, TTORATstpLongSequenceType BuyNo,
+    void MDL2Impl::NGTSTick(TTORATstpSecurityIDType SecurityID, TTORATstpExchangeIDType ExchangeID, TTORATstpLTickTypeType TickType, TTORATstpLongSequenceType BuyNo,
                             TTORATstpLongSequenceType SellNo, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume,
                             TTORATstpLSideType Side, TTORATstpTimeStampType TickTime) {
-        if (TickType == TORA_TSTP_LTT_Add) {
-            if (m_useVec) {
-                InsertOrderV(SecurityID, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Price, Volume, Side);
-            } else {
-                InsertOrderM(SecurityID, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Price, Volume, Side);
-            }
-        } else if (TickType == TORA_TSTP_LTT_Delete) {
-            if (m_useVec) {
-                ModifyOrderV(SecurityID, 0, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Side);
-            } else {
-                ModifyOrderM(SecurityID, 0, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Side);
-            }
-        } else if (TickType == TORA_TSTP_LTT_Trade) {
-            if (m_useVec) {
-                ModifyOrderV(SecurityID, Volume, BuyNo, TORA_TSTP_LSD_Buy);
-                ModifyOrderV(SecurityID, Volume, SellNo, TORA_TSTP_LSD_Sell);
-                PostPriceV(SecurityID, Price);
-            } else {
-                ModifyOrderM(SecurityID, Volume, BuyNo, TORA_TSTP_LSD_Buy);
-                ModifyOrderM(SecurityID, Volume, SellNo, TORA_TSTP_LSD_Sell);
-                PostPriceM(SecurityID, Price);
-            }
-        }
-    }
+		if (ExchangeID == TORA_TSTP_EXD_SSE) {
+			if (TickType == TORA_TSTP_LTT_Add) {
+				if (m_useVec) {
+					InsertOrderV(SecurityID, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Price, Volume, Side);
+				} else {
+					InsertOrderM(SecurityID, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Price, Volume, Side);
+				}
+			} else if (TickType == TORA_TSTP_LTT_Delete) {
+				if (m_useVec) {
+					ModifyOrderV(SecurityID, 0, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Side);
+				} else {
+					ModifyOrderM(SecurityID, 0, Side==TORA_TSTP_LSD_Buy?BuyNo:SellNo, Side);
+				}
+			} else if (TickType == TORA_TSTP_LTT_Trade) {
+				if (m_useVec) {
+					ModifyOrderV(SecurityID, Volume, BuyNo, TORA_TSTP_LSD_Buy);
+					ModifyOrderV(SecurityID, Volume, SellNo, TORA_TSTP_LSD_Sell);
+					PostPriceV(SecurityID, Price);
+				} else {
+					ModifyOrderM(SecurityID, Volume, BuyNo, TORA_TSTP_LSD_Buy);
+					ModifyOrderM(SecurityID, Volume, SellNo, TORA_TSTP_LSD_Sell);
+					PostPriceM(SecurityID, Price);
+				}
+			}
+		}
+	}
 
     /******************************Vector******************************/
     void MDL2Impl::InsertOrderV(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side) {
