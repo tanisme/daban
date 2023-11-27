@@ -88,7 +88,7 @@ void CApplication::OnTime(const boost::system::error_code& error) {
     if (m_shMD) m_shMD->ShowHandleSpeed();
     if (m_szMD) m_szMD->ShowHandleSpeed();
 
-    m_timer.expires_from_now(boost::posix_time::milliseconds(6000));
+    m_timer.expires_from_now(boost::posix_time::milliseconds(60000));
     m_timer.async_wait(boost::bind(&CApplication::OnTime, this, boost::asio::placeholders::error));
 }
 
