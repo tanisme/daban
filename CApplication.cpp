@@ -68,27 +68,30 @@ void CApplication::OnTime(const boost::system::error_code& error) {
         }
     }
 
-    for (auto& iter : m_watchSecurity) {
-        if (m_shMD && iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
-            if (m_useVec) {
-                m_shMD->ShowOrderBookV((char*)iter.first.c_str());
-            } else {
-                m_shMD->ShowOrderBookM((char*)iter.first.c_str());
+    auto timestr = GetTimeStr();
+    if ((strcmp(timestr.c_str(), "11:30:00") > 0 && strcmp(timestr.c_str(), "13:30:00") < 0) ||
+        (strcmp(timestr.c_str(), "15:20:00") > 0 && strcmp(timestr.c_str(), "16:00:00") < 0)) {
+        for (auto& iter : m_watchSecurity) {
+            if (m_shMD && iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
+                if (m_useVec) {
+                    m_shMD->ShowOrderBookV((char*)iter.first.c_str());
+                } else {
+                    m_shMD->ShowOrderBookM((char*)iter.first.c_str());
+                }
             }
-        }
-        if (m_szMD && iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
-            if (m_useVec) {
-                m_szMD->ShowOrderBookV((char*)iter.first.c_str());
-            } else {
-                m_szMD->ShowOrderBookM((char*)iter.first.c_str());
+            if (m_szMD && iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
+                if (m_useVec) {
+                    m_szMD->ShowOrderBookV((char*)iter.first.c_str());
+                } else {
+                    m_szMD->ShowOrderBookM((char*)iter.first.c_str());
+                }
             }
         }
     }
-
     if (m_shMD) m_shMD->ShowHandleSpeed();
     if (m_szMD) m_szMD->ShowHandleSpeed();
 
-    m_timer.expires_from_now(boost::posix_time::milliseconds(60000));
+    m_timer.expires_from_now(boost::posix_time::milliseconds(6000));
     m_timer.async_wait(boost::bind(&CApplication::OnTime, this, boost::asio::placeholders::error));
 }
 
@@ -106,16 +109,17 @@ void CApplication::MDOnInited(PROMD::TTORATstpExchangeIDType exchangeID) {
             PROMD::TTORATstpSecurityIDType Security = {0};
             strncpy(Security, iter.first.c_str(), sizeof(Security));
             if (iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
-                //m_shMD->ReqMarketData(Security, iter.second->ExchangeID, 3);
-                m_szMD->ReqMarketData(Security, iter.second->ExchangeID, 1);
-                m_szMD->ReqMarketData(Security, iter.second->ExchangeID, 2);
+                m_shMD->ReqMarketData(Security, iter.second->ExchangeID, 3);
+                //m_szMD->ReqMarketData(Security, iter.second->ExchangeID, 1);
+                //m_szMD->ReqMarketData(Security, iter.second->ExchangeID, 2);
             } else if (iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
                 m_szMD->ReqMarketData(Security, iter.second->ExchangeID, 1);
                 m_szMD->ReqMarketData(Security, iter.second->ExchangeID, 2);
             }
         }
     }
-    printf("%s subcount:%d total:%d\n", PROMD::MDL2Impl::GetExchangeName(exchangeID), cnt, (int)m_TD->m_marketSecurity.size());
+    printf("CApplication::MDOnInited %s subcount:%d total:%d\n",
+           PROMD::MDL2Impl::GetExchangeName(exchangeID), cnt, (int)m_TD->m_marketSecurity.size());
 }
 
 void CApplication::MDPostPrice(stPostPrice& postPrice) {

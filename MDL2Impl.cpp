@@ -12,6 +12,10 @@ namespace PROMD {
             m_pApi->Join();
             m_pApi->Release();
         }
+        if (m_pthread) {
+            m_pthread->join();
+            delete m_pthread;
+        }
     }
 
     bool MDL2Impl::Start(bool isTest, bool useVec) {
@@ -70,8 +74,8 @@ namespace PROMD {
 
     void MDL2Impl::ShowHandleSpeed() {
         if (m_delQueueCount <= 0) return;
-        printf("%s %s %s %-9lld %-9lld %-9lld %.3fus %ld\n", m_useVec?"V":"M", GetExchangeName(m_exchangeID), GetTimeStr().c_str(),
-               m_addQueueCount, m_delQueueCount, m_handleTick, (1.0*m_handleTick) / m_delQueueCount, m_pool.GetTotalCnt());
+        printf("%s %s %s %-9lld %-9lld %-3d %-9lld %.3fus %ld\n", m_useVec?"V":"M", GetExchangeName(m_exchangeID), GetTimeStr().c_str(),
+               m_addQueueCount, m_delQueueCount, m_waitQueueCount, m_handleTick, (1.0*m_handleTick) / m_delQueueCount, m_pool.GetTotalCnt());
     }
 
     const char *MDL2Impl::GetExchangeName(TTORATstpExchangeIDType ExchangeID) {
@@ -247,25 +251,23 @@ namespace PROMD {
             std::list<stNotifyData*> dataList;
             {
                 std::unique_lock<std::mutex> lock(m_dataMtx);
-                if (m_dataList.empty()) continue;
                 dataList.swap(m_dataList);
             }
 
             auto size = dataList.size();
-            if (size <= 0) {
-                //std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                continue;
-            }
+            if (size <= 0) continue;
+            long long int cnt = 0;
             auto start = GetUs();
             for (auto iter = dataList.begin(); iter != dataList.end(); ++iter) {
                 auto data = *iter;
                 if (!data) continue;
                 HandleData(data);
+                cnt++;
                 m_pool.Free(data, sizeof(stNotifyData));
             }
             auto duration = GetUs() - start;
             if (duration <= 0) duration = 1; // default 1us
-            m_delQueueCount += (long long int)size;
+            m_delQueueCount += cnt;
             m_handleTick += duration;
         }
     }
