@@ -95,7 +95,6 @@ void CApplication::OnTime(const boost::system::error_code& error) {
 void CApplication::MDOnInited(PROMD::TTORATstpExchangeIDType exchangeID) {
     auto cnt = 0;
     std::unordered_map<std::string, stSecurity*>& sub = m_TD->m_marketSecurity;
-    if (m_isSubWatch) { sub = m_watchSecurity; }
     for (auto &iter: sub) {
         if (exchangeID == iter.second->ExchangeID &&
             (iter.second->SecurityType == PROTD::TORA_TSTP_STP_SHAShares ||
@@ -106,9 +105,12 @@ void CApplication::MDOnInited(PROMD::TTORATstpExchangeIDType exchangeID) {
             PROMD::TTORATstpSecurityIDType Security = {0};
             strncpy(Security, iter.first.c_str(), sizeof(Security));
             if (iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
-                //m_shMD->ReqMarketData(Security, iter.second->ExchangeID, 3);
-                m_shMD->ReqMarketData(Security, iter.second->ExchangeID, 1);
-                m_shMD->ReqMarketData(Security, iter.second->ExchangeID, 2);
+                if (m_isSHNewversion) {
+                    m_shMD->ReqMarketData(Security, iter.second->ExchangeID, 3);
+                } else {
+                    m_shMD->ReqMarketData(Security, iter.second->ExchangeID, 1);
+                    m_shMD->ReqMarketData(Security, iter.second->ExchangeID, 2);
+                }
             } else if (iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
                 m_szMD->ReqMarketData(Security, iter.second->ExchangeID, 1);
                 m_szMD->ReqMarketData(Security, iter.second->ExchangeID, 2);
