@@ -29,7 +29,6 @@ namespace PROTD {
 
     void TDImpl::OnFrontConnected() {
         printf("TD::OnFrontConnected!!!\n");
-
         CTORATstpReqUserLoginField Req = {0};
         Req.LogInAccountType = TORA_TSTP_LACT_AccountID;
         strcpy(Req.LogInAccount, m_pApp->m_TDAccount.c_str());
@@ -49,7 +48,6 @@ namespace PROTD {
             return;
         }
         memcpy(&m_loginField, pRspUserLoginField, sizeof(m_loginField));
-
         CTORATstpQryShareholderAccountField Req = {0};
         m_pApi->ReqQryShareholderAccount(&Req, ++m_reqID);
     }
@@ -60,7 +58,6 @@ namespace PROTD {
             memcpy(&accountField, pShareholderAccountField, sizeof(accountField));
             m_shareHolder[pShareholderAccountField->ExchangeID] = accountField;
         }
-
         if (bIsLast) {
             CTORATstpQrySecurityField Req = {0};
             m_pApi->ReqQrySecurity(&Req, ++m_reqID);
@@ -82,12 +79,11 @@ namespace PROTD {
                     m_marketSecurity[security->SecurityID] = security;
                 }
             }
-
             if (m_pApp->m_watchSecurity.find(pSecurity->SecurityID) != m_pApp->m_watchSecurity.end()) {
                 m_pApp->m_watchSecurity[pSecurity->SecurityID]->ExchangeID = pSecurity->ExchangeID;
+                m_pApp->m_watchSecurity[pSecurity->SecurityID]->SecurityType = pSecurity->SecurityType;
             }
         }
-
         if (bIsLast) {
             printf("TD::OnRspQrySecurity Success!!!\n");
             CTORATstpQryOrderField Req = {0};
@@ -98,7 +94,6 @@ namespace PROTD {
     void TDImpl::OnRspQryOrder(CTORATstpOrderField *pOrder, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
         if (pOrder) {
         }
-
         if (bIsLast) {
             printf("TD::OnRspQryOrder Success!!!\n");
             CTORATstpQryTradeField Req = {0};
@@ -109,7 +104,6 @@ namespace PROTD {
     void TDImpl::OnRspQryTrade(CTORATstpTradeField *pTrade, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
         if (pTrade) {
         }
-
         if (bIsLast) {
             printf("TD::OnRspQryTrade Success!!!\n");
             CTORATstpQryPositionField Req = {0};
@@ -120,7 +114,6 @@ namespace PROTD {
     void TDImpl::OnRspQryPosition(CTORATstpPositionField *pPosition, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
         if (pPosition) {
         }
-
         if (bIsLast) {
             printf("TD::OnRspQryPosition Success!!!\n");
             CTORATstpQryTradingAccountField Req = {0};
@@ -131,7 +124,6 @@ namespace PROTD {
     void TDImpl::OnRspQryTradingAccount(CTORATstpTradingAccountField *pTradingAccount, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
         if (pTradingAccount) {
         }
-
         if (bIsLast) {
             printf("TD::OnRspQryTradingAccount Success!!!\n");
             m_isInited = true;

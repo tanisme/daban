@@ -247,6 +247,13 @@ namespace PROMD {
         if (ExchangeID == TORA_TSTP_EXD_SZSE) {
             InsertOrderV(SecurityID, OrderNO, Price, Volume, Side);
         }
+        if (ExchangeID == TORA_TSTP_EXD_SZSE) {
+            if (m_useVec) {
+                InsertOrderV(SecurityID, OrderNO, Price, Volume, Side);
+            } else {
+                InsertOrderM(SecurityID, OrderNO, Price, Volume, Side);
+            }
+        } 
 		else if (ExchangeID == TORA_TSTP_EXD_SSE) {
             if (OrderStatus == TORA_TSTP_LOS_Add) {
                 InsertOrderV(SecurityID, OrderNO, Price, Volume, Side);
@@ -276,6 +283,16 @@ namespace PROMD {
             ModifyOrderV(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
             ModifyOrderV(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
             PostPriceV(SecurityID, TradePrice);
+        }
+            if (m_useVec) {
+                ModifyOrderV(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
+                ModifyOrderV(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
+                PostPriceV(SecurityID, TradePrice);
+            } else {
+                ModifyOrderM(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
+                ModifyOrderM(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
+                PostPriceM(SecurityID, TradePrice);
+            }
         }
     }
 

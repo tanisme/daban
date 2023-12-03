@@ -63,7 +63,7 @@ namespace PROMD {
 
         std::unordered_map<int, int> m_seq;
         MemoryPool m_pool;
-        size_t m_waitQueueCount = 0;
+        int m_waitQueueCount = 0;
         long long int m_addQueueCount = 0;
         long long int m_delQueueCount = 0;
         long long int m_handleTick = 0;

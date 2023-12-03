@@ -39,7 +39,7 @@ public:
     bool m_useVec = true;
     bool m_isTest = true;
     bool m_isStrategyOpen = false;
-    bool m_isSubWatch = false;
+    bool m_isSHNewversion = false;
     std::string m_dbFile;
     std::string m_TDAddr = "tcp://210.14.72.21:4400";
     std::string m_TDAccount = "00030557";
