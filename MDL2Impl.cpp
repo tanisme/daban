@@ -29,7 +29,6 @@ namespace PROMD {
                 printf("MD::Run thread bind success\n");
             }
         #endif
-
         }
         if (isTest) { // tcp
             m_pApi = CTORATstpLev2MdApi::CreateTstpLev2MdApi();
@@ -135,17 +134,6 @@ namespace PROMD {
         data->ExchangeID = pOrderDetail->ExchangeID;
         data->OrderStatus = pOrderDetail->OrderStatus;
         m_addQueueCount++;
-        //check loss order
-        //if (m_seq.find(pOrderDetail->MainSeq) == m_seq.end()) {
-        //    m_seq[pOrderDetail->MainSeq] = pOrderDetail->SubSeq;
-        //} else {
-        //    auto subseq = m_seq[pOrderDetail->MainSeq] + 1;
-        //    if (subseq != pOrderDetail->SubSeq) {
-        //        printf("loss order %d\n", subseq);
-        //        m_seq[pOrderDetail->MainSeq] = pOrderDetail->SubSeq;
-        //    }
-        //}
-        //printf("OnRtnOrderDetail %s MainSeq:%d SubSeq:%d\n",pOrderDetail->SecurityID, pOrderDetail->MainSeq, pOrderDetail->SubSeq);
         //m_data.push(data);
         std::unique_lock<std::mutex> lock(m_dataMtx);
         m_dataList.push_back(data);
@@ -164,7 +152,6 @@ namespace PROMD {
         data->BuyNo = pTransaction->BuyNo;
         data->SellNo = pTransaction->SellNo;
         m_addQueueCount++;
-        //printf("OnRtnTransaction SubSeq:%lld %s\n", pTransaction->SubSeq, pTransaction->SecurityID);
         //m_data.push(data);
         std::unique_lock<std::mutex> lock(m_dataMtx);
         m_dataList.push_back(data);
@@ -184,7 +171,6 @@ namespace PROMD {
         data->SellNo = pTick->SellNo;
         data->ExchangeID = pTick->ExchangeID;
         m_addQueueCount++;
-        //printf("OnRtnNGTSTick SubSeq:%lld %s\n", pTick->SubSeq, pTick->SecurityID);
         //m_data.push(data);
         std::unique_lock<std::mutex> lock(m_dataMtx);
         m_dataList.push_back(data);
@@ -247,13 +233,6 @@ namespace PROMD {
         if (ExchangeID == TORA_TSTP_EXD_SZSE) {
             InsertOrderV(SecurityID, OrderNO, Price, Volume, Side);
         }
-        if (ExchangeID == TORA_TSTP_EXD_SZSE) {
-            if (m_useVec) {
-                InsertOrderV(SecurityID, OrderNO, Price, Volume, Side);
-            } else {
-                InsertOrderM(SecurityID, OrderNO, Price, Volume, Side);
-            }
-        } 
 		else if (ExchangeID == TORA_TSTP_EXD_SSE) {
             if (OrderStatus == TORA_TSTP_LOS_Add) {
                 InsertOrderV(SecurityID, OrderNO, Price, Volume, Side);
@@ -283,16 +262,6 @@ namespace PROMD {
             ModifyOrderV(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
             ModifyOrderV(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
             PostPriceV(SecurityID, TradePrice);
-        }
-            if (m_useVec) {
-                ModifyOrderV(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
-                ModifyOrderV(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
-                PostPriceV(SecurityID, TradePrice);
-            } else {
-                ModifyOrderM(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
-                ModifyOrderM(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
-                PostPriceM(SecurityID, TradePrice);
-            }
         }
     }
 
