@@ -76,11 +76,7 @@ namespace test {
         }
         ifs.close();
         printf("生成%s订单簿 处理完成所有成交 共%d条\n", SecurityID, i);
-        if (m_md->GetUseVec()) {
-            m_md->ShowOrderBookV(SecurityID);
-        } else {
-            m_md->ShowOrderBookM(SecurityID);
-        }
+        m_md->ShowOrderBookV(SecurityID);
         return i;
     }
 
@@ -138,8 +134,6 @@ namespace test {
 
     bool Imitate::TestOrderBook(std::string& srcDataDir, std::string& watchsecurity, bool createfile, bool isusevec) {
         m_md = new PROMD::MDL2Impl(nullptr, PROMD::TORA_TSTP_EXD_COMM);
-        m_md->SetUseVec(isusevec);
-
         trim(watchsecurity);
         if (watchsecurity.length() <= 0) {
             printf("配置文件中watchsecurity未配置\n");

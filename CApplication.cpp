@@ -70,18 +70,10 @@ void CApplication::OnTime(const boost::system::error_code& error) {
 
     for (auto& iter : m_watchSecurity) {
         if (m_shMD && iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
-            if (m_useVec) {
-                m_shMD->ShowOrderBookV((char*)iter.first.c_str());
-            } else {
-                m_shMD->ShowOrderBookM((char*)iter.first.c_str());
-            }
+            m_shMD->ShowOrderBookV((char*)iter.first.c_str());
         }
         if (m_szMD && iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
-            if (m_useVec) {
-                m_szMD->ShowOrderBookV((char*)iter.first.c_str());
-            } else {
-                m_szMD->ShowOrderBookM((char*)iter.first.c_str());
-            }
+            m_szMD->ShowOrderBookV((char*)iter.first.c_str());
         }
     }
 
