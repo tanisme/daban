@@ -7,7 +7,8 @@
 
 int main() {
     std::string cfgfile = "daban.ini";
-    bool istest = true, isstrategyopen = false, isusevec = true, isshnewversion = false, createfile = false;
+    bool istest = true, isstrategyopen = false, isshnewversion = false, createfile = false, isuseunlockqueue = false;
+    int matchoore = 1;
     std::string dbfile = "database.db";
     std::string shcpucore = "", szcpucore = "", currentexchangeid = "";
     std::string testshmdaddr = "", testszmdaddr = "", shmdaddr = "", shmdinterface = "", szmdaddr = "", szmdinterface = "";
@@ -15,10 +16,11 @@ int main() {
     std::string srcdatapath = "", watchsecurity = "";
     boost::program_options::options_description cfgdesc("Config file options");
     cfgdesc.add_options()
-            ("daban.isusevec", boost::program_options::value<bool>(&isusevec), "daban.isusevec")
             ("daban.istest", boost::program_options::value<bool>(&istest), "daban.istest")
             ("daban.isstrategyopen", boost::program_options::value<bool>(&isstrategyopen), "daban.isstrategyopen")
             ("daban.isshnewversion", boost::program_options::value<bool>(&isshnewversion), "daban.isshnewversion")
+            ("daban.isuseunlockqueue", boost::program_options::value<bool>(&isuseunlockqueue), "daban.isuseunlockqueue")
+            ("daban.matchoore", boost::program_options::value<int>(&matchoore), "daban.matchoore")
             ("daban.currentexchangeid", boost::program_options::value<std::string>(&currentexchangeid), "daban.currentexchangeid")
             ("daban.dbfile", boost::program_options::value<std::string>(&dbfile), "daban.dbfile")
             ("daban.tdaddr", boost::program_options::value<std::string>(&tdaddr), "daban.tdaddr")
@@ -48,20 +50,21 @@ int main() {
     ifs.close();
     vm.clear();
 
-    if (srcdatapath.length() > 0) {
-        printf("-------------------该程序功能为生成订单簿-------------------\n");
-        test::Imitate imitate;
-        imitate.TestOrderBook(srcdatapath, watchsecurity, createfile, isusevec);
-        printf("-------------------生成所有合约订单簿完成-------------------\n");
-        return 0;
-    }
+    //if (srcdatapath.length() > 0) {
+    //    printf("-------------------该程序功能为生成订单簿-------------------\n");
+    //    test::Imitate imitate;
+    //    imitate.TestOrderBook(srcdatapath, watchsecurity, createfile);
+    //    printf("-------------------生成所有合约订单簿完成-------------------\n");
+    //    return 0;
+    //}
 
     boost::asio::io_context io_context;
     CApplication app(io_context);
-    app.m_useVec = isusevec;
     app.m_isTest = istest;
+    app.m_isUseUnlockQueue = isuseunlockqueue;
     app.m_isStrategyOpen = isstrategyopen;
     app.m_isSHNewversion = isshnewversion;
+    app.m_matchCore = matchoore;
     app.m_dbFile = dbfile;
     app.m_TDAddr = tdaddr;
     app.m_TDAccount = tdaccount;

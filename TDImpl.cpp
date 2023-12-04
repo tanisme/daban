@@ -5,8 +5,7 @@
 
 namespace PROTD {
 
-    TDImpl::TDImpl(CApplication *pApp)
-            : m_pApp(pApp) {
+    TDImpl::TDImpl(CApplication *pApp) : m_pApp(pApp) {
     }
 
     TDImpl::~TDImpl() {

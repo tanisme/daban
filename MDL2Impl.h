@@ -16,7 +16,7 @@ namespace PROMD {
         explicit MDL2Impl(CApplication *pApp, TTORATstpExchangeIDType ExchangeID);
         ~MDL2Impl();
 
-        bool Start(bool isTest, bool useVec);
+        bool Start(bool isTest);
         int ReqMarketData(TTORATstpSecurityIDType SecurityID, TTORATstpExchangeIDType ExchangeID, int type, bool isSub = true);
         void ShowOrderBookV(TTORATstpSecurityIDType SecurityID);
         void ShowHandleSpeed();
@@ -52,8 +52,6 @@ namespace PROMD {
         TTORATstpExchangeIDType m_exchangeID;
         MapOrderV m_orderBuyV;
         MapOrderV m_orderSellV;
-        MapOrderM m_orderBuyM;
-        MapOrderM m_orderSellM;
 
         std::atomic_bool m_stop;
         boost::lockfree::spsc_queue<stNotifyData*, boost::lockfree::capacity<1024>> m_data;
@@ -63,9 +61,8 @@ namespace PROMD {
 
         std::unordered_map<int, int> m_seq;
         MemoryPool m_pool;
-        int m_waitQueueCount = 0;
-        long long int m_addQueueCount = 0;
-        long long int m_delQueueCount = 0;
+        int m_addQueueCount = 0;
+        int m_delQueueCount = 0;
         long long int m_handleTick = 0;
     };
 
