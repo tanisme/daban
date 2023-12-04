@@ -24,12 +24,12 @@ namespace PROMD {
         #ifndef WIN32
             cpu_set_t cpuset;
             CPU_ZERO(&cpuset);
-            CPU_SET(m_pApp->m_matchcore, &cpuset);
+            CPU_SET(m_pApp->m_matchCore, &cpuset);
             int rc = pthread_setaffinity_np(m_pthread->native_handle(), sizeof(cpu_set_t), &cpuset);
             if (rc != 0) {
-                printf("MD::Run thread bind failed[%d]\n", m_pApp->m_matchcore);
+                printf("MD::Run thread bind failed[%d]\n", m_pApp->m_matchCore);
             } else {
-                printf("MD::Run thread bind success[%d]\n", m_pApp->m_matchcore);
+                printf("MD::Run thread bind success[%d]\n", m_pApp->m_matchCore);
             }
         #endif
         }
