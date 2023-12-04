@@ -68,14 +68,19 @@ void CApplication::OnTime(const boost::system::error_code& error) {
         }
     }
 
-    for (auto& iter : m_watchSecurity) {
-        if (m_shMD && iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
-            m_shMD->ShowOrderBookV((char*)iter.first.c_str());
-        }
-        if (m_szMD && iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
-            m_szMD->ShowOrderBookV((char*)iter.first.c_str());
+    auto timestr = GetTimeStr();
+    if ((strcmp(timestr.c_str(), "11:20:00") >= 0 && strcmp(timestr.c_str(), "11:40:00") <= 0) ||
+        (strcmp(timestr.c_str(), "14:50:00") >= 0 && strcmp(timestr.c_str(), "15:10:00") <= 0)) {
+        for (auto& iter : m_watchSecurity) {
+            if (m_shMD && iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
+                m_shMD->ShowOrderBookV((char*)iter.first.c_str());
+            }
+            if (m_szMD && iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
+                m_szMD->ShowOrderBookV((char*)iter.first.c_str());
+            }
         }
     }
+
     if (m_shMD) m_shMD->ShowHandleSpeed();
     if (m_szMD) m_szMD->ShowHandleSpeed();
 
