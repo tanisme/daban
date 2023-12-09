@@ -2,7 +2,7 @@
 
 project(daban)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 add_compile_definitions(_CRT_SECURE_NO_WARNINGS BOOST_BIND_GLOBAL_PLACEHOLDERS)
 
@@ -10,8 +10,8 @@ set(Boost_USE_STATIC_LIBS ON)
 
 if (WIN32)
     message(STATUS "windows system")
-    SET(BOOST_ROOT I:/tanisme/workspace/cpplib/boost_1_73_0)
-    #SET(BOOST_ROOT E:/tangang/workspace/cpplib/boost_1_73_0_142_64)
+    #SET(BOOST_ROOT I:/tanisme/workspace/cpplib/boost_1_73_0)
+    SET(BOOST_ROOT E:/tangang/workspace/cpplib/boost_1_73_0_142_64)
     SET(BOOST_INCLUDEDIR ${BOOST_ROOT})
     SET(BOOST_LIBRARYDIR ${BOOST_ROOT}/lib64-msvc-14.2)
 elseif(UNIX)
@@ -46,7 +46,7 @@ add_executable(daban
 
 if (WIN32)
 if (CMAKE_BUILD_TYPE STREQUAL Debug)
-    target_link_libraries(daban PUBLIC lev2mdapi fasttraderapi jsoncppd sqlite3d)
+    target_link_libraries(daban PUBLIC lev2mdapi fasttraderapi jsoncppd sqlite3d clickhouse-cpp-lib.lib lz4 absl_int128 cityhash)
 else ()
     target_link_libraries(daban PUBLIC lev2mdapi fasttraderapi jsoncpp sqlite3)
 endif ()

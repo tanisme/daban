@@ -252,6 +252,7 @@ namespace PROMD {
             if (ExecType == TORA_TSTP_ECT_Fill) {
                 ModifyOrderV(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
                 ModifyOrderV(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
+                FixOrderV(SecurityID, TradePrice, BuyNo, SellNo);
                 PostPriceV(SecurityID, TradePrice);
             } else if (ExecType == TORA_TSTP_ECT_Cancel) {
                 if (BuyNo > 0) {
@@ -264,6 +265,7 @@ namespace PROMD {
 		else if (ExchangeID == TORA_TSTP_EXD_SSE) {
             ModifyOrderV(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
             ModifyOrderV(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
+            FixOrderV(SecurityID, TradePrice, BuyNo, SellNo);
             PostPriceV(SecurityID, TradePrice);
         }
     }
@@ -279,6 +281,7 @@ namespace PROMD {
 			} else if (TickType == TORA_TSTP_LTT_Trade) {
                 ModifyOrderV(SecurityID, Volume, BuyNo, TORA_TSTP_LSD_Buy);
                 ModifyOrderV(SecurityID, Volume, SellNo, TORA_TSTP_LSD_Sell);
+                FixOrderV(SecurityID, Price, BuyNo, SellNo);
                 PostPriceV(SecurityID, Price);
 			}
 		}
@@ -369,6 +372,12 @@ namespace PROMD {
             }
             if (nb) break;
         }
+    }
+
+    void MDL2Impl::FixOrderV(TTORATstpSecurityIDType SecurityID, TORALEV2API::TTORATstpPriceType Price,
+                             TORALEV2API::TTORATstpLongSequenceType BuyNo,
+                             TORALEV2API::TTORATstpLongSequenceType SellNo) {
+
     }
 
     void MDL2Impl::ShowHandleSpeed() {
