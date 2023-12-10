@@ -38,8 +38,8 @@ namespace PROMD {
 
     private:
         void InsertOrderV(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side);
-        void ModifyOrderV(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side);
-        void FixOrderV(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price, TTORATstpLongSequenceType BuyNo, TTORATstpLongSequenceType SellNo);
+        double ModifyOrderV(TTORATstpSecurityIDType SecurityID, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side);
+        void FixOrderV(TTORATstpSecurityIDType SecurityID, TTORATstpLongSequenceType BuyNo, TTORATstpPriceType BuyPrice, TTORATstpLongSequenceType SellNo, TTORATstpPriceType SellPrice);
         void PostPriceV(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price);
 
         void HandleData(stNotifyData* data);
