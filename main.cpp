@@ -532,10 +532,9 @@
 
 int main() {
     std::string cfgfile = "daban.ini";
-    bool istest = true, isstrategyopen = false, isshnewversion = false, createfile = false, isuseunlockqueue = false;
-    int matchoore = 1;
+    bool istest = true, isstrategyopen = false, isshnewversion = false, createfile = false;
     std::string dbfile = "database.db";
-    std::string shcpucore = "", szcpucore = "", currentexchangeid = "";
+    std::string currentexchangeid = "";
     std::string testshmdaddr = "", testszmdaddr = "", shmdaddr = "", shmdinterface = "", szmdaddr = "", szmdinterface = "";
     std::string tdaddr = "", tdaccount = "", tdpassword = "";
     std::string srcdatapath = "", watchsecurity = "";
@@ -544,16 +543,12 @@ int main() {
             ("daban.istest", boost::program_options::value<bool>(&istest), "daban.istest")
             ("daban.isstrategyopen", boost::program_options::value<bool>(&isstrategyopen), "daban.isstrategyopen")
             ("daban.isshnewversion", boost::program_options::value<bool>(&isshnewversion), "daban.isshnewversion")
-            ("daban.isuseunlockqueue", boost::program_options::value<bool>(&isuseunlockqueue), "daban.isuseunlockqueue")
-            ("daban.matchoore", boost::program_options::value<int>(&matchoore), "daban.matchoore")
             ("daban.currentexchangeid", boost::program_options::value<std::string>(&currentexchangeid), "daban.currentexchangeid")
             ("daban.dbfile", boost::program_options::value<std::string>(&dbfile), "daban.dbfile")
             ("daban.tdaddr", boost::program_options::value<std::string>(&tdaddr), "daban.tdaddr")
             ("daban.tdaccount", boost::program_options::value<std::string>(&tdaccount), "daban.tdaccount")
             ("daban.tdpassword", boost::program_options::value<std::string>(&tdpassword), "daban.tdpassword")
             ("daban.watchsecurity", boost::program_options::value<std::string>(&watchsecurity), "daban.watchsecurity")
-            ("daban.shcpucore", boost::program_options::value<std::string>(&shcpucore), "daban.shcpucore")
-            ("daban.szcpucore", boost::program_options::value<std::string>(&szcpucore), "daban.szcpucore")
             ("ceshi.testshmdaddr", boost::program_options::value<std::string>(&testshmdaddr), "ceshi.testshmdaddr")
             ("ceshi.testszmdaddr", boost::program_options::value<std::string>(&testszmdaddr), "ceshi.testszmdaddr")
             ("shipan.shmdaddr", boost::program_options::value<std::string>(&shmdaddr), "shipan.shmdaddr")
@@ -586,16 +581,12 @@ int main() {
     boost::asio::io_context io_context;
     CApplication app(io_context);
     app.m_isTest = istest;
-    app.m_isUseUnlockQueue = isuseunlockqueue;
     app.m_isStrategyOpen = isstrategyopen;
     app.m_isSHNewversion = isshnewversion;
-    app.m_matchCore = matchoore;
     app.m_dbFile = dbfile;
     app.m_TDAddr = tdaddr;
     app.m_TDAccount = tdaccount;
     app.m_TDPassword = tdpassword;
-    app.m_shCpucore = shcpucore;
-    app.m_szCpucore = szcpucore;
     app.m_testSHMDAddr = testshmdaddr;
     app.m_testSZMDAddr = testszmdaddr;
     app.m_shMDAddr = shmdaddr;

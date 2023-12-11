@@ -177,9 +177,6 @@ void CApplication::TDOnInited() {
 
 /*************************************Http****************************************/
 bool CApplication::LoadStrategy() {
-    m_db = SQLite3::Create(m_dbFile, SQLite3::READWRITE | SQLite3::CREATE);
-    if (!m_db) return false;
-
     const char *create_tab_sql = "CREATE TABLE IF NOT EXISTS strategy("
                                  "idx INTEGER PRIMARY KEY AUTOINCREMENT,"
                                  "security CHAR(32) NOT NULL,"
@@ -187,68 +184,13 @@ bool CApplication::LoadStrategy() {
                                  "status INTEGER NOT NULL DEFAULT 0,"
                                  "param1 REAL,param2 REAL,param3 REAL,param4 REAL,param5 REAL"
                                  ");";
-
-    m_db->execute(create_tab_sql);
-
-    const char *select_sql = "SELECT idx,security,type,status,param1,param2,param3,param4,param5 FROM strategy;";
-    SQLite3Stmt::ptr query = SQLite3Stmt::Create(m_db, select_sql);
-    if (!query) return false;
-
-    auto ds = query->query();
-    while (ds->next()) {
-        auto strategy = m_pool.Malloc<stStrategy>(sizeof(stStrategy));
-        memset(strategy, 0, sizeof(strategy));
-        strategy->idx = ds->getInt(0);
-        strcpy(strategy->SecurityID, ds->getText(1));
-        strategy->type = ds->getInt(2);
-        strategy->status = ds->getInt(3);
-        strategy->params.p1 = ds->getDouble(4);
-        strategy->params.p2 = ds->getDouble(5);
-        strategy->params.p3 = ds->getDouble(6);
-        strategy->params.p4 = ds->getDouble(7);
-        strategy->params.p5 = ds->getDouble(8);
-
-        if (m_strategys.find(strategy->SecurityID) == m_strategys.end())
-            m_strategys[strategy->SecurityID] = std::vector<stStrategy*>();
-        m_strategys[strategy->SecurityID].emplace_back(strategy);
-    }
     return true;
 }
 
 bool CApplication::AddStrategy(stStrategy& strategy) {
-    SQLite3Stmt::ptr stmt = SQLite3Stmt::Create(m_db,"insert into strategy(security,type,param1,param2,param3,param4,param5) values(?,?,?,?,?,?,?)");
-    if(!stmt) {
-        return false;
-    }
-
-    stmt->bind(1, strategy.SecurityID);
-    stmt->bind(2, strategy.type);
-    stmt->bind(3, strategy.params.p1);
-    stmt->bind(4, strategy.params.p2);
-    stmt->bind(5, strategy.params.p3);
-    stmt->bind(6, strategy.params.p4);
-    stmt->bind(7, strategy.params.p5);
-
-    if(stmt->execute() != SQLITE_OK) {
-        return false;
-    }
-    auto idx = m_db->getLastInsertId();
-    strategy.idx = (int)idx;
-
-    auto tmp = m_pool.Malloc<stStrategy>(sizeof(stStrategy));
-    memcpy(tmp, &strategy, sizeof(strategy));
-    m_strategys[tmp->SecurityID].emplace_back(tmp);
     return true;
 }
 
 bool CApplication::ModStrategy(stStrategy *strategy) {
-    SQLite3Stmt::ptr stmt = SQLite3Stmt::Create(m_db,"update strategy set status=1 where idx = ?");
-    if(!stmt) {
-        return false;
-    }
-    stmt->bind(1, strategy->idx);
-    if(stmt->execute() != SQLITE_OK) {
-        return false;
-    }
     return true;
 }

@@ -5,7 +5,6 @@
 #include <unordered_map>
 #include <boost/asio.hpp>
 
-#include "sqliteimpl.h"
 #include "MDL2Impl.h"
 #include "TDImpl.h"
 #include "MemoryPool.h"
@@ -39,14 +38,10 @@ public:
     bool m_isTest = true;
     bool m_isStrategyOpen = false;
     bool m_isSHNewversion = false;
-    bool m_isUseUnlockQueue = false;
-    int m_matchCore = 1;
     std::string m_dbFile;
     std::string m_TDAddr = "tcp://210.14.72.21:4400";
     std::string m_TDAccount = "00030557";
     std::string m_TDPassword = "17522830";
-    std::string m_shCpucore = "";
-    std::string m_szCpucore = "";
     //ceshi
     std::string m_testSHMDAddr = "tcp://210.14.72.17:16900";
     std::string m_testSZMDAddr = "tcp://210.14.72.17:6900";
@@ -65,7 +60,6 @@ private:
     PROTD::TDImpl *m_TD = nullptr;
     PROMD::MDL2Impl *m_shMD = nullptr;
     PROMD::MDL2Impl *m_szMD = nullptr;
-    SQLite3::ptr m_db = nullptr;
 };
 
 #endif //TEST_BALIBALI_H

@@ -21,27 +21,27 @@ namespace PROMD {
         m_stop = false;
         if (!m_pthread) {
             m_pthread = new std::thread(&MDL2Impl::Run, this);
-        #ifndef WIN32
-            cpu_set_t cpuset;
-            CPU_ZERO(&cpuset);
-            CPU_SET(m_pApp->m_matchCore, &cpuset);
-            int rc = pthread_setaffinity_np(m_pthread->native_handle(), sizeof(cpu_set_t), &cpuset);
-            if (rc != 0) {
-                printf("MD::Run thread bind failed[%d]\n", m_pApp->m_matchCore);
-            } else {
-                printf("MD::Run thread bind success[%d]\n", m_pApp->m_matchCore);
-            }
-        #endif
+        //#ifndef WIN32
+        //    cpu_set_t cpuset;
+        //    CPU_ZERO(&cpuset);
+        //    CPU_SET(m_pApp->m_matchCore, &cpuset);
+        //    int rc = pthread_setaffinity_np(m_pthread->native_handle(), sizeof(cpu_set_t), &cpuset);
+        //    if (rc != 0) {
+        //        printf("MD::Run thread bind failed[%d]\n", m_pApp->m_matchCore);
+        //    } else {
+        //        printf("MD::Run thread bind success[%d]\n", m_pApp->m_matchCore);
+        //    }
+        //#endif
         }
         if (isTest) { // tcp
             m_pApi = CTORATstpLev2MdApi::CreateTstpLev2MdApi();
             m_pApi->RegisterSpi(this);
             if (m_exchangeID == TORA_TSTP_EXD_SSE) {
                 m_pApi->RegisterFront((char *)m_pApp->m_testSHMDAddr.c_str());
-                m_pApi->Init(m_pApp->m_shCpucore.c_str());
+                m_pApi->Init();
             } else if (m_exchangeID == TORA_TSTP_EXD_SZSE) {
                 m_pApi->RegisterFront((char *)m_pApp->m_testSZMDAddr.c_str());
-                m_pApi->Init(m_pApp->m_szCpucore.c_str());
+                m_pApi->Init();
             } else {
                 return false;
             }
@@ -50,16 +50,15 @@ namespace PROMD {
             m_pApi->RegisterSpi(this);
             if (m_exchangeID == TORA_TSTP_EXD_SSE) {
                 m_pApi->RegisterMulticast((char *)m_pApp->m_shMDAddr.c_str(), (char*)m_pApp->m_shMDInterface.c_str(), nullptr);
-                m_pApi->Init(m_pApp->m_shCpucore.c_str());
+                m_pApi->Init();
             } else if (m_exchangeID == TORA_TSTP_EXD_SZSE) {
                 m_pApi->RegisterMulticast((char *)m_pApp->m_szMDAddr.c_str(), (char*)m_pApp->m_szMDInterface.c_str(), nullptr);
-                m_pApi->Init(m_pApp->m_szCpucore.c_str());
+                m_pApi->Init();
             } else {
                 return false;
             }
         }
-        printf("MD::Bind %s %s cpucore[%s]\n", isTest?"tcp":"udp", GetExchangeName(m_exchangeID),
-               m_exchangeID == TORA_TSTP_EXD_SSE?m_pApp->m_shCpucore.c_str():m_pApp->m_szCpucore.c_str());
+        printf("MD::Bind %s %s\n", isTest?"tcp":"udp", GetExchangeName(m_exchangeID));
         return true;
     }
 
@@ -131,12 +130,8 @@ namespace PROMD {
         data->ExchangeID = pOrderDetail->ExchangeID;
         data->OrderStatus = pOrderDetail->OrderStatus;
         m_addQueueCount++;
-        if (m_pApp->m_isUseUnlockQueue) {
-            m_data.push(data);
-        } else {
-            std::unique_lock<std::mutex> lock(m_dataMtx);
-            m_dataList.push_back(data);
-        }
+        std::unique_lock<std::mutex> lock(m_dataMtx);
+        m_dataList.push_back(data);
     }
 
     void MDL2Impl::OnRtnTransaction(CTORATstpLev2TransactionField *pTransaction) {
@@ -151,12 +146,8 @@ namespace PROMD {
         data->BuyNo = pTransaction->BuyNo;
         data->SellNo = pTransaction->SellNo;
         m_addQueueCount++;
-        if (m_pApp->m_isUseUnlockQueue) {
-            m_data.push(data);
-        } else {
-            std::unique_lock<std::mutex> lock(m_dataMtx);
-            m_dataList.push_back(data);
-        }
+        std::unique_lock<std::mutex> lock(m_dataMtx);
+        m_dataList.push_back(data);
     }
 
     void MDL2Impl::OnRtnNGTSTick(CTORATstpLev2NGTSTickField *pTick) {
@@ -172,48 +163,30 @@ namespace PROMD {
         data->SellNo = pTick->SellNo;
         data->ExchangeID = pTick->ExchangeID;
         m_addQueueCount++;
-        if (m_pApp->m_isUseUnlockQueue) {
-            m_data.push(data);
-        } else {
-            std::unique_lock<std::mutex> lock(m_dataMtx);
-            m_dataList.push_back(data);
-        }
+        std::unique_lock<std::mutex> lock(m_dataMtx);
+        m_dataList.push_back(data);
     }
 
     void MDL2Impl::Run() {
         while (!m_stop) {
-            if (m_pApp->m_isUseUnlockQueue) {
-                stNotifyData* data = nullptr;
-                m_data.pop(data);
-                if (data) {
-                    auto start = GetUs();
-                    HandleData(data);
-                    m_pool.Free(data, sizeof(stNotifyData));
-                    auto duration = GetUs() - start;
-                    if (duration <= 0) duration = 1; // default 1us
-                    m_delQueueCount++;
-                    m_handleTick += duration;
-                }
-            } else {
-                std::list<stNotifyData*> dataList;
-                {
-                    std::unique_lock<std::mutex> lock(m_dataMtx);
-                    if (m_dataList.empty()) continue;
-                    dataList.swap(m_dataList);
-                }
-
-                auto start = GetUs();
-                for (auto iter = dataList.begin(); iter != dataList.end(); ++iter) {
-                    auto data = *iter;
-                    if (!data) continue;
-                    HandleData(data);
-                    m_pool.Free(data, sizeof(stNotifyData));
-                    m_delQueueCount++;
-                }
-                auto duration = GetUs() - start;
-                if (duration <= 0) duration = 1; // default 1us
-                m_handleTick += duration;
+            std::list<stNotifyData*> dataList;
+            {
+                std::unique_lock<std::mutex> lock(m_dataMtx);
+                if (m_dataList.empty()) continue;
+                dataList.swap(m_dataList);
             }
+
+            auto start = GetUs();
+            for (auto iter = dataList.begin(); iter != dataList.end(); ++iter) {
+                auto data = *iter;
+                if (!data) continue;
+                HandleData(data);
+                m_pool.Free(data, sizeof(stNotifyData));
+                m_delQueueCount++;
+            }
+            auto duration = GetUs() - start;
+            if (duration <= 0) duration = 1; // default 1us
+            m_handleTick += duration;
         }
     }
 
@@ -449,7 +422,7 @@ namespace PROMD {
 
     void MDL2Impl::ShowHandleSpeed() {
         if (m_delQueueCount <= 0) return;
-        printf("%s %s %s %-9d %-9d %-9lld %.3fus %ld\n", m_pApp->m_isUseUnlockQueue?"L":"N", GetExchangeName(m_exchangeID), GetTimeStr().c_str(),
+        printf("%s %s %-9d %-9d %-9lld %.3fus %ld\n", GetExchangeName(m_exchangeID), GetTimeStr().c_str(),
                m_addQueueCount, m_delQueueCount, m_handleTick, (1.0*m_handleTick) / m_delQueueCount, m_pool.GetTotalCnt());
     }
 

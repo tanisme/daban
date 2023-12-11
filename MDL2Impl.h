@@ -4,7 +4,6 @@
 #include "defines.h"
 #include "MemoryPool.h"
 #include <memory>
-#include <boost/lockfree/spsc_queue.hpp>
 
 class CApplication;
 
@@ -55,7 +54,6 @@ namespace PROMD {
         MapOrderV m_orderSellV;
 
         std::atomic_bool m_stop;
-        boost::lockfree::spsc_queue<stNotifyData*, boost::lockfree::capacity<1024>> m_data;
         std::list<stNotifyData*> m_dataList;
         std::mutex m_dataMtx;
         std::thread* m_pthread = nullptr;
