@@ -121,44 +121,6 @@ void CApplication::MDOnInited(PROMD::TTORATstpExchangeIDType exchangeID) {
 void CApplication::MDPostPrice(stPostPrice& postPrice) {
     if (!m_TD || !m_TD->IsInited()) return;
     printf("MDPostPrice %s %lld %.2f|%.2f|%.2f %lld\n", postPrice.SecurityID, postPrice.AskVolume1, postPrice.AskPrice1, postPrice.TradePrice, postPrice.BidPrice1, postPrice.BidVolume1);
-
-    auto iterSecurity = m_TD->m_marketSecurity.find(postPrice.SecurityID);
-    if (iterSecurity == m_TD->m_marketSecurity.end()) return;
-    auto iterStrategy = m_strategys.find(postPrice.SecurityID);
-    if (iterStrategy == m_strategys.end()) return;
-
-    auto UpperLimitPrice = iterSecurity->second->UpperLimitPrice;
-    for (auto iter = iterStrategy->second.begin(); iter != iterStrategy->second.end(); ++iter) {
-        if ((*iter)->status == 1) continue;
-        auto rt = -1;
-        if ((*iter)->type == 1) {
-            auto price = (postPrice.TradePrice + 0.01) * (1 + (*iter)->params.p1);
-            if (price >= UpperLimitPrice + 0.000001) {
-                auto volume = (int)((*iter)->params.p2 / UpperLimitPrice);
-                rt = m_TD->OrderInsert(postPrice.SecurityID, iterSecurity->second->ExchangeID, PROMD::TORA_TSTP_LSD_Buy, volume, UpperLimitPrice);
-            }
-        } else if ((*iter)->type == 2) {
-            if (postPrice.AskPrice1 >= UpperLimitPrice) {
-                auto amount = postPrice.AskPrice1 * postPrice.AskVolume1;
-                if (amount < (*iter)->params.p1) {
-                    auto volume = (int)(*iter)->params.p2 / UpperLimitPrice;
-                    rt = m_TD->OrderInsert(postPrice.SecurityID, iterSecurity->second->ExchangeID, PROMD::TORA_TSTP_LSD_Buy, volume, UpperLimitPrice);
-                }
-            }
-        } else if ((*iter)->type == 3) {
-            if (postPrice.AskPrice1 <= 0.00001 && postPrice.AskVolume1 == 0) {
-                auto amount = postPrice.BidPrice1 * postPrice.BidVolume1;
-                if (amount > (*iter)->params.p1) {
-                    auto volume = (int)(*iter)->params.p2 / UpperLimitPrice;
-                    rt = m_TD->OrderInsert(postPrice.SecurityID, iterSecurity->second->ExchangeID, PROMD::TORA_TSTP_LSD_Buy, volume, UpperLimitPrice);
-                }
-            }
-        }
-        if (rt == 0) {
-            (*iter)->status = 1;
-            ModStrategy(*iter);
-        }
-    }
 }
 
 /***************************************TD***************************************/
@@ -166,31 +128,11 @@ void CApplication::TDOnInited() {
     auto iterSH = m_supportExchangeID.find(PROMD::TORA_TSTP_EXD_SSE);
     if (iterSH != m_supportExchangeID.end() && !m_shMD) {
         m_shMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SSE);
-        m_shMD->Start(m_isTest);
+        m_shMD->Start();
     }
     auto iterSZ = m_supportExchangeID.find(PROMD::TORA_TSTP_EXD_SZSE);
     if (iterSZ != m_supportExchangeID.end() && !m_szMD) {
         m_szMD = new PROMD::MDL2Impl(this, PROMD::TORA_TSTP_EXD_SZSE);
-        m_szMD->Start(m_isTest);
+        m_szMD->Start();
     }
-}
-
-/*************************************Http****************************************/
-bool CApplication::LoadStrategy() {
-    const char *create_tab_sql = "CREATE TABLE IF NOT EXISTS strategy("
-                                 "idx INTEGER PRIMARY KEY AUTOINCREMENT,"
-                                 "security CHAR(32) NOT NULL,"
-                                 "type INTEGER NOT NULL DEFAULT 0,"
-                                 "status INTEGER NOT NULL DEFAULT 0,"
-                                 "param1 REAL,param2 REAL,param3 REAL,param4 REAL,param5 REAL"
-                                 ");";
-    return true;
-}
-
-bool CApplication::AddStrategy(stStrategy& strategy) {
-    return true;
-}
-
-bool CApplication::ModStrategy(stStrategy *strategy) {
-    return true;
 }

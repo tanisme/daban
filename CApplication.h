@@ -30,22 +30,10 @@ public:
     boost::asio::deadline_timer m_timer;
 
 public:
-    bool LoadStrategy();
-    bool AddStrategy(stStrategy & strategy);
-    bool ModStrategy(stStrategy* strategy);
-
-public:
-    bool m_isTest = true;
-    bool m_isStrategyOpen = false;
     bool m_isSHNewversion = false;
-    std::string m_dbFile;
     std::string m_TDAddr = "tcp://210.14.72.21:4400";
     std::string m_TDAccount = "00030557";
     std::string m_TDPassword = "17522830";
-    //ceshi
-    std::string m_testSHMDAddr = "tcp://210.14.72.17:16900";
-    std::string m_testSZMDAddr = "tcp://210.14.72.17:6900";
-    //shipan
     std::string m_shMDAddr = "tcp://210.14.72.17:16900";
     std::string m_shMDInterface = "tcp://210.14.72.17:16900";
     std::string m_szMDAddr = "tcp://210.14.72.17:16900";
@@ -54,8 +42,6 @@ public:
     MemoryPool m_pool;
     std::unordered_map<PROMD::TTORATstpExchangeIDType, bool> m_supportExchangeID;
     std::unordered_map<std::string, stSecurity*> m_watchSecurity;
-    std::unordered_map<std::string, std::vector<stStrategy*> > m_strategys;
-
 private:
     PROTD::TDImpl *m_TD = nullptr;
     PROMD::MDL2Impl *m_shMD = nullptr;

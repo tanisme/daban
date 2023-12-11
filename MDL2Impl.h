@@ -15,7 +15,7 @@ namespace PROMD {
         explicit MDL2Impl(CApplication *pApp, TTORATstpExchangeIDType ExchangeID);
         ~MDL2Impl();
 
-        bool Start(bool isTest);
+        bool Start();
         int ReqMarketData(TTORATstpSecurityIDType SecurityID, TTORATstpExchangeIDType ExchangeID, int type, bool isSub = true);
         void ShowOrderBookV(TTORATstpSecurityIDType SecurityID);
         void ShowHandleSpeed();

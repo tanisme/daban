@@ -17,48 +17,22 @@ namespace PROMD {
         }
     }
 
-    bool MDL2Impl::Start(bool isTest) {
+    bool MDL2Impl::Start() {
         m_stop = false;
         if (!m_pthread) {
             m_pthread = new std::thread(&MDL2Impl::Run, this);
-        //#ifndef WIN32
-        //    cpu_set_t cpuset;
-        //    CPU_ZERO(&cpuset);
-        //    CPU_SET(m_pApp->m_matchCore, &cpuset);
-        //    int rc = pthread_setaffinity_np(m_pthread->native_handle(), sizeof(cpu_set_t), &cpuset);
-        //    if (rc != 0) {
-        //        printf("MD::Run thread bind failed[%d]\n", m_pApp->m_matchCore);
-        //    } else {
-        //        printf("MD::Run thread bind success[%d]\n", m_pApp->m_matchCore);
-        //    }
-        //#endif
         }
-        if (isTest) { // tcp
-            m_pApi = CTORATstpLev2MdApi::CreateTstpLev2MdApi();
-            m_pApi->RegisterSpi(this);
-            if (m_exchangeID == TORA_TSTP_EXD_SSE) {
-                m_pApi->RegisterFront((char *)m_pApp->m_testSHMDAddr.c_str());
-                m_pApi->Init();
-            } else if (m_exchangeID == TORA_TSTP_EXD_SZSE) {
-                m_pApi->RegisterFront((char *)m_pApp->m_testSZMDAddr.c_str());
-                m_pApi->Init();
-            } else {
-                return false;
-            }
-        } else { // udp
-            m_pApi = CTORATstpLev2MdApi::CreateTstpLev2MdApi(TORA_TSTP_MST_MCAST);
-            m_pApi->RegisterSpi(this);
-            if (m_exchangeID == TORA_TSTP_EXD_SSE) {
-                m_pApi->RegisterMulticast((char *)m_pApp->m_shMDAddr.c_str(), (char*)m_pApp->m_shMDInterface.c_str(), nullptr);
-                m_pApi->Init();
-            } else if (m_exchangeID == TORA_TSTP_EXD_SZSE) {
-                m_pApi->RegisterMulticast((char *)m_pApp->m_szMDAddr.c_str(), (char*)m_pApp->m_szMDInterface.c_str(), nullptr);
-                m_pApi->Init();
-            } else {
-                return false;
-            }
+        m_pApi = CTORATstpLev2MdApi::CreateTstpLev2MdApi(TORA_TSTP_MST_MCAST);
+        m_pApi->RegisterSpi(this);
+        if (m_exchangeID == TORA_TSTP_EXD_SSE) {
+            m_pApi->RegisterMulticast((char *)m_pApp->m_shMDAddr.c_str(), (char*)m_pApp->m_shMDInterface.c_str(), nullptr);
+            m_pApi->Init();
+        } else if (m_exchangeID == TORA_TSTP_EXD_SZSE) {
+            m_pApi->RegisterMulticast((char *)m_pApp->m_szMDAddr.c_str(), (char*)m_pApp->m_szMDInterface.c_str(), nullptr);
+            m_pApi->Init();
+        } else {
+            return false;
         }
-        printf("MD::Bind %s %s\n", isTest?"tcp":"udp", GetExchangeName(m_exchangeID));
         return true;
     }
 
@@ -119,7 +93,7 @@ namespace PROMD {
     }
 
     void MDL2Impl::OnRtnOrderDetail(CTORATstpLev2OrderDetailField *pOrderDetail) {
-        if (!pOrderDetail) return;
+        if (!pOrderDetail || pOrderDetail->OrderType == TORA_TSTP_LOT_Market) return;
         auto data = m_pool.Malloc<stNotifyData>(sizeof(stNotifyData));
         data->type = 1;
         strcpy(data->SecurityID, pOrderDetail->SecurityID);
@@ -226,7 +200,7 @@ namespace PROMD {
                 auto BuyPrice = ModifyOrderV(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
                 auto SellPrice = ModifyOrderV(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
                 FixOrderV(SecurityID, BuyNo, BuyPrice, SellNo, SellPrice);
-                PostPriceV(SecurityID, TradePrice);
+                //PostPriceV(SecurityID, TradePrice);
             } else if (ExecType == TORA_TSTP_ECT_Cancel) {
                 if (BuyNo > 0) {
                     ModifyOrderV(SecurityID, 0, BuyNo, TORA_TSTP_LSD_Buy);
@@ -239,7 +213,7 @@ namespace PROMD {
             auto BuyPrice = ModifyOrderV(SecurityID, TradeVolume, BuyNo, TORA_TSTP_LSD_Buy);
             auto SellPrice = ModifyOrderV(SecurityID, TradeVolume, SellNo, TORA_TSTP_LSD_Sell);
             FixOrderV(SecurityID, BuyNo, BuyPrice, SellNo, SellPrice);
-            PostPriceV(SecurityID, TradePrice);
+            //PostPriceV(SecurityID, TradePrice);
         }
     }
 
@@ -255,7 +229,7 @@ namespace PROMD {
                 auto BuyPrice = ModifyOrderV(SecurityID, Volume, BuyNo, TORA_TSTP_LSD_Buy);
                 auto SellPrice = ModifyOrderV(SecurityID, Volume, SellNo, TORA_TSTP_LSD_Sell);
                 FixOrderV(SecurityID, BuyNo, BuyPrice, SellNo, SellPrice);
-                PostPriceV(SecurityID, Price);
+                //PostPriceV(SecurityID, Price);
 			}
 		}
 	}
@@ -476,7 +450,7 @@ namespace PROMD {
     }
 
     void MDL2Impl::PostPriceV(TTORATstpSecurityIDType SecurityID, TTORATstpPriceType Price) {
-        if (!m_pApp || !m_pApp->m_isStrategyOpen) return;
+        if (!m_pApp) return;
 
         TTORATstpPriceType BidPrice1 = 0.0;
         TTORATstpLongVolumeType BidVolume1 = 0;

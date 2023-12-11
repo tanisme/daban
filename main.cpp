@@ -532,24 +532,18 @@
 
 int main() {
     std::string cfgfile = "daban.ini";
-    bool istest = true, isstrategyopen = false, isshnewversion = false, createfile = false;
-    std::string dbfile = "database.db", currentexchangeid = "";
-    std::string testshmdaddr = "", testszmdaddr = "", shmdaddr = "", shmdinterface = "", szmdaddr = "", szmdinterface = "";
+    bool isshnewversion = false, createfile = false;
+    std::string currentexchangeid = "", shmdaddr = "", shmdinterface = "", szmdaddr = "", szmdinterface = "";
     std::string tdaddr = "", tdaccount = "", tdpassword = "";
     std::string srcdatapath = "", watchsecurity = "";
     boost::program_options::options_description cfgdesc("Config file options");
     cfgdesc.add_options()
-            ("daban.istest", boost::program_options::value<bool>(&istest), "daban.istest")
-            ("daban.isstrategyopen", boost::program_options::value<bool>(&isstrategyopen), "daban.isstrategyopen")
             ("daban.isshnewversion", boost::program_options::value<bool>(&isshnewversion), "daban.isshnewversion")
             ("daban.currentexchangeid", boost::program_options::value<std::string>(&currentexchangeid), "daban.currentexchangeid")
-            ("daban.dbfile", boost::program_options::value<std::string>(&dbfile), "daban.dbfile")
             ("daban.tdaddr", boost::program_options::value<std::string>(&tdaddr), "daban.tdaddr")
             ("daban.tdaccount", boost::program_options::value<std::string>(&tdaccount), "daban.tdaccount")
             ("daban.tdpassword", boost::program_options::value<std::string>(&tdpassword), "daban.tdpassword")
             ("daban.watchsecurity", boost::program_options::value<std::string>(&watchsecurity), "daban.watchsecurity")
-            ("ceshi.testshmdaddr", boost::program_options::value<std::string>(&testshmdaddr), "ceshi.testshmdaddr")
-            ("ceshi.testszmdaddr", boost::program_options::value<std::string>(&testszmdaddr), "ceshi.testszmdaddr")
             ("shipan.shmdaddr", boost::program_options::value<std::string>(&shmdaddr), "shipan.shmdaddr")
             ("shipan.shmdinterface", boost::program_options::value<std::string>(&shmdinterface), "shipan.shmdinterface")
             ("shipan.szmdaddr", boost::program_options::value<std::string>(&szmdaddr), "shipan.szmdaddr")
@@ -579,15 +573,10 @@ int main() {
 
     boost::asio::io_context io_context;
     CApplication app(io_context);
-    app.m_isTest = istest;
-    app.m_isStrategyOpen = isstrategyopen;
     app.m_isSHNewversion = isshnewversion;
-    app.m_dbFile = dbfile;
     app.m_TDAddr = tdaddr;
     app.m_TDAccount = tdaccount;
     app.m_TDPassword = tdpassword;
-    app.m_testSHMDAddr = testshmdaddr;
-    app.m_testSZMDAddr = testszmdaddr;
     app.m_shMDAddr = shmdaddr;
     app.m_shMDInterface = shmdinterface;
     app.m_szMDAddr = szmdaddr;

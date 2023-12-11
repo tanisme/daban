@@ -173,8 +173,15 @@ namespace test {
                     std::string OrderType = res.at(7);
                     std::string OrderNo = res.at(13);
                     std::string OrderStatus = res.at(14);
-                    m_md->OrderDetail((char*)SecurityID.c_str(), Side.c_str()[0],
-                                      atoll(OrderNo.c_str()), atof(Price.c_str()), atol(Volume.c_str()), ExchangeID.c_str()[0], OrderStatus.c_str()[0]);
+                    if (ExchangeID.c_str()[0] == PROMD::TORA_TSTP_EXD_SZSE) {
+                        if (OrderType.c_str()[0] != PROMD::TORA_TSTP_LOT_Market) {
+                            m_md->OrderDetail((char*)SecurityID.c_str(), Side.c_str()[0],
+                                              atoll(OrderNo.c_str()), atof(Price.c_str()), atol(Volume.c_str()), ExchangeID.c_str()[0], OrderStatus.c_str()[0]);
+                        }
+                    } else {
+                        m_md->OrderDetail((char*)SecurityID.c_str(), Side.c_str()[0],
+                                          atoll(OrderNo.c_str()), atof(Price.c_str()), atol(Volume.c_str()), ExchangeID.c_str()[0], OrderStatus.c_str()[0]);
+                    }
                 } else if (res.at(0) == "T") {
                     std::string TradePrice = res.at(4);
                     std::string TradeVolume = res.at(5);
