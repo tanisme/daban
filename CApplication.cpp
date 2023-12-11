@@ -54,7 +54,7 @@ bool CApplication::Init(std::string& watchSecurity, std::string& currentExchange
 void CApplication::Start() {
     if (!m_TD) {
         m_TD = new PROTD::TDImpl(this);
-        m_TD->Start(m_isTest);
+        m_TD->Start();
     }
 
     m_timer.expires_from_now(boost::posix_time::milliseconds(5000));

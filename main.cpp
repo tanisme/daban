@@ -533,8 +533,7 @@
 int main() {
     std::string cfgfile = "daban.ini";
     bool istest = true, isstrategyopen = false, isshnewversion = false, createfile = false;
-    std::string dbfile = "database.db";
-    std::string currentexchangeid = "";
+    std::string dbfile = "database.db", currentexchangeid = "";
     std::string testshmdaddr = "", testszmdaddr = "", shmdaddr = "", shmdinterface = "", szmdaddr = "", szmdinterface = "";
     std::string tdaddr = "", tdaccount = "", tdpassword = "";
     std::string srcdatapath = "", watchsecurity = "";
@@ -573,7 +572,7 @@ int main() {
     if (srcdatapath.length() > 0) {
         printf("-------------------该程序功能为生成订单簿-------------------\n");
         test::Imitate imitate;
-        imitate.TestOrderBook(srcdatapath, watchsecurity, createfile);
+        imitate.TestOrderBook(srcdatapath, watchsecurity, createfile, true);
         printf("-------------------生成所有合约订单簿完成-------------------\n");
         return 0;
     }

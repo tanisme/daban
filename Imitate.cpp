@@ -132,7 +132,7 @@ namespace test {
         return cnt;
     }
 
-    bool Imitate::TestOrderBook(std::string& srcDataDir, std::string& watchsecurity, bool createfile, bool isusevec) {
+    bool Imitate::TestOrderBook(std::string& srcDataDir, std::string& watchsecurity, bool createfile, bool isotherfile) {
         m_md = new PROMD::MDL2Impl(nullptr, PROMD::TORA_TSTP_EXD_COMM);
         trim(watchsecurity);
         if (watchsecurity.length() <= 0) {
@@ -142,52 +142,104 @@ namespace test {
 
         std::vector<std::string> tempSecurity;
         Stringsplit(watchsecurity, ',', tempSecurity);
-
-        std::string dstDataDir = srcDataDir + "/result/";
-        boost::filesystem::path path(dstDataDir);
-        if (!boost::filesystem::exists(dstDataDir)) {
-            boost::filesystem::create_directories(dstDataDir);
+        std::unordered_map<std::string, bool> Securitys;
+        for (auto it : tempSecurity) {
+            Securitys[it] = true;
         }
 
-        {
-            printf("-------------------------------------------------------------------\n");
-            if (createfile) {
-                printf("开始分离文件 %s\n", GetTimeStr().c_str());
-                auto orderCnt = 0, tradeCnt = 0;
-                for (auto iter : tempSecurity) {
-                    std::string orderFileName = dstDataDir + iter + "_o.txt";
-                    std::string tradeFileName = dstDataDir + iter + "_t.txt";
-                    FILE *opf = fopen(orderFileName.c_str(), "w+");
-                    if (!opf) {
-                        printf("打开订单%s文件失败\n", orderFileName.c_str());
-                        return false;
-                    }
-                    FILE *tpf = fopen(tradeFileName.c_str(), "w+");
-                    if (!tpf) {
-                        printf("打开成交%s文件失败\n", tradeFileName.c_str());
-                        fclose(opf);
-                        return false;
-                    }
-                    m_watchOrderFILE[iter] = opf;
-                    m_watchTradeFILE[iter] = tpf;
-                }
-                orderCnt = SplitSecurityFile(srcDataDir, true);
-                tradeCnt = SplitSecurityFile(srcDataDir, false);
-                for (auto iter = m_watchOrderFILE.begin(); iter != m_watchOrderFILE.end(); ++iter) if (iter->second) fclose(iter->second);
-                for (auto iter = m_watchTradeFILE.begin(); iter != m_watchTradeFILE.end(); ++iter) if (iter->second) fclose(iter->second);
-                printf("分离文件完成 订单数量:%d 成交数量:%d\n", orderCnt, tradeCnt);
+        if (isotherfile) {
+            std::string file = srcDataDir + "/20231110.csv";
+            std::ifstream ifs(file, std::ios::in);
+            if (!ifs.is_open()) {
+                printf("otherfile.csv open failed!!! path%s\n", file.c_str());
+                return false;
             }
 
-            auto bt = GetUs();
-            printf("开始生成订单簿 %s\n", GetTimeStr().c_str());
-            int cnt = 0;
-            for (auto iter : tempSecurity) {
-                cnt += SplitSecurityFileOrderQuot(dstDataDir, (char*)iter.c_str());
-                cnt += SplitSecurityFileTradeQuot(dstDataDir, (char*)iter.c_str());
+            int i = 0;
+            std::string line;
+            std::vector<std::string> res;
+            while (std::getline(ifs, line)) {
+                res.clear();
+                trim(line);
+                Stringsplit(line, ',', res);
+                std::string SecurityID = res.at(2);
+                if (Securitys.find(SecurityID) == Securitys.end()) continue;
+                std::string ExchangeID = res.at(3);
+
+                if (res.at(0) == "O") {
+                    std::string Price = res.at(4);
+                    std::string Volume = res.at(5);
+                    std::string Side = res.at(6);
+                    std::string OrderType = res.at(7);
+                    std::string OrderNo = res.at(13);
+                    std::string OrderStatus = res.at(14);
+                    m_md->OrderDetail((char*)SecurityID.c_str(), Side.c_str()[0],
+                                      atoll(OrderNo.c_str()), atof(Price.c_str()), atol(Volume.c_str()), ExchangeID.c_str()[0], OrderStatus.c_str()[0]);
+                } else if (res.at(0) == "T") {
+                    std::string TradePrice = res.at(4);
+                    std::string TradeVolume = res.at(5);
+                    std::string ExecType = res.at(6);
+                    std::string BuyNo = res.at(9);
+                    std::string SellNo = res.at(10);
+                    m_md->Transaction((char*)SecurityID.c_str(), ExchangeID.c_str()[0],
+                                      atoll(TradeVolume.c_str()), ExecType.c_str()[0],
+                                      atoll(BuyNo.c_str()), atoll(SellNo.c_str()),
+                                      atof(TradePrice.c_str()), 0);
+                }
+                i++;
             }
-            auto duration = GetUs() - bt;
-            printf("生成订单簿完成 总数量:%d 耗时%d微秒 平均耗时:%.3f\n", (int)duration, cnt, duration*1.0/cnt);
-            printf("-------------------------------------------------------------------\n");
+            for (auto it : Securitys) {
+                m_md->ShowOrderBookV((char*)it.first.c_str());
+            }
+
+            ifs.close();
+        } else {
+            std::string dstDataDir = srcDataDir + "/result/";
+            boost::filesystem::path path(dstDataDir);
+            if (!boost::filesystem::exists(dstDataDir)) {
+                boost::filesystem::create_directories(dstDataDir);
+            }
+
+            {
+                printf("-------------------------------------------------------------------\n");
+                if (createfile) {
+                    printf("开始分离文件 %s\n", GetTimeStr().c_str());
+                    auto orderCnt = 0, tradeCnt = 0;
+                    for (auto iter : tempSecurity) {
+                        std::string orderFileName = dstDataDir + iter + "_o.txt";
+                        std::string tradeFileName = dstDataDir + iter + "_t.txt";
+                        FILE *opf = fopen(orderFileName.c_str(), "w+");
+                        if (!opf) {
+                            printf("打开订单%s文件失败\n", orderFileName.c_str());
+                            return false;
+                        }
+                        FILE *tpf = fopen(tradeFileName.c_str(), "w+");
+                        if (!tpf) {
+                            printf("打开成交%s文件失败\n", tradeFileName.c_str());
+                            fclose(opf);
+                            return false;
+                        }
+                        m_watchOrderFILE[iter] = opf;
+                        m_watchTradeFILE[iter] = tpf;
+                    }
+                    orderCnt = SplitSecurityFile(srcDataDir, true);
+                    tradeCnt = SplitSecurityFile(srcDataDir, false);
+                    for (auto iter = m_watchOrderFILE.begin(); iter != m_watchOrderFILE.end(); ++iter) if (iter->second) fclose(iter->second);
+                    for (auto iter = m_watchTradeFILE.begin(); iter != m_watchTradeFILE.end(); ++iter) if (iter->second) fclose(iter->second);
+                    printf("分离文件完成 订单数量:%d 成交数量:%d\n", orderCnt, tradeCnt);
+                }
+
+                auto bt = GetUs();
+                printf("开始生成订单簿 %s\n", GetTimeStr().c_str());
+                int cnt = 0;
+                for (auto iter : tempSecurity) {
+                    cnt += SplitSecurityFileOrderQuot(dstDataDir, (char*)iter.c_str());
+                    cnt += SplitSecurityFileTradeQuot(dstDataDir, (char*)iter.c_str());
+                }
+                auto duration = GetUs() - bt;
+                printf("生成订单簿完成 总数量:%d 耗时%d微秒 平均耗时:%.3f\n", (int)duration, cnt, duration*1.0/cnt);
+                printf("-------------------------------------------------------------------\n");
+            }
         }
 
         if (m_md) {
