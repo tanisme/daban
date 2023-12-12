@@ -36,6 +36,7 @@ struct stPriceOrders {
     std::vector<stOrder*> Orders;
 };
 typedef std::unordered_map<std::string, std::vector<stPriceOrders> > MapOrderV;
+typedef std::vector<std::vector<stPriceOrders>> MapOrderN;
 
 struct stPostPrice {
     TORALEV2API::TTORATstpSecurityIDType SecurityID;
@@ -53,6 +54,8 @@ struct stSecurity {
     TORASTOCKAPI::TTORATstpSecurityTypeType SecurityType;
     TORASTOCKAPI::TTORATstpPriceType UpperLimitPrice;
     TORASTOCKAPI::TTORATstpPriceType LowerLimitPrice;
+    TORASTOCKAPI::TTORATstpPriceTickType PriceTick;
+    int TotalIndex = 0;
 };
 
 struct stNotifyData {

@@ -3,7 +3,6 @@
 #include <boost/program_options.hpp>
 
 #include "CApplication.h"
-#include "Imitate.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////
 //#include <clickhouse/client.h>
@@ -532,22 +531,21 @@
 
 int main() {
     std::string cfgfile = "daban.ini";
-    bool isshnewversion = false, createfile = false;
-    std::string currentexchangeid = "", shmdaddr = "", shmdinterface = "", szmdaddr = "", szmdinterface = "";
+    bool istest = true, isshexchange = true, isshnewversion = false, createfile = false;
+    std::string mdaddr = "", mdinterface = "";
     std::string tdaddr = "", tdaccount = "", tdpassword = "";
     std::string srcdatapath = "", watchsecurity = "";
     boost::program_options::options_description cfgdesc("Config file options");
     cfgdesc.add_options()
+            ("daban.istest", boost::program_options::value<bool>(&istest), "daban.istest")
+            ("daban.isshexchange", boost::program_options::value<bool>(&isshexchange), "daban.isshexchange")
             ("daban.isshnewversion", boost::program_options::value<bool>(&isshnewversion), "daban.isshnewversion")
-            ("daban.currentexchangeid", boost::program_options::value<std::string>(&currentexchangeid), "daban.currentexchangeid")
             ("daban.tdaddr", boost::program_options::value<std::string>(&tdaddr), "daban.tdaddr")
             ("daban.tdaccount", boost::program_options::value<std::string>(&tdaccount), "daban.tdaccount")
             ("daban.tdpassword", boost::program_options::value<std::string>(&tdpassword), "daban.tdpassword")
             ("daban.watchsecurity", boost::program_options::value<std::string>(&watchsecurity), "daban.watchsecurity")
-            ("shipan.shmdaddr", boost::program_options::value<std::string>(&shmdaddr), "shipan.shmdaddr")
-            ("shipan.shmdinterface", boost::program_options::value<std::string>(&shmdinterface), "shipan.shmdinterface")
-            ("shipan.szmdaddr", boost::program_options::value<std::string>(&szmdaddr), "shipan.szmdaddr")
-            ("shipan.szmdinterface", boost::program_options::value<std::string>(&szmdinterface), "shipan.szmdinterface")
+            ("shipan.mdaddr", boost::program_options::value<std::string>(&mdaddr), "shipan.mdaddr")
+            ("shipan.mdinterface", boost::program_options::value<std::string>(&mdinterface), "shipan.mdinterface")
             ("csvfile.createfile", boost::program_options::value<bool>(&createfile), "csvfile.createfile")
             ("csvfile.srcdatapath", boost::program_options::value<std::string>(&srcdatapath), "csvfile.srcdatapath");
     boost::program_options::variables_map vm;
@@ -563,25 +561,19 @@ int main() {
     ifs.close();
     vm.clear();
 
-    if (srcdatapath.length() > 0) {
-        printf("-------------------该程序功能为生成订单簿-------------------\n");
-        test::Imitate imitate;
-        imitate.TestOrderBook(srcdatapath, watchsecurity, createfile, true);
-        printf("-------------------生成所有合约订单簿完成-------------------\n");
-        return 0;
-    }
-
     boost::asio::io_context io_context;
     CApplication app(io_context);
+    app.m_isTest = istest;
+    app.m_isSHExchange = isshexchange;
     app.m_isSHNewversion = isshnewversion;
     app.m_TDAddr = tdaddr;
     app.m_TDAccount = tdaccount;
     app.m_TDPassword = tdpassword;
-    app.m_shMDAddr = shmdaddr;
-    app.m_shMDInterface = shmdinterface;
-    app.m_szMDAddr = szmdaddr;
-    app.m_szMDInterface = szmdinterface;
-    app.Init(watchsecurity, currentexchangeid);
+    app.m_MDAddr = mdaddr;
+    app.m_MDInterface = mdinterface;
+    app.m_createFile = createfile;
+    app.m_dataDir = srcdatapath;
+    app.Init(watchsecurity);
 
     app.Start();
     io_context.run();

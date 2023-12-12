@@ -32,9 +32,9 @@ namespace test {
             std::string OrderStatus = res.at(13);                           //订单状态
 
             //if (ExchangeID.c_str()[0] == PROMD::TORA_TSTP_EXD_SZSE) {
-                m_md->OrderDetail(SecurityID, Side.c_str()[0], atoll(OrderNO.c_str()),
-                                  atof(Price.c_str()), atoll(Volume.c_str()), ExchangeID.c_str()[0],
-                                  OrderStatus.c_str()[0]);
+                //m_md->OrderDetail(SecurityID, Side.c_str()[0], atoll(OrderNO.c_str()),
+                //                  atof(Price.c_str()), atoll(Volume.c_str()), ExchangeID.c_str()[0],
+                //                  OrderStatus.c_str()[0]);
             //} else if (ExchangeID.c_str()[0] == PROMD::TORA_TSTP_EXD_SSE){
             //    m_md->NGTSTick(SecurityID, data->TickType, data->BuyNo, data->SellNo, data->Price, data->Volume, data->Side, 0);
             //}
@@ -69,14 +69,14 @@ namespace test {
             std::string ExecType = res.at(5);                                   //成交类别（只有深圳行情有效）
             std::string BuyNo = res.at(8);                                      //买方委托序号
             std::string SellNo = res.at(9);                                     //卖方委托序号
-            m_md->Transaction(SecurityID, ExchangeID.c_str()[0], atoll(TradeVolume.c_str()),
-                              ExecType.c_str()[0], atoll(BuyNo.c_str()), atoll(SellNo.c_str()),
-                              atof(TradePrice.c_str()), atoi(TradeTime.c_str()));
+//            m_md->Transaction(SecurityID, ExchangeID.c_str()[0], atoll(TradeVolume.c_str()),
+//                              ExecType.c_str()[0], atoll(BuyNo.c_str()), atoll(SellNo.c_str()),
+//                              atof(TradePrice.c_str()), atoi(TradeTime.c_str()));
             i++;
         }
         ifs.close();
         printf("生成%s订单簿 处理完成所有成交 共%d条\n", SecurityID, i);
-        m_md->ShowOrderBookV(SecurityID);
+//        m_md->ShowOrderBookV(SecurityID);
         return i;
     }
 
@@ -175,12 +175,14 @@ namespace test {
                     std::string OrderStatus = res.at(14);
                     if (ExchangeID.c_str()[0] == PROMD::TORA_TSTP_EXD_SZSE) {
                         if (OrderType.c_str()[0] != PROMD::TORA_TSTP_LOT_Market) {
-                            m_md->OrderDetail((char*)SecurityID.c_str(), Side.c_str()[0],
-                                              atoll(OrderNo.c_str()), atof(Price.c_str()), atol(Volume.c_str()), ExchangeID.c_str()[0], OrderStatus.c_str()[0]);
+//                            m_md->OrderDetail((char*)SecurityID.c_str(), Side.c_str()[0],
+//                                              atoll(OrderNo.c_str()), atof(Price.c_str()), atol(Volume.c_str()), ExchangeID.c_str()[0], OrderStatus.c_str()[0]);
+                        } else {
+                            printf("%s 市价单 OrderNO:%s\n", SecurityID.c_str(), OrderNo.c_str());
                         }
                     } else {
-                        m_md->OrderDetail((char*)SecurityID.c_str(), Side.c_str()[0],
-                                          atoll(OrderNo.c_str()), atof(Price.c_str()), atol(Volume.c_str()), ExchangeID.c_str()[0], OrderStatus.c_str()[0]);
+//                        m_md->OrderDetail((char*)SecurityID.c_str(), Side.c_str()[0],
+//                                          atoll(OrderNo.c_str()), atof(Price.c_str()), atol(Volume.c_str()), ExchangeID.c_str()[0], OrderStatus.c_str()[0]);
                     }
                 } else if (res.at(0) == "T") {
                     std::string TradePrice = res.at(4);
@@ -188,15 +190,15 @@ namespace test {
                     std::string ExecType = res.at(6);
                     std::string BuyNo = res.at(9);
                     std::string SellNo = res.at(10);
-                    m_md->Transaction((char*)SecurityID.c_str(), ExchangeID.c_str()[0],
-                                      atoll(TradeVolume.c_str()), ExecType.c_str()[0],
-                                      atoll(BuyNo.c_str()), atoll(SellNo.c_str()),
-                                      atof(TradePrice.c_str()), 0);
+//                    m_md->Transaction((char*)SecurityID.c_str(), ExchangeID.c_str()[0],
+//                                      atoll(TradeVolume.c_str()), ExecType.c_str()[0],
+//                                      atoll(BuyNo.c_str()), atoll(SellNo.c_str()),
+//                                      atof(TradePrice.c_str()), 0);
                 }
                 i++;
             }
             for (auto it : Securitys) {
-                m_md->ShowOrderBookV((char*)it.first.c_str());
+//                m_md->ShowOrderBookV((char*)it.first.c_str());
             }
 
             ifs.close();
@@ -250,8 +252,8 @@ namespace test {
         }
 
         if (m_md) {
-            m_md->GetApi()->Join();
-            m_md->GetApi()->Release();
+            m_md->Api()->Join();
+            m_md->Api()->Release();
             delete m_md;
         }
         return true;
