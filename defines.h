@@ -9,21 +9,11 @@
 #include <vector>
 #include <list>
 #include <thread>
+#include <atomic>
 
 #include <boost/bind/bind.hpp>
 #include "TORA/TORATstpLev2MdApi.h"
 #include "TORA/TORATstpTraderApi.h"
-
-struct stStrategy {
-    int idx;
-    TORALEV2API::TTORATstpSecurityIDType SecurityID;
-    int type;
-    int status; // executed
-    struct stParams {
-        double p1; double p2; double p3; double p4; double p5;
-    };
-    stParams params;
-};
 
 struct stOrder {
     TORALEV2API::TTORATstpLongSequenceType OrderNo;
