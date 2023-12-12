@@ -19,7 +19,7 @@ CApplication::~CApplication() {
     }
 }
 
-bool CApplication::Init(std::string& watchSecurity) {
+void CApplication::Init(std::string& watchSecurity) {
     trim(watchSecurity);
     std::vector<std::string> vtSecurity;
     Stringsplit(watchSecurity, ',', vtSecurity);
@@ -28,7 +28,6 @@ bool CApplication::Init(std::string& watchSecurity) {
         strcpy(security->SecurityID, iter.c_str());
         m_watchSecurity[security->SecurityID] = security;
     }
-    return true;
 }
 
 void CApplication::Start() {
@@ -60,24 +59,16 @@ void CApplication::OnTime(const boost::system::error_code& error) {
 void CApplication::MDOnInitFinished(PROMD::TTORATstpExchangeIDType ExchangeID) {
     auto cnt = 0;
     for (auto &iter: m_marketSecurity) {
-        if (ExchangeID == iter.second->ExchangeID &&
-            (iter.second->SecurityType == PROTD::TORA_TSTP_STP_SHAShares ||
-             //iter.second->SecurityType == PROTD::TORA_TSTP_STP_SHKC ||
-             //iter.second->SecurityType == PROTD::TORA_TSTP_STP_SZGEM ||
-             iter.second->SecurityType == PROTD::TORA_TSTP_STP_SZMainAShares)) {
+        if (ExchangeID == iter.second->ExchangeID) {
             cnt++;
             PROMD::TTORATstpSecurityIDType SecurityID = {0};
             strncpy(SecurityID, iter.first.c_str(), sizeof(SecurityID));
             char *security_arr[1];
             security_arr[0] = SecurityID;
-            if (iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
-                if (m_isSHNewversion) {
-                    m_MD->Api()->SubscribeNGTSTick(security_arr, 1, ExchangeID);
-                } else {
-                    m_MD->Api()->SubscribeOrderDetail(security_arr, 1, ExchangeID);
-                    m_MD->Api()->SubscribeTransaction(security_arr, 1, ExchangeID);
-                }
-            } else if (iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
+
+            if (iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SSE && m_isSHNewversion) {
+                m_MD->Api()->SubscribeNGTSTick(security_arr, 1, ExchangeID);
+            } else {
                 m_MD->Api()->SubscribeOrderDetail(security_arr, 1, ExchangeID);
                 m_MD->Api()->SubscribeTransaction(security_arr, 1, ExchangeID);
             }
@@ -87,26 +78,30 @@ void CApplication::MDOnInitFinished(PROMD::TTORATstpExchangeIDType ExchangeID) {
            PROMD::MDL2Impl::GetExchangeName(ExchangeID), cnt, (int)m_marketSecurity.size());
 }
 
-void CApplication::MDPostPrice(stPostPrice& postPrice) {
-    if (!m_TD || !m_TD->IsInited()) return;
-    printf("MDPostPrice %s %lld %.2f|%.2f|%.2f %lld\n", postPrice.SecurityID, postPrice.AskVolume1, postPrice.AskPrice1, postPrice.TradePrice, postPrice.BidPrice1, postPrice.BidVolume1);
-}
-
 void CApplication::MDOnRtnOrderDetail(PROMD::CTORATstpLev2OrderDetailField &OrderDetail) {
     if (OrderDetail.Side != PROMD::TORA_TSTP_LSD_Buy && OrderDetail.Side != PROMD::TORA_TSTP_LSD_Sell) return;
     if (OrderDetail.ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
-        //InsertOrder(OrderDetail.SecurityID, OrderDetail.OrderNO, OrderDetail.Price, OrderDetail.Volume, OrderDetail.Side);
-        InsertOrderN(OrderDetail.SecurityID, OrderDetail.OrderNO, OrderDetail.Price, OrderDetail.Volume, OrderDetail.Side);
         m_orderNoPrice[OrderDetail.OrderNO] = OrderDetail.Price;
+        if (m_isUseNew) {
+            InsertOrderN(OrderDetail.SecurityID, OrderDetail.OrderNO, OrderDetail.Price, OrderDetail.Volume, OrderDetail.Side);
+        } else {
+            InsertOrder(OrderDetail.SecurityID, OrderDetail.OrderNO, OrderDetail.Price, OrderDetail.Volume, OrderDetail.Side);
+        }
     }
     else if (OrderDetail.ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
         if (OrderDetail.OrderStatus == PROMD::TORA_TSTP_LOS_Add) {
-            //InsertOrder(OrderDetail.SecurityID, OrderDetail.OrderNO, OrderDetail.Price, OrderDetail.Volume, OrderDetail.Side);
-            InsertOrderN(OrderDetail.SecurityID, OrderDetail.OrderNO, OrderDetail.Price, OrderDetail.Volume, OrderDetail.Side);
             m_orderNoPrice[OrderDetail.OrderNO] = OrderDetail.Price;
+            if (m_isUseNew) {
+                InsertOrderN(OrderDetail.SecurityID, OrderDetail.OrderNO, OrderDetail.Price, OrderDetail.Volume, OrderDetail.Side);
+            } else {
+                InsertOrder(OrderDetail.SecurityID, OrderDetail.OrderNO, OrderDetail.Price, OrderDetail.Volume, OrderDetail.Side);
+            }
         } else if (OrderDetail.OrderStatus == PROMD::TORA_TSTP_LOS_Delete) {
-            //ModifyOrder(OrderDetail.SecurityID, 0, OrderDetail.OrderNO, OrderDetail.Side);
-            ModifyOrderN(OrderDetail.SecurityID, 0, OrderDetail.OrderNO, OrderDetail.Side);
+            if (m_isUseNew) {
+                ModifyOrderN(OrderDetail.SecurityID, 0, OrderDetail.OrderNO, OrderDetail.Side);
+            } else {
+                ModifyOrder(OrderDetail.SecurityID, 0, OrderDetail.OrderNO, OrderDetail.Side);
+            }
         }
     }
 }
@@ -114,56 +109,75 @@ void CApplication::MDOnRtnOrderDetail(PROMD::CTORATstpLev2OrderDetailField &Orde
 void CApplication::MDOnRtnTransaction(PROMD::CTORATstpLev2TransactionField &Transaction) {
     if (Transaction.ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
         if (Transaction.ExecType == PROMD::TORA_TSTP_ECT_Fill) {
-            //auto BuyPrice = ModifyOrder(Transaction.SecurityID, Transaction.TradeVolume, Transaction.BuyNo, PROMD::TORA_TSTP_LSD_Buy);
-            //auto SellPrice = ModifyOrder(Transaction.SecurityID, Transaction.TradeVolume, Transaction.SellNo, PROMD::TORA_TSTP_LSD_Sell);
-            auto BuyPrice = ModifyOrderN(Transaction.SecurityID, Transaction.TradeVolume, Transaction.BuyNo, PROMD::TORA_TSTP_LSD_Buy);
-            auto SellPrice = ModifyOrderN(Transaction.SecurityID, Transaction.TradeVolume, Transaction.SellNo, PROMD::TORA_TSTP_LSD_Sell);
-            FixOrderN(Transaction.SecurityID, Transaction.BuyNo, BuyPrice, Transaction.SellNo, SellPrice);
-            //PostPrice(Transaction.SecurityID, Transaction.TradePrice);
+            if (m_isUseNew) {
+                auto BuyPrice = ModifyOrderN(Transaction.SecurityID, Transaction.TradeVolume, Transaction.BuyNo, PROMD::TORA_TSTP_LSD_Buy);
+                auto SellPrice = ModifyOrderN(Transaction.SecurityID, Transaction.TradeVolume, Transaction.SellNo, PROMD::TORA_TSTP_LSD_Sell);
+                FixOrderN(Transaction.SecurityID, Transaction.BuyNo, BuyPrice, Transaction.SellNo, SellPrice);
+            } else {
+                auto BuyPrice = ModifyOrder(Transaction.SecurityID, Transaction.TradeVolume, Transaction.BuyNo, PROMD::TORA_TSTP_LSD_Buy);
+                auto SellPrice = ModifyOrder(Transaction.SecurityID, Transaction.TradeVolume, Transaction.SellNo, PROMD::TORA_TSTP_LSD_Sell);
+                FixOrder(Transaction.SecurityID, Transaction.BuyNo, BuyPrice, Transaction.SellNo, SellPrice);
+            }
         } else if (Transaction.ExecType == PROMD::TORA_TSTP_ECT_Cancel) {
             if (Transaction.BuyNo > 0) {
-                //ModifyOrder(Transaction.SecurityID, 0, Transaction.BuyNo, PROMD::TORA_TSTP_LSD_Buy);
-                ModifyOrderN(Transaction.SecurityID, 0, Transaction.BuyNo, PROMD::TORA_TSTP_LSD_Buy);
-            } else if (Transaction.SellNo > 0) {
-                //ModifyOrder(Transaction.SecurityID, 0, Transaction.SellNo, PROMD::TORA_TSTP_LSD_Sell);
-                ModifyOrderN(Transaction.SecurityID, 0, Transaction.BuyNo, PROMD::TORA_TSTP_LSD_Buy);
+                if (m_isUseNew) {
+                    ModifyOrderN(Transaction.SecurityID, 0, Transaction.BuyNo, PROMD::TORA_TSTP_LSD_Buy);
+                } else {
+                    ModifyOrder(Transaction.SecurityID, 0, Transaction.BuyNo, PROMD::TORA_TSTP_LSD_Buy);
+                }
+            }
+            if (Transaction.SellNo > 0) {
+                if (m_isUseNew) {
+                    ModifyOrderN(Transaction.SecurityID, 0, Transaction.BuyNo, PROMD::TORA_TSTP_LSD_Buy);
+                } else {
+                    ModifyOrder(Transaction.SecurityID, 0, Transaction.SellNo, PROMD::TORA_TSTP_LSD_Sell);
+                }
             }
         }
     }
     else if (Transaction.ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
-        //auto BuyPrice = ModifyOrder(Transaction.SecurityID, Transaction.TradeVolume, Transaction.BuyNo, PROMD::TORA_TSTP_LSD_Buy);
-        //auto SellPrice = ModifyOrder(Transaction.SecurityID, Transaction.TradeVolume, Transaction.SellNo, PROMD::TORA_TSTP_LSD_Sell);
-        //FixOrder(Transaction.SecurityID, Transaction.BuyNo, BuyPrice, Transaction.SellNo, SellPrice);
-        //PostPrice(Transaction.SecurityID, Transaction.TradePrice);
-        auto BuyPrice = ModifyOrderN(Transaction.SecurityID, Transaction.TradeVolume, Transaction.BuyNo, PROMD::TORA_TSTP_LSD_Buy);
-        auto SellPrice = ModifyOrderN(Transaction.SecurityID, Transaction.TradeVolume, Transaction.SellNo, PROMD::TORA_TSTP_LSD_Sell);
-        FixOrderN(Transaction.SecurityID, Transaction.BuyNo, BuyPrice, Transaction.SellNo, SellPrice);
+        if (m_isUseNew) {
+            auto BuyPrice = ModifyOrderN(Transaction.SecurityID, Transaction.TradeVolume, Transaction.BuyNo, PROMD::TORA_TSTP_LSD_Buy);
+            auto SellPrice = ModifyOrderN(Transaction.SecurityID, Transaction.TradeVolume, Transaction.SellNo, PROMD::TORA_TSTP_LSD_Sell);
+            FixOrderN(Transaction.SecurityID, Transaction.BuyNo, BuyPrice, Transaction.SellNo, SellPrice);
+        } else {
+            auto BuyPrice = ModifyOrder(Transaction.SecurityID, Transaction.TradeVolume, Transaction.BuyNo, PROMD::TORA_TSTP_LSD_Buy);
+            auto SellPrice = ModifyOrder(Transaction.SecurityID, Transaction.TradeVolume, Transaction.SellNo, PROMD::TORA_TSTP_LSD_Sell);
+            FixOrder(Transaction.SecurityID, Transaction.BuyNo, BuyPrice, Transaction.SellNo, SellPrice);
+        }
     }
 }
 
 void CApplication::MDOnRtnNGTSTick(PROMD::CTORATstpLev2NGTSTickField &Tick) {
     if (Tick.ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
         if (Tick.TickType == PROMD::TORA_TSTP_LTT_Add) {
-            //InsertOrder(Tick.SecurityID, Tick.Side==PROMD::TORA_TSTP_LSD_Buy?Tick.BuyNo:Tick.SellNo, Tick.Price, Tick.Volume, Tick.Side);
-            InsertOrderN(Tick.SecurityID, Tick.Side==PROMD::TORA_TSTP_LSD_Buy?Tick.BuyNo:Tick.SellNo, Tick.Price, Tick.Volume, Tick.Side);
             if (Tick.Side == PROMD::TORA_TSTP_LSD_Buy && Tick.BuyNo > 0) {
                 m_orderNoPrice[Tick.BuyNo] = Tick.Price;
             }
             if (Tick.Side == PROMD::TORA_TSTP_LSD_Sell && Tick.SellNo > 0) {
                 m_orderNoPrice[Tick.SellNo] = Tick.Price;
             }
+            if (m_isUseNew) {
+                InsertOrderN(Tick.SecurityID, Tick.Side==PROMD::TORA_TSTP_LSD_Buy?Tick.BuyNo:Tick.SellNo, Tick.Price, Tick.Volume, Tick.Side);
+            } else {
+                InsertOrder(Tick.SecurityID, Tick.Side==PROMD::TORA_TSTP_LSD_Buy?Tick.BuyNo:Tick.SellNo, Tick.Price, Tick.Volume, Tick.Side);
+            }
         } else if (Tick.TickType == PROMD::TORA_TSTP_LTT_Delete) {
-            //ModifyOrder(Tick.SecurityID, 0, Tick.Side==PROMD::TORA_TSTP_LSD_Buy?Tick.BuyNo:Tick.SellNo, Tick.Side);
-            ModifyOrderN(Tick.SecurityID, 0, Tick.Side==PROMD::TORA_TSTP_LSD_Buy?Tick.BuyNo:Tick.SellNo, Tick.Side);
+            if (m_isUseNew) {
+                ModifyOrderN(Tick.SecurityID, 0, Tick.Side==PROMD::TORA_TSTP_LSD_Buy?Tick.BuyNo:Tick.SellNo, Tick.Side);
+            } else {
+                ModifyOrder(Tick.SecurityID, 0, Tick.Side==PROMD::TORA_TSTP_LSD_Buy?Tick.BuyNo:Tick.SellNo, Tick.Side);
+            }
         } else if (Tick.TickType == PROMD::TORA_TSTP_LTT_Trade) {
-            //auto BuyPrice = ModifyOrder(Tick.SecurityID, Tick.Volume, Tick.BuyNo, PROMD::TORA_TSTP_LSD_Buy);
-            //auto SellPrice = ModifyOrder(Tick.SecurityID, Tick.Volume, Tick.SellNo, PROMD::TORA_TSTP_LSD_Sell);
-            //FixOrder(Tick.SecurityID, Tick.BuyNo, BuyPrice, Tick.SellNo, SellPrice);
-            auto BuyPrice = ModifyOrderN(Tick.SecurityID, Tick.Volume, Tick.BuyNo, PROMD::TORA_TSTP_LSD_Buy);
-            auto SellPrice = ModifyOrderN(Tick.SecurityID, Tick.Volume, Tick.SellNo, PROMD::TORA_TSTP_LSD_Sell);
-            FixOrderN(Tick.SecurityID, Tick.BuyNo, BuyPrice, Tick.SellNo, SellPrice);
-            //PostPrice(Tick.SecurityID, Tick.Price);
-
+            if (m_isUseNew) {
+                auto BuyPrice = ModifyOrderN(Tick.SecurityID, Tick.Volume, Tick.BuyNo, PROMD::TORA_TSTP_LSD_Buy);
+                auto SellPrice = ModifyOrderN(Tick.SecurityID, Tick.Volume, Tick.SellNo, PROMD::TORA_TSTP_LSD_Sell);
+                FixOrderN(Tick.SecurityID, Tick.BuyNo, BuyPrice, Tick.SellNo, SellPrice);
+            } else {
+                auto BuyPrice = ModifyOrder(Tick.SecurityID, Tick.Volume, Tick.BuyNo, PROMD::TORA_TSTP_LSD_Buy);
+                auto SellPrice = ModifyOrder(Tick.SecurityID, Tick.Volume, Tick.SellNo, PROMD::TORA_TSTP_LSD_Sell);
+                FixOrder(Tick.SecurityID, Tick.BuyNo, BuyPrice, Tick.SellNo, SellPrice);
+            }
         }
     }
 }
@@ -424,7 +438,7 @@ void CApplication::PostPrice(PROMD::TTORATstpSecurityIDType SecurityID, PROMD::T
     p.AskPrice1 = AskPrice1;
     p.AskVolume1 = AskVolume1;
     p.TradePrice = TradePrice;
-    MDPostPrice(p);
+    //printf("MDPostPrice %s %lld %.2f|%.2f|%.2f %lld\n", postPrice.SecurityID, postPrice.AskVolume1, postPrice.AskPrice1, postPrice.TradePrice, postPrice.BidPrice1, postPrice.BidVolume1);
 }
 
 /***************************************TD***************************************/
@@ -455,13 +469,13 @@ void CApplication::TDOnRspQrySecurity(PROTD::CTORATstpSecurityField &Security) {
 }
 
 void CApplication::TDOnInitFinished() {
-    InitOrderMap();
-    if (m_MD) return;
     printf("CApplication::TDOnInitFinished\n");
 
+    InitOrderMap();
     if (m_dataDir.length() > 0) {
 
     } else {
+        if (m_MD) return;
         PROMD::TTORATstpExchangeIDType ExchangeID = PROMD::TORA_TSTP_EXD_SZSE;
         if (m_isSHExchange) ExchangeID = PROMD::TORA_TSTP_EXD_SSE;
         m_MD = new PROMD::MDL2Impl(this, ExchangeID);
@@ -471,20 +485,20 @@ void CApplication::TDOnInitFinished() {
 
 /***************************************NEW***************************************/
 void CApplication::InitOrderMap() {
-    auto arrayCount = m_maxSecurityID - m_minSecurityID + 1;
+    auto arrayCount = m_maxSecurityID - m_minSecurityID + 2;
     m_orderBuyN.resize(arrayCount);
     m_orderSellN.resize(arrayCount);
 
     for (auto it : m_marketSecurity) {
-        auto size = int((it.second->UpperLimitPrice - it.second->LowerLimitPrice) / 0.01);
+        auto size = int((it.second->UpperLimitPrice - it.second->LowerLimitPrice) / it.second->PriceTick);
         auto SecurityIDInt = atoi(it.second->SecurityID);
         m_orderBuyN.at(SecurityIDInt).resize(size);
         for (auto i = 0; i < size; ++i) {
-            m_orderBuyN.at(SecurityIDInt).at(i).Price = it.second->UpperLimitPrice - i * 0.01;
+            m_orderBuyN.at(SecurityIDInt).at(i).Price = it.second->UpperLimitPrice - i * it.second->PriceTick;
         }
         m_orderSellN.at(SecurityIDInt).resize(size);
         for (auto i = 0; i < size; ++i) {
-            m_orderSellN.at(SecurityIDInt).at(i).Price = it.second->LowerLimitPrice + i * 0.01;
+            m_orderSellN.at(SecurityIDInt).at(i).Price = it.second->LowerLimitPrice + i * it.second->PriceTick;
         }
     }
 }

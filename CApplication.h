@@ -15,7 +15,7 @@ public:
     explicit CApplication(boost::asio::io_context& ioc);
     ~CApplication();
 
-    bool Init(std::string& watchSecurity);
+    void Init(std::string& watchSecurity);
     void Start();
     void OnTime(const boost::system::error_code& error);
 
@@ -25,7 +25,6 @@ public:
 
     // MD
     void MDOnInitFinished(PROMD::TTORATstpExchangeIDType exchangeID);
-    void MDPostPrice(stPostPrice& postPrice);
     void MDOnRtnOrderDetail(PROMD::CTORATstpLev2OrderDetailField& OrderDetail);
     void MDOnRtnTransaction(PROMD::CTORATstpLev2TransactionField& Transaction);
     void MDOnRtnNGTSTick(PROMD::CTORATstpLev2NGTSTickField& Tick);
@@ -47,6 +46,7 @@ public:
 
 public:
     bool m_isTest = true;
+    bool m_isUseNew = true;
     bool m_isSHExchange = true;
     bool m_isSHNewversion = false;
     std::string m_TDAddr = "tcp://210.14.72.21:4400";
