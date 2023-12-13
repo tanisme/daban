@@ -569,8 +569,8 @@ void test_soci() {
 
 int main() {
     //test_clickhouse();
-    test_soci();
-    getchar();
+    //test_soci();
+    //getchar();
     std::string cfgfile = "daban.ini";
     bool istest = true, isusenew = true, isshexchange = true, isshnewversion = false, createfile = false;
     std::string mdaddr = "", mdinterface = "";

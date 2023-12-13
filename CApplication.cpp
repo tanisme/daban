@@ -525,16 +525,18 @@ void CApplication::TDOnRspQrySecurity(PROTD::CTORATstpSecurityField &Security) {
 void CApplication::TDOnInitFinished() {
     printf("CApplication::TDOnInitFinished\n");
 
-    InitOrderMap();
-    if (m_dataDir.length() > 0) {
+    if (m_isUseNew) {
+        InitOrderMap();
+    }
+    //if (m_dataDir.length() > 0) {
 
-    } else {
+    //} else {
         if (m_MD) return;
         PROMD::TTORATstpExchangeIDType ExchangeID = PROMD::TORA_TSTP_EXD_SZSE;
         if (m_isSHExchange) ExchangeID = PROMD::TORA_TSTP_EXD_SSE;
         m_MD = new PROMD::MDL2Impl(this, ExchangeID);
         m_MD->Start();
-    }
+    //}
 }
 
 /***************************************NEW***************************************/
