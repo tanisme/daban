@@ -4,7 +4,7 @@
 #include <iostream>
 
 #include "CApplication.h"
-#include "soci/soci.h"
+//#include "soci/soci.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////
 //#include <clickhouse/client.h>
@@ -544,28 +544,28 @@ using namespace std;
 //
 //}
 
-void test_soci() {
-    soci::session* db = nullptr;
-    try {
-        // 打开数据库
-        db = new soci::session("sqlite3", "db=balibali.db");
-
-        *db << "CREATE TABLE IF NOT EXISTS strategy (strategy CHAR(30), instrument CHAR(30) , parameters TEXT, status CHAR(15), message CHAR(100), PRIMARY KEY(strategy,instrument))";
-    }
-        //catch (const soci::mysql_soci_error& e)
-        //{
-        //	logsend(lp, LOG_ERROR, "System", "Table tblOrder insert failed![%s]", (const char*)e.what());
-        //	return -1;
-        //}
-    catch (const soci::soci_error& e)
-    {
-        std::cout << e.what() << std::endl;
-    }
-    catch (...)
-    {
-        std::cout << "DB connect failed." << std::endl;
-    }
-}
+//void test_soci() {
+//    soci::session* db = nullptr;
+//    try {
+//        // 打开数据库
+//        db = new soci::session("sqlite3", "db=balibali.db");
+//
+//        *db << "CREATE TABLE IF NOT EXISTS strategy (strategy CHAR(30), instrument CHAR(30) , parameters TEXT, status CHAR(15), message CHAR(100), PRIMARY KEY(strategy,instrument))";
+//    }
+//        //catch (const soci::mysql_soci_error& e)
+//        //{
+//        //	logsend(lp, LOG_ERROR, "System", "Table tblOrder insert failed![%s]", (const char*)e.what());
+//        //	return -1;
+//        //}
+//    catch (const soci::soci_error& e)
+//    {
+//        std::cout << e.what() << std::endl;
+//    }
+//    catch (...)
+//    {
+//        std::cout << "DB connect failed." << std::endl;
+//    }
+//}
 
 int main() {
     //test_clickhouse();
