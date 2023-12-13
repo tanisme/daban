@@ -21,11 +21,26 @@
 // Enables C++11 support
 /* #undef SOCI_HAVE_CXX11 */
 
+// DB2 backend
+/* #undef SOCI_HAVE_DB2 */
+
 // EMPTY backend
 #define SOCI_HAVE_EMPTY
 
+// FIREBIRD backend
+/* #undef SOCI_HAVE_FIREBIRD */
+
+// MYSQL backend
+/* #undef SOCI_HAVE_MYSQL */
+
 // ODBC backend
-#define SOCI_HAVE_ODBC
+/* #undef SOCI_HAVE_ODBC */
+
+// ORACLE backend
+/* #undef SOCI_HAVE_ORACLE */
+
+// POSTGRESQL backend
+/* #undef SOCI_HAVE_POSTGRESQL */
 
 // SQLITE3 backend
 #define SOCI_HAVE_SQLITE3

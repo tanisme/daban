@@ -13,10 +13,10 @@
 //
 
 // Boost library
-#define SOCI_HAVE_BOOST
+/* #undef SOCI_HAVE_BOOST */
 
 // Boost date_time library
-#define SOCI_HAVE_BOOST_DATE_TIME
+/* #undef SOCI_HAVE_BOOST_DATE_TIME */
 
 // Enables C++11 support
 /* #undef SOCI_HAVE_CXX11 */
