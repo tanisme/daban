@@ -29,7 +29,7 @@ public:
     void MDOnRtnTransaction(PROMD::CTORATstpLev2TransactionField& Transaction);
     void MDOnRtnNGTSTick(PROMD::CTORATstpLev2NGTSTickField& Tick);
     void InsertOrder(PROMD::TTORATstpSecurityIDType SecurityID, PROMD::TTORATstpLongSequenceType OrderNO, PROMD::TTORATstpPriceType Price, PROMD::TTORATstpLongVolumeType Volume, PROMD::TTORATstpLSideType Side);
-    double ModifyOrder(PROMD::TTORATstpSecurityIDType SecurityID, PROMD::TTORATstpLongVolumeType Volume, PROMD::TTORATstpLongSequenceType OrderNo, PROMD::TTORATstpTradeBSFlagType Side);
+    void ModifyOrder(PROMD::TTORATstpSecurityIDType SecurityID, PROMD::TTORATstpLongVolumeType Volume, PROMD::TTORATstpLongSequenceType OrderNo, PROMD::TTORATstpTradeBSFlagType Side);
     void FixOrder(PROMD::TTORATstpSecurityIDType SecurityID, PROMD::TTORATstpLongSequenceType BuyNo, PROMD::TTORATstpPriceType BuyPrice, PROMD::TTORATstpLongSequenceType SellNo, PROMD::TTORATstpPriceType SellPrice);
     void PostPrice(PROMD::TTORATstpSecurityIDType SecurityID, PROMD::TTORATstpPriceType Price);
     void ShowOrderBook(PROMD::TTORATstpSecurityIDType SecurityID);

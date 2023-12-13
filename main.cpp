@@ -543,8 +543,8 @@ void test_clickhouse() {
 }
 
 int main() {
-    test_clickhouse();
-    getchar();
+    //test_clickhouse();
+    //getchar();
     std::string cfgfile = "daban.ini";
     bool istest = true, isusenew = true, isshexchange = true, isshnewversion = false, createfile = false;
     std::string mdaddr = "", mdinterface = "";
