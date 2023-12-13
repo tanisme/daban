@@ -3,6 +3,7 @@
 #include <boost/program_options.hpp>
 
 #include "CApplication.h"
+#include "soci/soci.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////
 #include <clickhouse/client.h>
@@ -542,9 +543,33 @@ void test_clickhouse() {
 
 }
 
+void test_soci() {
+    soci::session* db = nullptr;
+    try {
+        // 打开数据库
+        db = new soci::session("sqlite3", "db=balibali.db");
+
+        *db << "CREATE TABLE IF NOT EXISTS strategy (strategy CHAR(30), instrument CHAR(30) , parameters TEXT, status CHAR(15), message CHAR(100), PRIMARY KEY(strategy,instrument))";
+    }
+        //catch (const soci::mysql_soci_error& e)
+        //{
+        //	logsend(lp, LOG_ERROR, "System", "Table tblOrder insert failed![%s]", (const char*)e.what());
+        //	return -1;
+        //}
+    catch (const soci::soci_error& e)
+    {
+        std::cout << e.what() << std::endl;
+    }
+    catch (...)
+    {
+        std::cout << "DB connect failed." << std::endl;
+    }
+}
+
 int main() {
     //test_clickhouse();
-    //getchar();
+    test_soci();
+    getchar();
     std::string cfgfile = "daban.ini";
     bool istest = true, isusenew = true, isshexchange = true, isshnewversion = false, createfile = false;
     std::string mdaddr = "", mdinterface = "";
