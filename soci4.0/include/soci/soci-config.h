@@ -45,8 +45,11 @@
 // SQLITE3 backend
 #define SOCI_HAVE_SQLITE3
 
+#if defined(_MSC_VER)
+/* #undef SOCI_HAVE_VISIBILITY_SUPPORT */
+#else
 // Test SOCI_HAVE_VISIBILITY_SUPPORT
 #define SOCI_HAVE_VISIBILITY_SUPPORT
-
+#endif
 
 #endif // SOCICONFIG_H_INCLUDED
