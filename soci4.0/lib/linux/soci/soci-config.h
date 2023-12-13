@@ -19,7 +19,7 @@
 /* #undef SOCI_HAVE_BOOST_DATE_TIME */
 
 // Enables C++11 support
-/* #undef SOCI_HAVE_CXX11 */
+#define SOCI_HAVE_CXX11
 
 // DB2 backend
 /* #undef SOCI_HAVE_DB2 */
