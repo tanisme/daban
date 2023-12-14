@@ -152,6 +152,9 @@ namespace test {
                 trim(line);
                 Stringsplit(line, ',', res);
                 std::string SecurityID = res.at(2);
+                if (i++ % 10000 == 0) {
+                    printf("已经读取行数:%d\n", i);
+                }
                 if (pApp->m_watchSecurity.find(SecurityID) == pApp->m_watchSecurity.end()) continue;
                 std::string ExchangeID = res.at(3);
 
@@ -190,7 +193,6 @@ namespace test {
                     Transaction.TradePrice = atof(TradePrice.c_str());
                     pApp->MDOnRtnTransaction(Transaction);
                 }
-                i++;
             }
             printf("结束读取文件!!!\n");
             for (auto it : pApp->m_watchSecurity) {
