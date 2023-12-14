@@ -31,13 +31,16 @@ void CApplication::Init(std::string& watchSecurity) {
 }
 
 void CApplication::Start() {
-    if (!m_TD) {
-        m_TD = new PROTD::TDImpl(this);
-        m_TD->Start();
+    if (m_dataDir.length() > 0) {
+        m_imitate.TestOrderBook(this, m_dataDir, m_createFile);
+    } else {
+        if (!m_TD) {
+            m_TD = new PROTD::TDImpl(this);
+            m_TD->Start();
+        }
+        m_timer.expires_from_now(boost::posix_time::milliseconds(5000));
+        m_timer.async_wait(boost::bind(&CApplication::OnTime, this, boost::asio::placeholders::error));
     }
-
-    m_timer.expires_from_now(boost::posix_time::milliseconds(5000));
-    m_timer.async_wait(boost::bind(&CApplication::OnTime, this, boost::asio::placeholders::error));
 }
 
 void CApplication::OnTime(const boost::system::error_code& error) {
@@ -420,13 +423,9 @@ void CApplication::TDOnRspQrySecurity(PROTD::CTORATstpSecurityField &Security) {
 void CApplication::TDOnInitFinished() {
     printf("CApplication::TDOnInitFinished\n");
 
-    if (m_dataDir.length() > 0) {
-        m_imitate.TestOrderBook(this, m_dataDir, m_createFile);
-    } else {
-        if (m_MD) return;
-        PROMD::TTORATstpExchangeIDType ExchangeID = PROMD::TORA_TSTP_EXD_SZSE;
-        if (m_isSHExchange) ExchangeID = PROMD::TORA_TSTP_EXD_SSE;
-        m_MD = new PROMD::MDL2Impl(this, ExchangeID);
-        m_MD->Start();
-    }
+    if (m_MD) return;
+    PROMD::TTORATstpExchangeIDType ExchangeID = PROMD::TORA_TSTP_EXD_SZSE;
+    if (m_isSHExchange) ExchangeID = PROMD::TORA_TSTP_EXD_SSE;
+    m_MD = new PROMD::MDL2Impl(this, ExchangeID);
+    m_MD->Start();
 }

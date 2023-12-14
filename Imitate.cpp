@@ -136,6 +136,7 @@ namespace test {
     bool Imitate::TestOrderBook(CApplication* pApp, std::string& srcDataDir, bool createfile, bool isxxfile) {
         isxxfile = true;
         if (isxxfile) {
+            printf("开始读取文件!!!\n");
             std::string file = srcDataDir + "/20231110.csv";
             std::ifstream ifs(file, std::ios::in);
             if (!ifs.is_open()) {
@@ -191,6 +192,7 @@ namespace test {
                 }
                 i++;
             }
+            printf("结束读取文件!!!\n");
             for (auto it : pApp->m_watchSecurity) {
                 pApp->ShowOrderBook((char*)it.first.c_str());
             }
