@@ -103,7 +103,7 @@ void CApplication::MDOnRtnOrderDetail(PROMD::CTORATstpLev2OrderDetailField &Orde
 void CApplication::MDOnRtnTransaction(PROMD::CTORATstpLev2TransactionField &Transaction) {
     if (Transaction.ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
         if (Transaction.ExecType == PROMD::TORA_TSTP_ECT_Fill) {
-            auto homeBestBuyOrder = GetHomebestOrder(Transaction.SecurityID, Transaction.SellNo);
+            auto homeBestBuyOrder = GetHomebestOrder(Transaction.SecurityID, Transaction.BuyNo);
             if (homeBestBuyOrder) {
                 homeBestBuyOrder->Volume -= Transaction.TradeVolume;
                 if (homeBestBuyOrder->Volume > 0) {
