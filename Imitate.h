@@ -21,7 +21,7 @@ namespace test {
         int SplitSecurityFileTradeQuot(std::string &dstDataDir, TTORATstpSecurityIDType SecurityID);
 
     private:
-        std::list<stNotifyData*> m_dataList;
+        //std::list<stNotifyData*> m_dataList;
         PROMD::MDL2Impl* m_md = nullptr;
         std::unordered_map<std::string, bool> m_watchSecurity;
         std::unordered_map<std::string, FILE*> m_watchOrderFILE;

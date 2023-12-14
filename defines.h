@@ -39,33 +39,19 @@ struct stPostPrice {
 
 struct stSecurity {
     TORASTOCKAPI::TTORATstpSecurityIDType SecurityID;
-    TORASTOCKAPI::TTORATstpSecurityNameType SecurityName;
     TORASTOCKAPI::TTORATstpExchangeIDType ExchangeID;
-    TORASTOCKAPI::TTORATstpSecurityTypeType SecurityType;
     TORASTOCKAPI::TTORATstpPriceType UpperLimitPrice;
     TORASTOCKAPI::TTORATstpPriceType LowerLimitPrice;
-    TORASTOCKAPI::TTORATstpPriceTickType PriceTick;
     int TotalIndex = 0;
 };
 
-struct stNotifyData {
-    int type;
-    // OrderDetail
+struct stHomebestOrder {
     TORALEV2API::TTORATstpSecurityIDType SecurityID;
-    TORALEV2API::TTORATstpLSideType Side;
     TORALEV2API::TTORATstpLongSequenceType OrderNO;
     TORALEV2API::TTORATstpPriceType Price;
-    TORALEV2API::TTORATstpLongVolumeType Volume;//TradeVolume
+    TORALEV2API::TTORATstpLongVolumeType Volume;
+    TORALEV2API::TTORATstpLSideType Side;
     TORALEV2API::TTORATstpExchangeIDType ExchangeID;
-    TORALEV2API::TTORATstpLOrderStatusType OrderStatus;
-
-    // Transaction
-    TORALEV2API::TTORATstpExecTypeType ExecType;
-    TORALEV2API::TTORATstpLongSequenceType	BuyNo;
-    TORALEV2API::TTORATstpLongSequenceType	SellNo;
-
-    // NGTS
-    TORALEV2API::TTORATstpLTickTypeType TickType;
 };
 
 void Stringsplit(const std::string &str, const char split, std::vector<std::string> &res);

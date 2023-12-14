@@ -66,7 +66,7 @@ namespace PROMD {
     }
 
     void MDL2Impl::OnRtnOrderDetail(CTORATstpLev2OrderDetailField *pOrderDetail) {
-        if (!pOrderDetail || pOrderDetail->OrderType == TORA_TSTP_LOT_Market) return;
+        if (!pOrderDetail) return;
         m_pApp->m_ioc.post(boost::bind(&CApplication::MDOnRtnOrderDetail, m_pApp, *pOrderDetail));
     }
 
