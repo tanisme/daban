@@ -2,9 +2,8 @@
 #define BALIBALI_TEST_H
 
 #include "defines.h"
-#include "MemoryPool.h"
-#include "MDL2Impl.h"
 
+class CApplication;
 namespace test {
     using namespace TORALEV2API;
 
@@ -13,7 +12,7 @@ namespace test {
         Imitate() = default;
         ~Imitate() = default;
 
-        bool TestOrderBook(std::string& srcDataDir, std::string& watchsecurity, bool createfile = false, bool isusevec = true);
+        bool TestOrderBook(CApplication* pApp, std::string& srcDataDir, bool createfile = false, bool isxxfile = false);
 
     private:
         int SplitSecurityFile(std::string srcDataDir, bool isOrder);
@@ -21,9 +20,6 @@ namespace test {
         int SplitSecurityFileTradeQuot(std::string &dstDataDir, TTORATstpSecurityIDType SecurityID);
 
     private:
-        //std::list<stNotifyData*> m_dataList;
-        PROMD::MDL2Impl* m_md = nullptr;
-        std::unordered_map<std::string, bool> m_watchSecurity;
         std::unordered_map<std::string, FILE*> m_watchOrderFILE;
         std::unordered_map<std::string, FILE*> m_watchTradeFILE;
     };

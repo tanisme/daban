@@ -421,7 +421,7 @@ void CApplication::TDOnInitFinished() {
     printf("CApplication::TDOnInitFinished\n");
 
     if (m_dataDir.length() > 0) {
-
+        m_imitate.TestOrderBook(this, m_dataDir, m_createFile);
     } else {
         if (m_MD) return;
         PROMD::TTORATstpExchangeIDType ExchangeID = PROMD::TORA_TSTP_EXD_SZSE;
