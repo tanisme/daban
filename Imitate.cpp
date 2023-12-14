@@ -137,7 +137,7 @@ namespace test {
         isxxfile = true;
         if (isxxfile) {
             printf("开始读取文件!!!\n");
-            std::string file = srcDataDir + "/20231110.csv";
+            std::string file = srcDataDir;
             std::ifstream ifs(file, std::ios::in);
             if (!ifs.is_open()) {
                 printf("xxfile.csv open failed!!! path%s\n", file.c_str());
