@@ -117,9 +117,9 @@ void CApplication::MDOnRtnTransaction(PROMD::CTORATstpLev2TransactionField &Tran
 
             auto homeBestSellOrder = GetHomebestOrder(Transaction.SecurityID, Transaction.SellNo);
             if (homeBestSellOrder) {
-                homeBestBuyOrder->Volume -= Transaction.TradeVolume;
+                homeBestSellOrder->Volume -= Transaction.TradeVolume;
                 if (homeBestSellOrder->Volume > 0) {
-                    InsertOrder(homeBestBuyOrder->SecurityID, homeBestBuyOrder->OrderNO, Transaction.TradePrice, homeBestBuyOrder->Volume, homeBestBuyOrder->Side);
+                    InsertOrder(homeBestSellOrder->SecurityID, homeBestSellOrder->OrderNO, Transaction.TradePrice, homeBestSellOrder->Volume, homeBestSellOrder->Side);
                 } else {
                     m_pool.Free<stHomebestOrder>(homeBestSellOrder, sizeof(stHomebestOrder));
                 }
