@@ -258,13 +258,11 @@ void CApplication::ModifyOrder(PROMD::TTORATstpSecurityIDType SecurityID, PROMD:
 }
 
 double CApplication::GetOrderNoPrice(PROMD::TTORATstpSecurityIDType SecurityID, PROMD::TTORATstpLongSequenceType OrderNO) {
-    double Price = 0.0;
-    if (m_orderNoPrice.find(SecurityID) != m_orderNoPrice.end()) {
-        if (m_orderNoPrice[SecurityID].find(OrderNO) != m_orderNoPrice[SecurityID].end()) {
-            return m_orderNoPrice[SecurityID][OrderNO];
-        }
-    }
-    return Price;
+    auto iter = m_orderNoPrice.find(SecurityID);
+    if (iter == m_orderNoPrice.end()) return 0.0;
+    auto it = iter->second.find(OrderNO);
+    if (it == iter->second.end()) return 0.0;
+    return it->second;
 }
 
 void CApplication::AddOrderNoPrice(PROMD::TTORATstpSecurityIDType SecurityID, PROMD::TTORATstpLongSequenceType OrderNO, PROMD::TTORATstpPriceType Price) {
@@ -272,11 +270,11 @@ void CApplication::AddOrderNoPrice(PROMD::TTORATstpSecurityIDType SecurityID, PR
 }
 
 void CApplication::DelOrderNoPrice(PROMD::TTORATstpSecurityIDType SecurityID, PROMD::TTORATstpLongSequenceType OrderNO) {
-    if (m_orderNoPrice.find(SecurityID) != m_orderNoPrice.end()) {
-        if (m_orderNoPrice[SecurityID].find(OrderNO) != m_orderNoPrice[SecurityID].end()) {
-            m_orderNoPrice[SecurityID].erase(OrderNO);
-        }
-    }
+    auto iter = m_orderNoPrice.find(SecurityID);
+    if (iter == m_orderNoPrice.end()) return;
+    auto it = iter->second.find(OrderNO);
+    if (it == iter->second.end()) return;
+    m_orderNoPrice[SecurityID].erase(OrderNO);
 }
 
 void CApplication::AddHomebestOrder(PROMD::TTORATstpSecurityIDType SecurityID, PROMD::TTORATstpLongSequenceType OrderNO,
