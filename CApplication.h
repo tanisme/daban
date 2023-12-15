@@ -77,8 +77,8 @@ private:
 
     MapOrderN m_orderBuyN;
     MapOrderN m_orderSellN;
-    std::unordered_map<int, std::unordered_map<int, int>> m_orderBuyNIndex;
-    std::unordered_map<int, std::unordered_map<int, int>> m_orderSellNIndex;
+    std::unordered_map<int, std::map<int, int>> m_orderBuyNIndex;
+    std::unordered_map<int, std::map<int, int>> m_orderSellNIndex;
 
     test::Imitate m_imitate;
 };

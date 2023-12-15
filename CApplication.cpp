@@ -244,7 +244,20 @@ double CApplication::ModifyOrderN(int SecurityIDInt, PROMD::TTORATstpLongVolumeT
 }
 
 void CApplication::FixOrderN(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO, PROMD::TTORATstpPriceType Price, PROMD::TTORATstpLSideType Side) {
+    if (OrderNO <= 0 || Price < 0.000001) return;
+    auto& orderIndex = Side==PROMD::TORA_TSTP_LSD_Buy?m_orderBuyNIndex:m_orderSellNIndex;
+    auto index_iter = orderIndex.find(SecurityIDInt);
+    if (index_iter == orderIndex.end()) return;
 
+    auto& mapOrder = Side==PROMD::TORA_TSTP_LSD_Buy?m_orderBuyN:m_orderSellN;
+    auto priceIndex = GetPriceIndex(SecurityIDInt, Price, Side);
+    for (auto it = index_iter->second.begin(); it != index_iter->second.end(); ++it) {
+        if (it->first <= priceIndex) {
+            //需要清理
+            continue;
+        }
+        break;
+    }
 }
 
 /***************************************TD***************************************/
