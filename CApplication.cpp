@@ -111,7 +111,7 @@ void CApplication::MDOnRtnTransaction(PROMD::CTORATstpLev2TransactionField &Tran
                     if (homeBestBuyOrder->Volume > 0) {
                         InsertOrder(homeBestBuyOrder->SecurityID, homeBestBuyOrder->OrderNO, Transaction.TradePrice, homeBestBuyOrder->Volume, homeBestBuyOrder->Side);
                     }
-                    m_pool.Free<stHomebestOrder>(homeBestBuyOrder, sizeof(stHomebestOrder));
+                    DelHomebestOrder(Transaction.SecurityID, Transaction.BuyNo);
                 } else {
                     ModifyOrder(Transaction.SecurityID, Transaction.TradeVolume, Transaction.BuyNo, PROMD::TORA_TSTP_LSD_Buy);
                 }
@@ -123,7 +123,7 @@ void CApplication::MDOnRtnTransaction(PROMD::CTORATstpLev2TransactionField &Tran
                     if (homeBestSellOrder->Volume > 0) {
                         InsertOrder(homeBestSellOrder->SecurityID, homeBestSellOrder->OrderNO, Transaction.TradePrice, homeBestSellOrder->Volume, homeBestSellOrder->Side);
                     }
-                    m_pool.Free<stHomebestOrder>(homeBestSellOrder, sizeof(stHomebestOrder));
+                    DelHomebestOrder(Transaction.SecurityID, Transaction.SellNo);
                 } else {
                     ModifyOrder(Transaction.SecurityID, Transaction.TradeVolume, Transaction.SellNo, PROMD::TORA_TSTP_LSD_Sell);
                 }
@@ -321,6 +321,15 @@ stHomebestOrder* CApplication::GetHomebestOrder(PROMD::TTORATstpSecurityIDType S
     if (iter == m_homeBaseOrder.end()) return nullptr;
     if (iter->second.find(OrderNO) == iter->second.end()) return nullptr;
     return iter->second[OrderNO];
+}
+
+void CApplication::DelHomebestOrder(PROMD::TTORATstpSecurityIDType SecurityID, PROMD::TTORATstpLongSequenceType OrderNO) {
+    auto iter = m_homeBaseOrder.find(SecurityID);
+    if (iter == m_homeBaseOrder.end()) return;
+    if (iter->second.find(OrderNO) == iter->second.end()) return;
+    auto ptr = iter->second[OrderNO];
+    iter->second.erase(OrderNO);
+    m_pool.Free<stHomebestOrder>(ptr, sizeof(stHomebestOrder));
 }
 
 void CApplication::ShowOrderBook(PROMD::TTORATstpSecurityIDType SecurityID) {
