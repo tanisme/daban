@@ -50,19 +50,21 @@ void CApplication::OnTime(const boost::system::error_code& error) {
         }
     }
 
+    printf("----------------------------%d %s----------------------------\n", m_totalCount, GetTimeStr().c_str());
     for (auto& iter : m_watchSecurity) {
         ShowOrderBook((char*)iter.first.c_str());
     }
 
-    m_timer.expires_from_now(boost::posix_time::milliseconds(6000));
+    m_timer.expires_from_now(boost::posix_time::milliseconds(60000));
     m_timer.async_wait(boost::bind(&CApplication::OnTime, this, boost::asio::placeholders::error));
 }
 
 /***************************************MD***************************************/
 void CApplication::MDOnInitFinished(PROMD::TTORATstpExchangeIDType ExchangeID) {
     auto cnt = 0;
-    for (auto &iter: m_watchSecurity) {
-        if (m_marketSecurity.find(iter.first) == m_marketSecurity.end()) continue;
+    for (auto &iter: m_marketSecurity) {
+    //for (auto &iter: m_watchSecurity) {
+        //if (m_marketSecurity.find(iter.first) == m_marketSecurity.end()) continue;
         if (ExchangeID == iter.second->ExchangeID) {
             cnt++;
             PROMD::TTORATstpSecurityIDType SecurityID = {0};
@@ -82,6 +84,8 @@ void CApplication::MDOnInitFinished(PROMD::TTORATstpExchangeIDType ExchangeID) {
 }
 
 void CApplication::MDOnRtnOrderDetail(PROMD::CTORATstpLev2OrderDetailField &OrderDetail) {
+    m_totalCount++;
+    m_SecurityIDNotifyCount[OrderDetail.SecurityID]++;
     if (OrderDetail.OrderType == PROMD::TORA_TSTP_LOT_Market) return;
     if (OrderDetail.Side != PROMD::TORA_TSTP_LSD_Buy && OrderDetail.Side != PROMD::TORA_TSTP_LSD_Sell) return;
 
@@ -102,6 +106,8 @@ void CApplication::MDOnRtnOrderDetail(PROMD::CTORATstpLev2OrderDetailField &Orde
 }
 
 void CApplication::MDOnRtnTransaction(PROMD::CTORATstpLev2TransactionField &Transaction) {
+    m_totalCount++;
+    m_SecurityIDNotifyCount[Transaction.SecurityID]++;
     if (Transaction.ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
         if (Transaction.ExecType == PROMD::TORA_TSTP_ECT_Fill) {
             {
@@ -143,6 +149,8 @@ void CApplication::MDOnRtnTransaction(PROMD::CTORATstpLev2TransactionField &Tran
 }
 
 void CApplication::MDOnRtnNGTSTick(PROMD::CTORATstpLev2NGTSTickField &Tick) {
+    m_totalCount++;
+    m_SecurityIDNotifyCount[Tick.SecurityID]++;
     if (Tick.ExchangeID != PROMD::TORA_TSTP_EXD_SSE) return;
     if (Tick.Side != PROMD::TORA_TSTP_LSD_Buy && Tick.Side != PROMD::TORA_TSTP_LSD_Sell) return;
 
@@ -343,10 +351,13 @@ void CApplication::DelHomebestOrder(PROMD::TTORATstpSecurityIDType SecurityID, P
 void CApplication::ShowOrderBook(PROMD::TTORATstpSecurityIDType SecurityID) {
     if (m_orderBuyV.find(SecurityID) == m_orderBuyV.end() &&
         m_orderSellV.find(SecurityID) == m_orderSellV.end()) return;
-
+    int securityIDCount = 0;
+    if (m_SecurityIDNotifyCount.find(SecurityID) != m_SecurityIDNotifyCount.end()) {
+        securityIDCount = m_SecurityIDNotifyCount[SecurityID];
+    }
     std::stringstream stream;
     stream << "\n";
-    stream << "-----------" << SecurityID << " " << GetTimeStr() << "-----------\n";
+    stream << "-------------" << SecurityID << " " << securityIDCount << "-------------\n";
 
     char buffer[512] = {0};
     {

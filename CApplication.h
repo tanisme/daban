@@ -54,6 +54,7 @@ public:
     std::string m_MDInterface = "tcp://210.14.72.17:16900";
     std::string m_dataDir = "";
 
+    int m_totalCount = 0;
     MemoryPool m_pool;
     std::unordered_map<std::string, stSecurity*> m_marketSecurity;
     std::unordered_map<std::string, stSecurity*> m_watchSecurity;
@@ -64,6 +65,7 @@ private:
     MapOrderV m_orderBuyV;
     MapOrderV m_orderSellV;
 
+    std::unordered_map<std::string, int> m_SecurityIDNotifyCount;
     std::unordered_map<int, std::unordered_map<PROMD::TTORATstpLongSequenceType,PROMD::TTORATstpPriceType>> m_orderNoPrice;
     std::unordered_map<std::string, std::unordered_map<PROMD::TTORATstpLongSequenceType, stHomebestOrder*>> m_homeBaseOrder;
 
