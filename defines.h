@@ -25,7 +25,6 @@ struct stPriceOrders {
     TORALEV2API::TTORATstpPriceType Price;
     std::vector<stOrder*> Orders;
 };
-typedef std::unordered_map<std::string, std::vector<stPriceOrders> > MapOrderV;
 typedef std::vector<std::vector<stPriceOrders>> MapOrderN;
 
 struct stSecurity {
@@ -37,12 +36,10 @@ struct stSecurity {
 };
 
 struct stHomebestOrder {
-    TORALEV2API::TTORATstpSecurityIDType SecurityID;
+    int SecurityIDInt;
     TORALEV2API::TTORATstpLongSequenceType OrderNO;
-    TORALEV2API::TTORATstpPriceType Price;
     TORALEV2API::TTORATstpLongVolumeType Volume;
     TORALEV2API::TTORATstpLSideType Side;
-    TORALEV2API::TTORATstpExchangeIDType ExchangeID;
 };
 
 void Stringsplit(const std::string &str, const char split, std::vector<std::string> &res);

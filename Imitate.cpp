@@ -155,7 +155,7 @@ namespace test {
                 if (i++ % 10000 == 0) {
                     printf("已经读取行数:%d\n", i);
                 }
-                if (pApp->m_watchSecurity.find(SecurityID) == pApp->m_watchSecurity.end()) continue;
+                //if (pApp->m_watchSecurity.find(SecurityID) == pApp->m_watchSecurity.end()) continue;
                 std::string ExchangeID = res.at(3);
 
                 if (res.at(0) == "O") {
@@ -196,7 +196,7 @@ namespace test {
             }
             printf("结束读取文件!!!\n");
             for (auto it : pApp->m_watchSecurity) {
-                pApp->ShowOrderBook((char*)it.first.c_str());
+                pApp->ShowOrderBook((char*)it.second->SecurityID);
             }
             ifs.close();
         } else {

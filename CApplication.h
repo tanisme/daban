@@ -29,20 +29,25 @@ public:
     void MDOnRtnOrderDetail(PROMD::CTORATstpLev2OrderDetailField& OrderDetail);
     void MDOnRtnTransaction(PROMD::CTORATstpLev2TransactionField& Transaction);
     void MDOnRtnNGTSTick(PROMD::CTORATstpLev2NGTSTickField& Tick);
+
     void ShowOrderBook(PROMD::TTORATstpSecurityIDType SecurityID);
+
+    void AddHomebestOrder(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO, PROMD::TTORATstpLongVolumeType Volume, PROMD::TTORATstpLSideType Side);
+    stHomebestOrder* GetHomebestOrder(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO);
+    void DelHomebestOrder(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO);
+
+    void InitOrderMap();
+    int GetPriceIndex(int SecurityIDInt, PROMD::TTORATstpPriceType Price, PROMD::TTORATstpTradeBSFlagType Side);
+    void AddOrderPriceIndex(int SecutityIDInt, int idx, PROMD::TTORATstpTradeBSFlagType Side);
+    void ModOrderPriceIndex(int SecurityIDInt, int idx, PROMD::TTORATstpTradeBSFlagType Side);
+
     double GetOrderNoPrice(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO);
     void AddOrderNoPrice(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO, PROMD::TTORATstpPriceType Price);
     void DelOrderNoPrice(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO);
-    void AddHomebestOrder(PROMD::TTORATstpSecurityIDType SecurityID, PROMD::TTORATstpLongSequenceType OrderNO, PROMD::TTORATstpPriceType Price, PROMD::TTORATstpLongVolumeType Volume, PROMD::TTORATstpLSideType Side, PROMD::TTORATstpExchangeIDType ExchangeID);
-    stHomebestOrder* GetHomebestOrder(PROMD::TTORATstpSecurityIDType SecurityID, PROMD::TTORATstpLongSequenceType OrderNO);
 
-    void InitOrderMapN(bool isTest = false);
-    int GetPriceIndexN(PROMD::TTORATstpSecurityIDType SecurityID, PROMD::TTORATstpPriceType Price, PROMD::TTORATstpTradeBSFlagType Side);
-    void InsertOrderN(PROMD::TTORATstpSecurityIDType SecurityID, PROMD::TTORATstpLongSequenceType OrderNO, PROMD::TTORATstpPriceType Price, PROMD::TTORATstpLongVolumeType Volume, PROMD::TTORATstpLSideType Side);
-    double ModifyOrderN(PROMD::TTORATstpSecurityIDType SecurityID, PROMD::TTORATstpLongVolumeType Volume, PROMD::TTORATstpLongSequenceType OrderNo, PROMD::TTORATstpTradeBSFlagType Side);
-    void FixOrderN(PROMD::TTORATstpSecurityIDType SecurityID, PROMD::TTORATstpLongSequenceType OrderNO, PROMD::TTORATstpPriceType Price, PROMD::TTORATstpLongVolumeType Volume, PROMD::TTORATstpLSideType Side);
-    void AddOrderIndexN(int SecutityIDInt, int idx, PROMD::TTORATstpTradeBSFlagType Side);
-    void ModOrderIndexN(int SecurityIDInt, int idx, PROMD::TTORATstpTradeBSFlagType Side);
+    void InsertOrderN(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO, PROMD::TTORATstpPriceType Price, PROMD::TTORATstpLongVolumeType Volume, PROMD::TTORATstpLSideType Side);
+    double ModifyOrderN(int SecurityIDInt, PROMD::TTORATstpLongVolumeType Volume, PROMD::TTORATstpLongSequenceType OrderNo, PROMD::TTORATstpTradeBSFlagType Side);
+    void FixOrderN(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO, PROMD::TTORATstpPriceType Price, PROMD::TTORATstpLSideType Side);
 
 public:
     boost::asio::io_context& m_ioc;
@@ -60,15 +65,15 @@ public:
     std::string m_dataDir = "";
 
     MemoryPool m_pool;
-    std::unordered_map<std::string, stSecurity*> m_marketSecurity;
-    std::unordered_map<std::string, stSecurity*> m_watchSecurity;
+    std::unordered_map<int, stSecurity*> m_marketSecurity;
+    std::unordered_map<int, stSecurity*> m_watchSecurity;
 
 private:
     PROTD::TDImpl *m_TD = nullptr;
     PROMD::MDL2Impl *m_MD = nullptr;
 
     std::unordered_map<int, std::unordered_map<PROMD::TTORATstpLongSequenceType,PROMD::TTORATstpPriceType>> m_orderNoPrice;
-    std::unordered_map<std::string, std::unordered_map<PROMD::TTORATstpLongSequenceType, stHomebestOrder*>> m_homeBaseOrder;
+    std::unordered_map<int, std::unordered_map<PROMD::TTORATstpLongSequenceType, stHomebestOrder*>> m_homeBaseOrder;
 
     MapOrderN m_orderBuyN;
     MapOrderN m_orderSellN;
