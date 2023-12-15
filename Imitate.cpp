@@ -65,7 +65,7 @@ namespace test {
                 pApp->MDOnRtnTransaction(Transaction);
             }
         }
-        printf("结束读取文件!!!\n");
+        printf("结束读取文件!!! 累计条数:%d\n", i);
         for (auto it : pApp->m_watchSecurity) {
             pApp->ShowOrderBook((char*)it.first.c_str());
         }

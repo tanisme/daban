@@ -224,21 +224,21 @@ void CApplication::ModifyOrder(PROMD::TTORATstpSecurityIDType SecurityID, PROMD:
         auto curPrice = iterVecOrder->Price;
         if ((Side == PROMD::TORA_TSTP_LSD_Buy && curPrice > Price + 0.000001) ||
             (Side == PROMD::TORA_TSTP_LSD_Sell && curPrice + 0.000001 < Price)) {
-            for (auto iterOrder = iterVecOrder->Orders.begin(); iterOrder != iterVecOrder->Orders.end(); ++iterOrder) {
-                auto order = (*iterOrder);
-                DelOrderNoPrice(SecurityIDInt, order->OrderNo);
-                m_pool.Free<stOrder>(order, sizeof(stOrder));
+            if (Volume > 0) {
+                for (auto iterOrder = iterVecOrder->Orders.begin(); iterOrder != iterVecOrder->Orders.end(); ++iterOrder) {
+                    auto order = (*iterOrder);
+                    DelOrderNoPrice(SecurityIDInt, order->OrderNo);
+                    m_pool.Free<stOrder>(order, sizeof(stOrder));
+                }
+                iterVecOrder = iter->second.erase(iterVecOrder);
+            } else {
+                ++iterVecOrder;
             }
-            iterVecOrder = iter->second.erase(iterVecOrder);
         } else if ((Side == PROMD::TORA_TSTP_LSD_Buy && curPrice > Price - 0.000001) ||
                    (Side == PROMD::TORA_TSTP_LSD_Sell && curPrice - 0.000001 < Price)) {
             for (auto iterOrder = iterVecOrder->Orders.begin(); iterOrder != iterVecOrder->Orders.end();) {
                 auto order = (*iterOrder);
-                if (order->OrderNo < OrderNo) {
-                    DelOrderNoPrice(SecurityIDInt, order->OrderNo);
-                    m_pool.Free<stOrder>(order, sizeof(stOrder));
-                    iterOrder = iterVecOrder->Orders.erase(iterOrder);
-                } else if (order->OrderNo == OrderNo) {
+                if (order->OrderNo == OrderNo) {
                     if (Volume > 0) {
                         (*iterOrder)->Volume -= Volume;
                     }
@@ -251,6 +251,14 @@ void CApplication::ModifyOrder(PROMD::TTORATstpSecurityIDType SecurityID, PROMD:
                         ++iterOrder;
                     }
                 } else {
+                    if (order->OrderNo < OrderNo) {
+                        if (Volume > 0) {
+                            DelOrderNoPrice(SecurityIDInt, order->OrderNo);
+                            m_pool.Free<stOrder>(order, sizeof(stOrder));
+                            iterOrder = iterVecOrder->Orders.erase(iterOrder);
+                            continue;
+                        }
+                    }
                     ++iterOrder;
                     //break; // 上海有序后直接break
                 }
