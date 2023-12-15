@@ -31,8 +31,8 @@ if (Boost_FOUND)
     link_directories(${Boost_LIBRARY_DIRS})
 endif ()
 
-include_directories(. include soci4.0/include)
-link_directories(lib soci4.0/lib)
+include_directories(. include)
+link_directories(lib)
 
 add_executable(daban
         main.cpp
@@ -45,12 +45,7 @@ add_executable(daban
 )
 
 if (WIN32)
-if (CMAKE_BUILD_TYPE STREQUAL Debug)
-    target_link_libraries(daban PUBLIC lev2mdapi fasttraderapi jsoncppd sqlite3d clickhouse-cpp-libd.lib lz4d absl_int128d cityhashd soci_core_4_0d soci_sqlite3_4_0d soci_empty_4_0d)
-else ()
-    target_link_libraries(daban PUBLIC lev2mdapi fasttraderapi jsoncpp sqlite3 clickhouse-cpp-lib.lib lz4 absl_int128 cityhash soci_core_4_0 soci_sqlite3_4_0 soci_empty_4_0)
-endif ()
+    target_link_libraries(daban PUBLIC lev2mdapi fasttraderapi)
 elseif (UNIX)
-    #target_link_libraries(daban PUBLIC lev2mdapi fasttraderapi jsoncpp sqlite3 pthread ${CMAKE_DL_LIBS} ${Boost_LIBRARIES} soci_core soci_sqlite3 soci_empty)
-    target_link_libraries(daban PUBLIC lev2mdapi fasttraderapi jsoncpp sqlite3 pthread ${CMAKE_DL_LIBS} ${Boost_LIBRARIES})
+    target_link_libraries(daban PUBLIC lev2mdapi fasttraderapi pthread ${CMAKE_DL_LIBS} ${Boost_LIBRARIES})
 endif ()
