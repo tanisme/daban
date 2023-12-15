@@ -29,8 +29,6 @@ public:
     void MDOnRtnOrderDetail(PROMD::CTORATstpLev2OrderDetailField& OrderDetail);
     void MDOnRtnTransaction(PROMD::CTORATstpLev2TransactionField& Transaction);
     void MDOnRtnNGTSTick(PROMD::CTORATstpLev2NGTSTickField& Tick);
-    void InsertOrder(PROMD::TTORATstpSecurityIDType SecurityID, PROMD::TTORATstpLongSequenceType OrderNO, PROMD::TTORATstpPriceType Price, PROMD::TTORATstpLongVolumeType Volume, PROMD::TTORATstpLSideType Side);
-    void ModifyOrder(PROMD::TTORATstpSecurityIDType SecurityID, PROMD::TTORATstpLongVolumeType Volume, PROMD::TTORATstpLongSequenceType OrderNo, PROMD::TTORATstpTradeBSFlagType Side);
     void ShowOrderBook(PROMD::TTORATstpSecurityIDType SecurityID);
     double GetOrderNoPrice(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO);
     void AddOrderNoPrice(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO, PROMD::TTORATstpPriceType Price);
@@ -52,7 +50,6 @@ public:
 
 public:
     bool m_isTest = true;
-    bool m_isUseNew = true;
     bool m_isSHExchange = true;
     bool m_isSHNewversion = false;
     std::string m_TDAddr = "tcp://210.14.72.21:4400";
@@ -69,8 +66,6 @@ public:
 private:
     PROTD::TDImpl *m_TD = nullptr;
     PROMD::MDL2Impl *m_MD = nullptr;
-    MapOrderV m_orderBuyV;
-    MapOrderV m_orderSellV;
 
     std::unordered_map<int, std::unordered_map<PROMD::TTORATstpLongSequenceType,PROMD::TTORATstpPriceType>> m_orderNoPrice;
     std::unordered_map<std::string, std::unordered_map<PROMD::TTORATstpLongSequenceType, stHomebestOrder*>> m_homeBaseOrder;

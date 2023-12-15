@@ -572,14 +572,13 @@ int main() {
     //test_soci();
     //getchar();
     std::string cfgfile = "daban.ini";
-    bool istest = true, isusenew = true, isshexchange = true, isshnewversion = false;
+    bool istest = true, isshexchange = true, isshnewversion = false;
     std::string mdaddr = "", mdinterface = "";
     std::string tdaddr = "", tdaccount = "", tdpassword = "";
     std::string srcdatapath = "", watchsecurity = "";
     boost::program_options::options_description cfgdesc("Config file options");
     cfgdesc.add_options()
             ("daban.istest", boost::program_options::value<bool>(&istest), "daban.istest")
-            ("daban.isusenew", boost::program_options::value<bool>(&isusenew), "daban.isusenew")
             ("daban.isshexchange", boost::program_options::value<bool>(&isshexchange), "daban.isshexchange")
             ("daban.isshnewversion", boost::program_options::value<bool>(&isshnewversion), "daban.isshnewversion")
             ("daban.tdaddr", boost::program_options::value<std::string>(&tdaddr), "daban.tdaddr")
@@ -605,7 +604,6 @@ int main() {
     boost::asio::io_context io_context;
     CApplication app(io_context);
     app.m_isTest = istest;
-    app.m_isUseNew = isusenew;
     app.m_isSHExchange = isshexchange;
     app.m_isSHNewversion = isshnewversion;
     app.m_TDAddr = tdaddr;
