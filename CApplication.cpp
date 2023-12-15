@@ -110,9 +110,8 @@ void CApplication::MDOnRtnTransaction(PROMD::CTORATstpLev2TransactionField &Tran
                     homeBestBuyOrder->Volume -= Transaction.TradeVolume;
                     if (homeBestBuyOrder->Volume > 0) {
                         InsertOrder(homeBestBuyOrder->SecurityID, homeBestBuyOrder->OrderNO, Transaction.TradePrice, homeBestBuyOrder->Volume, homeBestBuyOrder->Side);
-                    } else {
-                        m_pool.Free<stHomebestOrder>(homeBestBuyOrder, sizeof(stHomebestOrder));
                     }
+                    m_pool.Free<stHomebestOrder>(homeBestBuyOrder, sizeof(stHomebestOrder));
                 } else {
                     ModifyOrder(Transaction.SecurityID, Transaction.TradeVolume, Transaction.BuyNo, PROMD::TORA_TSTP_LSD_Buy);
                 }
@@ -123,9 +122,8 @@ void CApplication::MDOnRtnTransaction(PROMD::CTORATstpLev2TransactionField &Tran
                     homeBestSellOrder->Volume -= Transaction.TradeVolume;
                     if (homeBestSellOrder->Volume > 0) {
                         InsertOrder(homeBestSellOrder->SecurityID, homeBestSellOrder->OrderNO, Transaction.TradePrice, homeBestSellOrder->Volume, homeBestSellOrder->Side);
-                    } else {
-                        m_pool.Free<stHomebestOrder>(homeBestSellOrder, sizeof(stHomebestOrder));
                     }
+                    m_pool.Free<stHomebestOrder>(homeBestSellOrder, sizeof(stHomebestOrder));
                 } else {
                     ModifyOrder(Transaction.SecurityID, Transaction.TradeVolume, Transaction.SellNo, PROMD::TORA_TSTP_LSD_Sell);
                 }
