@@ -61,7 +61,7 @@ void CApplication::OnTime(const boost::system::error_code& error) {
 /***************************************MD***************************************/
 void CApplication::MDOnInitFinished(PROMD::TTORATstpExchangeIDType ExchangeID) {
     auto cnt = 0;
-    for (auto &iter: m_marketSecurity) {
+    for (auto &iter: m_watchSecurity) {
         if (ExchangeID == iter.second->ExchangeID) {
             cnt++;
             PROMD::TTORATstpSecurityIDType SecurityID = {0};
