@@ -15,7 +15,7 @@ namespace PROMD {
         explicit MDL2Impl(CApplication *pApp, TTORATstpExchangeIDType ExchangeID);
         ~MDL2Impl();
 
-        void Start();
+        void Start(bool isTest);
         bool IsInited() const { return m_isInited; }
         CTORATstpLev2MdApi *Api() const { return m_pApi; }
         static const char *GetExchangeName(TTORATstpExchangeIDType ExchangeID);

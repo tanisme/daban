@@ -14,8 +14,8 @@ namespace PROMD {
         }
     }
 
-    void MDL2Impl::Start() {
-        if (m_pApp->m_isTest) { // tcp
+    void MDL2Impl::Start(bool isTest) {
+        if (isTest) { // tcp
             m_pApi = CTORATstpLev2MdApi::CreateTstpLev2MdApi();
             m_pApi->RegisterSpi(this);
             char addr[128] = {0};

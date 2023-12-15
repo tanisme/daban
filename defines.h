@@ -28,15 +28,6 @@ struct stPriceOrders {
 typedef std::unordered_map<std::string, std::vector<stPriceOrders> > MapOrderV;
 typedef std::vector<std::vector<stPriceOrders>> MapOrderN;
 
-struct stPostPrice {
-    TORALEV2API::TTORATstpSecurityIDType SecurityID;
-    TORALEV2API::TTORATstpPriceType AskPrice1;
-    TORALEV2API::TTORATstpLongVolumeType AskVolume1;
-    TORALEV2API::TTORATstpPriceType BidPrice1;
-    TORALEV2API::TTORATstpLongVolumeType BidVolume1;
-    TORALEV2API::TTORATstpPriceType TradePrice;
-};
-
 struct stSecurity {
     TORASTOCKAPI::TTORATstpSecurityIDType SecurityID;
     TORASTOCKAPI::TTORATstpExchangeIDType ExchangeID;
@@ -61,5 +52,6 @@ int GetClockTick();
 void trim(std::string &s);
 std::string GetThreadID();
 long long int GetUs();
+int FindOrderNo(std::vector<TORALEV2API::TTORATstpLongSequenceType>& vec, TORALEV2API::TTORATstpLongSequenceType OrderNo);
 
 #endif //DABAN_DEFINES_H

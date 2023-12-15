@@ -572,7 +572,7 @@ int main() {
     //test_soci();
     //getchar();
     std::string cfgfile = "daban.ini";
-    bool istest = true, isusenew = true, isshexchange = true, isshnewversion = false, createfile = false;
+    bool istest = true, isusenew = true, isshexchange = true, isshnewversion = false;
     std::string mdaddr = "", mdinterface = "";
     std::string tdaddr = "", tdaccount = "", tdpassword = "";
     std::string srcdatapath = "", watchsecurity = "";
@@ -588,7 +588,6 @@ int main() {
             ("daban.watchsecurity", boost::program_options::value<std::string>(&watchsecurity), "daban.watchsecurity")
             ("shipan.mdaddr", boost::program_options::value<std::string>(&mdaddr), "shipan.mdaddr")
             ("shipan.mdinterface", boost::program_options::value<std::string>(&mdinterface), "shipan.mdinterface")
-            ("csvfile.createfile", boost::program_options::value<bool>(&createfile), "csvfile.createfile")
             ("csvfile.srcdatapath", boost::program_options::value<std::string>(&srcdatapath), "csvfile.srcdatapath");
     boost::program_options::variables_map vm;
 
@@ -614,7 +613,6 @@ int main() {
     app.m_TDPassword = tdpassword;
     app.m_MDAddr = mdaddr;
     app.m_MDInterface = mdinterface;
-    app.m_createFile = createfile;
     app.m_dataDir = srcdatapath;
     app.Init(watchsecurity);
 
