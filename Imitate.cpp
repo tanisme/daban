@@ -23,7 +23,7 @@ namespace test {
             trim(line);
             Stringsplit(line, ',', res);
             std::string SecurityID = res.at(2);
-            if (i++ % 10000 == 0) {
+            if (++i % 1000000 == 0) {
                 printf("已经读取行数:%d\n", i);
             }
             if (pApp->m_watchSecurity.find(SecurityID) == pApp->m_watchSecurity.end()) continue;
