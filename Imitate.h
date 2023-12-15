@@ -11,17 +11,7 @@ namespace test {
     public:
         Imitate() = default;
         ~Imitate() = default;
-
-        bool TestOrderBook(CApplication* pApp, std::string& srcDataDir, bool createfile = false, bool isxxfile = false);
-
-    private:
-        int SplitSecurityFile(std::string srcDataDir, bool isOrder);
-        int SplitSecurityFileOrderQuot(std::string &dstDataDir, TTORATstpSecurityIDType SecurityID);
-        int SplitSecurityFileTradeQuot(std::string &dstDataDir, TTORATstpSecurityIDType SecurityID);
-
-    private:
-        std::unordered_map<std::string, FILE*> m_watchOrderFILE;
-        std::unordered_map<std::string, FILE*> m_watchTradeFILE;
+        void TestOrderBook(CApplication* pApp, std::string& srcDataDir);
     };
 
 }

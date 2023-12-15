@@ -60,18 +60,3 @@ long long int GetUs() {
     auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(duration);
     return microseconds.count();
 }
-
-int FindOrderNo(std::vector<TORALEV2API::TTORATstpLongSequenceType>& vec, TORALEV2API::TTORATstpLongSequenceType OrderNo) {
-    int min = 0, max = vec.size();
-    while (min <= max) {
-        int mid = (min + max) / 2;
-        if (vec.at(mid) == OrderNo) {
-            return mid;
-        } else if (vec.at(mid) < OrderNo) {
-            min = mid;
-        } else {
-            max = min;
-        }
-    }
-    return -1;
-}
