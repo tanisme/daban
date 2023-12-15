@@ -15,6 +15,10 @@
 #include "TORA/TORATstpLev2MdApi.h"
 #include "TORA/TORATstpTraderApi.h"
 
+#define MAKEINT64(a, b)      ((unsigned long long int)(((unsigned int)((a) & 0xffffffff)) | ((unsigned long long int)((unsigned int)((b) & 0xffffffff))) << 32))
+#define LOUINT(_qw)    ((unsigned int)(_qw))
+#define HIUINT(_qw)    ((unsigned int)(((_qw) >> 32) & 0xffffffff))
+
 struct stOrder {
     TORALEV2API::TTORATstpLongSequenceType OrderNo;
     TORALEV2API::TTORATstpLongVolumeType Volume;
