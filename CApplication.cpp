@@ -222,7 +222,10 @@ void CApplication::InsertOrder(PROMD::TTORATstpSecurityIDType SecurityID, PROMD:
 void CApplication::ModifyOrder(PROMD::TTORATstpSecurityIDType SecurityID, PROMD::TTORATstpLongVolumeType Volume, PROMD::TTORATstpLongSequenceType OrderNo, PROMD::TTORATstpTradeBSFlagType Side) {
     int SecurityIDInt = atoi(SecurityID);
     auto Price = GetOrderNoPrice(SecurityIDInt, OrderNo);
-    if (Price < 0.000001) return;
+    if (Price < 0.000001) {
+        printf("未找到订单号为:%lld 的合约:%s 数量:%lld\n", OrderNo, SecurityID, Volume);
+        return;
+    }
 
     auto &mapOrder = Side == PROMD::TORA_TSTP_LSD_Buy ? m_orderBuyV : m_orderSellV;
     auto iter = mapOrder.find(SecurityID);

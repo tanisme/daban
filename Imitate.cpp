@@ -7,6 +7,7 @@ namespace test {
     using namespace TORALEV2API;
 
     void Imitate::TestOrderBook(CApplication* pApp, std::string& srcDataDir) {
+        auto create_file = false;
         printf("开始读取文件!!!\n");
         std::string file = srcDataDir;
         std::ifstream ifs(file, std::ios::in);
@@ -15,6 +16,18 @@ namespace test {
             return;
         }
 
+        std::unordered_map<std::string, FILE*> file_fps;
+        if (create_file) {
+            for (auto& it : pApp->m_watchSecurity) {
+                std::string fileName = "./" + it.first + ".txt";
+                FILE *fp = fopen(fileName.c_str(), "w+");
+                if (!fp) {
+                    printf("打开%s文件失败\n", fileName.c_str());
+                    return;
+                }
+                file_fps[it.first] = fp;
+            }
+        }
         int i = 0;
         std::string line;
         std::vector<std::string> res;
@@ -27,8 +40,13 @@ namespace test {
                 printf("已经读取行数:%d\n", i);
             }
             if (pApp->m_watchSecurity.find(SecurityID) == pApp->m_watchSecurity.end()) continue;
+            if (create_file) {
+                auto it = file_fps.find(SecurityID);
+                FILE* fp = it->second;
+                fputs(line.c_str(), fp);
+                fputs("\n", fp);
+            }
             std::string ExchangeID = res.at(3);
-
             if (res.at(0) == "O") {
                 std::string Price = res.at(4);
                 std::string Volume = res.at(5);
@@ -64,6 +82,10 @@ namespace test {
                 Transaction.TradePrice = atof(TradePrice.c_str());
                 pApp->MDOnRtnTransaction(Transaction);
             }
+        }
+
+        for (auto& it : file_fps) {
+            if (it.second) fclose(it.second);
         }
         printf("结束读取文件!!! 累计条数:%d\n", i);
         for (auto it : pApp->m_watchSecurity) {
