@@ -62,9 +62,9 @@ void CApplication::OnTime(const boost::system::error_code& error) {
 /***************************************MD***************************************/
 void CApplication::MDOnInitFinished(PROMD::TTORATstpExchangeIDType ExchangeID) {
     auto cnt = 0;
-    for (auto &iter: m_marketSecurity) {
-    //for (auto &iter: m_watchSecurity) {
-        //if (m_marketSecurity.find(iter.first) == m_marketSecurity.end()) continue;
+    //for (auto &iter: m_marketSecurity) {
+    for (auto &iter: m_watchSecurity) {
+        if (m_marketSecurity.find(iter.first) == m_marketSecurity.end()) continue;
         if (ExchangeID == iter.second->ExchangeID) {
             cnt++;
             PROMD::TTORATstpSecurityIDType SecurityID = {0};
@@ -223,7 +223,7 @@ void CApplication::ModifyOrder(PROMD::TTORATstpSecurityIDType SecurityID, PROMD:
     int SecurityIDInt = atoi(SecurityID);
     auto Price = GetOrderNoPrice(SecurityIDInt, OrderNo);
     if (Price < 0.000001) {
-        printf("未找到订单号为:%lld 的合约:%s 数量:%lld\n", OrderNo, SecurityID, Volume);
+        //printf("未找到订单号为:%lld 的合约:%s 数量:%lld\n", OrderNo, SecurityID, Volume);
         return;
     }
 
