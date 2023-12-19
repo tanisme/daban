@@ -37,17 +37,16 @@ public:
     void DelHomebestOrder(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO);
 
     void InitOrderMap();
-    int GetPriceIndex(int SecurityIDInt, PROMD::TTORATstpPriceType Price, PROMD::TTORATstpTradeBSFlagType Side);
+    int GetVecPriceIndex(int SecurityIDInt, PROMD::TTORATstpPriceType Price, PROMD::TTORATstpTradeBSFlagType Side);
     void AddOrderPriceIndex(int SecutityIDInt, int idx, PROMD::TTORATstpTradeBSFlagType Side);
     void ModOrderPriceIndex(int SecurityIDInt, int idx, PROMD::TTORATstpTradeBSFlagType Side);
 
-    double GetOrderNoPrice(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO);
-    void AddOrderNoPrice(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO, PROMD::TTORATstpPriceType Price);
+    double GetOrderNoToPrice(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO);
+    void AddOrderNoToPrice(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO, PROMD::TTORATstpPriceType Price);
     void DelOrderNoPrice(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO);
 
     void InsertOrderN(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO, PROMD::TTORATstpPriceType Price, PROMD::TTORATstpLongVolumeType Volume, PROMD::TTORATstpLSideType Side);
-    double ModifyOrderN(int SecurityIDInt, PROMD::TTORATstpLongVolumeType Volume, PROMD::TTORATstpLongSequenceType OrderNo, PROMD::TTORATstpTradeBSFlagType Side);
-    void FixOrderN(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO, PROMD::TTORATstpPriceType Price, PROMD::TTORATstpLSideType Side);
+    void ModifyOrderN(int SecurityIDInt, PROMD::TTORATstpLongVolumeType Volume, PROMD::TTORATstpLongSequenceType OrderNo, PROMD::TTORATstpTradeBSFlagType Side);
 
 public:
     boost::asio::io_context& m_ioc;
@@ -72,13 +71,13 @@ private:
     PROTD::TDImpl *m_TD = nullptr;
     PROMD::MDL2Impl *m_MD = nullptr;
 
-    std::unordered_map<int, std::unordered_map<PROMD::TTORATstpLongSequenceType,PROMD::TTORATstpPriceType>> m_orderNoPrice;
+    std::unordered_map<int, std::unordered_map<PROMD::TTORATstpLongSequenceType,PROMD::TTORATstpPriceType>> m_orderNoToPrice;
     std::unordered_map<int, std::unordered_map<PROMD::TTORATstpLongSequenceType, stHomebestOrder*>> m_homeBaseOrder;
 
     MapOrderN m_orderBuyN;
     MapOrderN m_orderSellN;
-    std::unordered_map<int, std::map<int, int>> m_orderBuyNIndex;
-    std::unordered_map<int, std::map<int, int>> m_orderSellNIndex;
+    std::unordered_map<int, std::map<int, int>> m_buyPriceIndex;
+    std::unordered_map<int, std::map<int, int>> m_sellPriceIndex;
 
     test::Imitate m_imitate;
 };

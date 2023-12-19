@@ -60,10 +60,10 @@ void CApplication::OnTime(const boost::system::error_code& error) {
 }
 
 
-double CApplication::GetOrderNoPrice(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO) {
+double CApplication::GetOrderNoToPrice(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO) {
     auto Price = 0.0;
-    auto iter = m_orderNoPrice.find(SecurityIDInt);
-    if (iter != m_orderNoPrice.end()) {
+    auto iter = m_orderNoToPrice.find(SecurityIDInt);
+    if (iter != m_orderNoToPrice.end()) {
         auto it = iter->second.find(OrderNO);
         if (it != iter->second.end()) {
             Price = it->second;
@@ -72,25 +72,23 @@ double CApplication::GetOrderNoPrice(int SecurityIDInt, PROMD::TTORATstpLongSequ
     return Price;
 }
 
-void CApplication::AddOrderNoPrice(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO, PROMD::TTORATstpPriceType Price) {
-    auto iter = m_orderNoPrice.find(SecurityIDInt);
-    if (iter != m_orderNoPrice.end()) {
+void CApplication::AddOrderNoToPrice(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO, PROMD::TTORATstpPriceType Price) {
+    auto iter = m_orderNoToPrice.find(SecurityIDInt);
+    if (iter != m_orderNoToPrice.end()) {
         auto it = iter->second.find(OrderNO);
         if (it != iter->second.end()) {
             printf("添加 %d 订单号 %lld 价格错误 已经存在该订单号价格 %.3f\n", SecurityIDInt, OrderNO, Price);
         }
     }
-    m_orderNoPrice[SecurityIDInt][OrderNO] = Price;
+    m_orderNoToPrice[SecurityIDInt][OrderNO] = Price;
 }
 
 void CApplication::DelOrderNoPrice(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO) {
-    auto iter = m_orderNoPrice.find(SecurityIDInt);
-    if (iter != m_orderNoPrice.end()) {
-        auto it = iter->second.find(OrderNO);
-        if (it != iter->second.end()) {
-            m_orderNoPrice[SecurityIDInt].erase(OrderNO);
-        }
-    }
+    auto iter = m_orderNoToPrice.find(SecurityIDInt);
+    if (iter == m_orderNoToPrice.end()) return;
+    auto it = iter->second.find(OrderNO);
+    if (it == iter->second.end()) return;
+    m_orderNoToPrice[SecurityIDInt].erase(OrderNO);
 }
 
 void CApplication::AddHomebestOrder(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO,
@@ -106,7 +104,6 @@ void CApplication::AddHomebestOrder(int SecurityIDInt, PROMD::TTORATstpLongSeque
         }
     }
     auto homeBestOrder = m_pool.Malloc<stHomebestOrder>(sizeof(stHomebestOrder));
-    homeBestOrder->SecurityIDInt = SecurityIDInt;
     homeBestOrder->OrderNO = OrderNO;
     homeBestOrder->Volume = Volume;
     homeBestOrder->Side = Side;
@@ -116,20 +113,22 @@ void CApplication::AddHomebestOrder(int SecurityIDInt, PROMD::TTORATstpLongSeque
 stHomebestOrder* CApplication::GetHomebestOrder(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO) {
     auto iter = m_homeBaseOrder.find(SecurityIDInt);
     if (iter == m_homeBaseOrder.end()) return nullptr;
-    if (iter->second.find(OrderNO) == iter->second.end()) return nullptr;
-    return iter->second[OrderNO];
+    auto it = iter->second.find(OrderNO);
+    if (it == iter->second.end()) return nullptr;
+    return it->second;
 }
 
 void CApplication::DelHomebestOrder(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO) {
     auto iter = m_homeBaseOrder.find(SecurityIDInt);
     if (iter == m_homeBaseOrder.end()) return;
-    if (iter->second.find(OrderNO) == iter->second.end()) return;
-    auto ptr = iter->second[OrderNO];
-    iter->second.erase(OrderNO);
+    auto it = iter->second.find(OrderNO);
+    if (it == iter->second.end()) return;
+    auto ptr = it->second;
+    iter->second.erase(it);
     m_pool.Free<stHomebestOrder>(ptr, sizeof(stHomebestOrder));
 }
 
-int CApplication::GetPriceIndex(int SecurityIDInt, PROMD::TTORATstpPriceType Price, PROMD::TTORATstpTradeBSFlagType Side) {
+int CApplication::GetVecPriceIndex(int SecurityIDInt, PROMD::TTORATstpPriceType Price, PROMD::TTORATstpTradeBSFlagType Side) {
     auto priceIndex = -1;
     auto iter = m_marketSecurity.find(SecurityIDInt);
     if (iter == m_marketSecurity.end()) return priceIndex;
@@ -145,15 +144,15 @@ int CApplication::GetPriceIndex(int SecurityIDInt, PROMD::TTORATstpPriceType Pri
     return priceIndex;
 }
 
-void CApplication::AddOrderPriceIndex(int SecurityIDInt, int idx, PROMD::TTORATstpTradeBSFlagType Side) {
-    auto& orderIndex = Side==PROMD::TORA_TSTP_LSD_Buy?m_orderBuyNIndex:m_orderSellNIndex;
+void CApplication::AddOrderPriceIndex(int SecurityIDInt, int priceIndex, PROMD::TTORATstpTradeBSFlagType Side) {
+    auto& orderIndex = Side==PROMD::TORA_TSTP_LSD_Buy?m_buyPriceIndex:m_sellPriceIndex;
     auto iter = orderIndex.find(SecurityIDInt);
     if (iter == orderIndex.end()) {
-        orderIndex[SecurityIDInt][idx] = 1;
+        orderIndex[SecurityIDInt][priceIndex] = 1;
     } else {
-        auto it = iter->second.find(idx);
+        auto it = iter->second.find(priceIndex);
         if (it == iter->second.end()) {
-            orderIndex[SecurityIDInt][idx] = 1;
+            orderIndex[SecurityIDInt][priceIndex] = 1;
         } else {
             it->second++;
         }
@@ -161,7 +160,7 @@ void CApplication::AddOrderPriceIndex(int SecurityIDInt, int idx, PROMD::TTORATs
 }
 
 void CApplication::ModOrderPriceIndex(int SecurityIDInt, int idx, PROMD::TTORATstpTradeBSFlagType Side) {
-    auto& orderIndex = Side==PROMD::TORA_TSTP_LSD_Buy?m_orderBuyNIndex:m_orderSellNIndex;
+    auto& orderIndex = Side==PROMD::TORA_TSTP_LSD_Buy?m_buyPriceIndex:m_sellPriceIndex;
     auto iter = orderIndex.find(SecurityIDInt);
     if (iter == orderIndex.end()) return;
     auto it = iter->second.find(idx);
@@ -177,10 +176,10 @@ void CApplication::ModOrderPriceIndex(int SecurityIDInt, int idx, PROMD::TTORATs
 
 void CApplication::InsertOrderN(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO, PROMD::TTORATstpPriceType Price,
                                 PROMD::TTORATstpLongVolumeType Volume, PROMD::TTORATstpLSideType Side) {
-    auto priceIndex = GetPriceIndex(SecurityIDInt, Price, Side);
+    auto priceIndex = GetVecPriceIndex(SecurityIDInt, Price, Side);
     if (priceIndex < 0) return;
 
-    AddOrderNoPrice(SecurityIDInt, OrderNO, Price);
+    AddOrderNoToPrice(SecurityIDInt, OrderNO, Price);
     AddOrderPriceIndex(SecurityIDInt, priceIndex, Side);
 
     auto order = m_pool.Malloc<stOrder>(sizeof(stOrder));
@@ -190,73 +189,68 @@ void CApplication::InsertOrderN(int SecurityIDInt, PROMD::TTORATstpLongSequenceT
     mapOrder.at(SecurityIDInt).at(priceIndex).Orders.emplace_back(order);
 }
 
-double CApplication::ModifyOrderN(int SecurityIDInt, PROMD::TTORATstpLongVolumeType Volume,
+void CApplication::ModifyOrderN(int SecurityIDInt, PROMD::TTORATstpLongVolumeType Volume,
                                 PROMD::TTORATstpLongSequenceType OrderNo, PROMD::TTORATstpTradeBSFlagType Side) {
-    auto Price = GetOrderNoPrice(SecurityIDInt, OrderNo);
-    if (Price < 0.000001) return Price;
-    auto priceIndex = GetPriceIndex(SecurityIDInt, Price, Side);
-    if (priceIndex < 0) return Price;
-
-    auto& mapOrder = Side == PROMD::TORA_TSTP_LSD_Buy?m_orderBuyN:m_orderSellN;
-    auto iter = mapOrder.at(SecurityIDInt).at(priceIndex).Orders.begin();
-    for (;iter != mapOrder.at(SecurityIDInt).at(priceIndex).Orders.end(); ++iter) {
-        if ((*iter)->OrderNo == OrderNo) {
-            break;
-        }
-    }
-
-    if (Volume > 0) {
-        (*iter)->Volume -= Volume;
-    }
-    if (Volume == 0 || (*iter)->Volume <= 0) {
-        auto order = (*iter);
-        DelOrderNoPrice(SecurityIDInt, order->OrderNo);
-        ModOrderPriceIndex(SecurityIDInt, priceIndex, Side);
-        mapOrder.at(SecurityIDInt).at(priceIndex).Orders.erase(iter);
-        m_pool.Free<stOrder>(order, sizeof(stOrder));
-    }
-
-    //std::vector<PROMD::TTORATstpLongSequenceType> OrderNos;
-    //for (auto it : mapOrder.at(SecurityIDInt).at(priceIndex).Orders) {
-    //    OrderNos.emplace_back(it->OrderNo);
-    //}
-    //int idx = FindOrderNo(OrderNos, OrderNo);
-    //int idx = -1;
-    //for (int i = 0; i < mapOrder.at(SecurityIDInt).at(priceIndex).Orders.size(); ++i) {
-    //    if (mapOrder.at(SecurityIDInt).at(priceIndex).Orders.at(i)->OrderNo == OrderNo) {
-    //        idx = i;
-    //        break;
-    //    }
-    //}
-
-    //if (idx < 0) return Price;
-    //if (Volume > 0) {
-    //    mapOrder.at(SecurityIDInt).at(priceIndex).Orders.at(idx)->Volume -= Volume;
-    //}
-    //if (Volume == 0 || mapOrder.at(SecurityIDInt).at(priceIndex).Orders.at(idx)->Volume <= 0) {
-    //    auto order = mapOrder.at(SecurityIDInt).at(priceIndex).Orders.at(idx);
-    //    DelOrderNoPrice(SecurityIDInt, order->OrderNo);
-    //    ModOrderPriceIndex(SecurityIDInt, priceIndex, Side);
-    //    mapOrder.at(SecurityIDInt).at(priceIndex).Orders.erase(mapOrder.at(SecurityIDInt).at(priceIndex).Orders.begin() + idx);
-    //    m_pool.Free<stOrder>(order, sizeof(stOrder));
-    //}
-    return Price;
-}
-
-void CApplication::FixOrderN(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO, PROMD::TTORATstpPriceType Price, PROMD::TTORATstpLSideType Side) {
-    if (OrderNO <= 0 || Price < 0.000001) return;
-    auto& orderIndex = Side==PROMD::TORA_TSTP_LSD_Buy?m_orderBuyNIndex:m_orderSellNIndex;
-    auto index_iter = orderIndex.find(SecurityIDInt);
-    if (index_iter == orderIndex.end()) return;
+    auto Price = GetOrderNoToPrice(SecurityIDInt, OrderNo);
+    if (Price < 0.000001) return;
+    auto priceIndex = GetVecPriceIndex(SecurityIDInt, Price, Side);
+    if (priceIndex < 0) return;
+    auto& curPriceIndex = Side==PROMD::TORA_TSTP_LSD_Buy?m_buyPriceIndex:m_sellPriceIndex;
+    auto priceIndexIter = curPriceIndex.find(SecurityIDInt);
+    if (priceIndexIter == curPriceIndex.end()) return;
 
     auto& mapOrder = Side==PROMD::TORA_TSTP_LSD_Buy?m_orderBuyN:m_orderSellN;
-    auto priceIndex = GetPriceIndex(SecurityIDInt, Price, Side);
-    for (auto it = index_iter->second.begin(); it != index_iter->second.end(); ++it) {
-        if (it->first <= priceIndex) {
-            //需要清理
-            continue;
+    for (auto it = priceIndexIter->second.begin(); it != priceIndexIter->second.end();) {
+        if (it->first < priceIndex) {
+            if (Volume > 0) {
+                auto iter = mapOrder.at(SecurityIDInt).at(it->first).Orders.begin();
+                for (;iter != mapOrder.at(SecurityIDInt).at(it->first).Orders.end(); ++iter) {
+                    auto order = (*iter);
+                    DelOrderNoPrice(SecurityIDInt, order->OrderNo);
+                    ModOrderPriceIndex(SecurityIDInt, priceIndex, Side);
+                    m_pool.Free<stOrder>(order, sizeof(stOrder));
+                }
+                mapOrder.at(SecurityIDInt).at(priceIndex).Orders.clear();
+                it = priceIndexIter->second.erase(it);
+            } else {
+                ++it;
+            }
+        } else if (it->first == priceIndex) {
+            auto iter = mapOrder.at(SecurityIDInt).at(it->first).Orders.begin();
+            for (;iter != mapOrder.at(SecurityIDInt).at(it->first).Orders.end();) {
+                auto order = (*iter);
+                if (order->OrderNo == OrderNo) {
+                    if (Volume > 0) {
+                        if (Volume > 0) {
+                            (*iter)->Volume -= Volume;
+                        }
+                        if (Volume == 0 || (*iter)->Volume <= 0) {
+                            auto order = (*iter);
+                            DelOrderNoPrice(SecurityIDInt, order->OrderNo);
+                            ModOrderPriceIndex(SecurityIDInt, priceIndex, Side);
+                            mapOrder.at(SecurityIDInt).at(priceIndex).Orders.erase(iter);
+                            m_pool.Free<stOrder>(order, sizeof(stOrder));
+                        }
+
+                    }
+                    DelOrderNoPrice(SecurityIDInt, order->OrderNo);
+                    ModOrderPriceIndex(SecurityIDInt, priceIndex, Side);
+                    m_pool.Free<stOrder>(order, sizeof(stOrder));
+
+                } else if (order->OrderNo < OrderNo) {
+                    if (Volume > 0) {
+                        DelOrderNoPrice(SecurityIDInt, order->OrderNo);
+                        ModOrderPriceIndex(SecurityIDInt, priceIndex, Side);
+                        m_pool.Free<stOrder>(order, sizeof(stOrder));
+                    }
+                } else {
+                    ++iter;
+                }
+            }
+
+        } else {
+            break;
         }
-        break;
     }
 }
 
@@ -354,31 +348,25 @@ void CApplication::MDOnRtnTransaction(PROMD::CTORATstpLev2TransactionField &Tran
     int SecurityIDInt = atoi(Transaction.SecurityID);
     if (Transaction.ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
         if (Transaction.ExecType == PROMD::TORA_TSTP_ECT_Fill) {
-            {
-                auto homeBestBuyOrder = GetHomebestOrder(SecurityIDInt, Transaction.BuyNo);
-                if (homeBestBuyOrder) {
-                    homeBestBuyOrder->Volume -= Transaction.TradeVolume;
-                    if (homeBestBuyOrder->Volume > 0) {
-                        InsertOrderN(SecurityIDInt, homeBestBuyOrder->OrderNO, Transaction.TradePrice, homeBestBuyOrder->Volume, homeBestBuyOrder->Side);
-                    }
-                    DelHomebestOrder(SecurityIDInt, homeBestBuyOrder->OrderNO);
-                } else {
-                    auto BuyPrice = ModifyOrderN(SecurityIDInt, Transaction.TradeVolume, Transaction.BuyNo, PROMD::TORA_TSTP_LSD_Buy);
-                    FixOrderN(SecurityIDInt, Transaction.BuyNo, BuyPrice, PROMD::TORA_TSTP_LSD_Buy);
+            auto homeBestBuyOrder = GetHomebestOrder(SecurityIDInt, Transaction.BuyNo);
+            if (homeBestBuyOrder) {
+                homeBestBuyOrder->Volume -= Transaction.TradeVolume;
+                if (homeBestBuyOrder->Volume > 0) {
+                    InsertOrderN(SecurityIDInt, homeBestBuyOrder->OrderNO, Transaction.TradePrice, homeBestBuyOrder->Volume, homeBestBuyOrder->Side);
                 }
+                DelHomebestOrder(SecurityIDInt, Transaction.BuyNo);
+            } else {
+                ModifyOrderN(SecurityIDInt, Transaction.TradeVolume, Transaction.BuyNo, PROMD::TORA_TSTP_LSD_Buy);
             }
-            {
-                auto homeBestSellOrder = GetHomebestOrder(SecurityIDInt, Transaction.SellNo);
-                if (homeBestSellOrder) {
-                    homeBestSellOrder->Volume -= Transaction.TradeVolume;
-                    if (homeBestSellOrder->Volume > 0) {
-                        InsertOrderN(SecurityIDInt, homeBestSellOrder->OrderNO, Transaction.TradePrice, homeBestSellOrder->Volume, homeBestSellOrder->Side);
-                    }
-                    DelHomebestOrder(SecurityIDInt, homeBestSellOrder->OrderNO);
-                } else {
-                    auto SellPrice = ModifyOrderN(SecurityIDInt, Transaction.TradeVolume, Transaction.SellNo, PROMD::TORA_TSTP_LSD_Sell);
-                    FixOrderN(SecurityIDInt, Transaction.SellNo, SellPrice, PROMD::TORA_TSTP_LSD_Sell);
+            auto homeBestSellOrder = GetHomebestOrder(SecurityIDInt, Transaction.SellNo);
+            if (homeBestSellOrder) {
+                homeBestSellOrder->Volume -= Transaction.TradeVolume;
+                if (homeBestSellOrder->Volume > 0) {
+                    InsertOrderN(SecurityIDInt, homeBestSellOrder->OrderNO, Transaction.TradePrice, homeBestSellOrder->Volume, homeBestSellOrder->Side);
                 }
+                DelHomebestOrder(SecurityIDInt, Transaction.SellNo);
+            } else {
+                ModifyOrderN(SecurityIDInt, Transaction.TradeVolume, Transaction.SellNo, PROMD::TORA_TSTP_LSD_Sell);
             }
         } else if (Transaction.ExecType == PROMD::TORA_TSTP_ECT_Cancel) {
             if (Transaction.BuyNo > 0) {
@@ -389,10 +377,8 @@ void CApplication::MDOnRtnTransaction(PROMD::CTORATstpLev2TransactionField &Tran
         }
     }
     else if (Transaction.ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
-        auto BuyPrice = ModifyOrderN(SecurityIDInt, Transaction.TradeVolume, Transaction.BuyNo, PROMD::TORA_TSTP_LSD_Buy);
-        FixOrderN(SecurityIDInt, Transaction.BuyNo, BuyPrice, PROMD::TORA_TSTP_LSD_Buy);
-        auto SellPrice = ModifyOrderN(SecurityIDInt, Transaction.TradeVolume, Transaction.SellNo, PROMD::TORA_TSTP_LSD_Sell);
-        FixOrderN(SecurityIDInt, Transaction.BuyNo, BuyPrice, PROMD::TORA_TSTP_LSD_Buy);
+        ModifyOrderN(SecurityIDInt, Transaction.TradeVolume, Transaction.BuyNo, PROMD::TORA_TSTP_LSD_Buy);
+        ModifyOrderN(SecurityIDInt, Transaction.TradeVolume, Transaction.SellNo, PROMD::TORA_TSTP_LSD_Sell);
     }
 }
 
@@ -406,10 +392,8 @@ void CApplication::MDOnRtnNGTSTick(PROMD::CTORATstpLev2NGTSTickField &Tick) {
     } else if (Tick.TickType == PROMD::TORA_TSTP_LTT_Delete) {
         ModifyOrderN(SecurityIDInt, 0, Tick.Side==PROMD::TORA_TSTP_LSD_Buy?Tick.BuyNo:Tick.SellNo, Tick.Side);
     } else if (Tick.TickType == PROMD::TORA_TSTP_LTT_Trade) {
-        auto BuyPrice = ModifyOrderN(SecurityIDInt, Tick.Volume, Tick.BuyNo, PROMD::TORA_TSTP_LSD_Buy);
-        FixOrderN(SecurityIDInt, Tick.BuyNo, BuyPrice, PROMD::TORA_TSTP_LSD_Buy);
-        auto SellPrice = ModifyOrderN(SecurityIDInt, Tick.Volume, Tick.SellNo, PROMD::TORA_TSTP_LSD_Sell);
-        FixOrderN(SecurityIDInt, Tick.SellNo, SellPrice, PROMD::TORA_TSTP_LSD_Sell);
+        ModifyOrderN(SecurityIDInt, Tick.Volume, Tick.BuyNo, PROMD::TORA_TSTP_LSD_Buy);
+        ModifyOrderN(SecurityIDInt, Tick.Volume, Tick.SellNo, PROMD::TORA_TSTP_LSD_Sell);
     }
 }
 
