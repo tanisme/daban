@@ -221,33 +221,29 @@ void CApplication::ModifyOrderN(int SecurityIDInt, PROMD::TTORATstpLongVolumeTyp
                 auto order = (*iter);
                 if (order->OrderNo == OrderNo) {
                     if (Volume > 0) {
-                        if (Volume > 0) {
-                            (*iter)->Volume -= Volume;
-                        }
-                        if (Volume == 0 || (*iter)->Volume <= 0) {
-                            auto order = (*iter);
-                            DelOrderNoPrice(SecurityIDInt, order->OrderNo);
-                            ModOrderPriceIndex(SecurityIDInt, priceIndex, Side);
-                            mapOrder.at(SecurityIDInt).at(priceIndex).Orders.erase(iter);
-                            m_pool.Free<stOrder>(order, sizeof(stOrder));
-                        }
-
+                        (*iter)->Volume -= Volume;
                     }
-                    DelOrderNoPrice(SecurityIDInt, order->OrderNo);
-                    ModOrderPriceIndex(SecurityIDInt, priceIndex, Side);
-                    m_pool.Free<stOrder>(order, sizeof(stOrder));
-
+                    if (Volume == 0 || (*iter)->Volume <= 0) {
+                        DelOrderNoPrice(SecurityIDInt, order->OrderNo);
+                        ModOrderPriceIndex(SecurityIDInt, priceIndex, Side);
+                        iter = mapOrder.at(SecurityIDInt).at(priceIndex).Orders.erase(iter);
+                        m_pool.Free<stOrder>(order, sizeof(stOrder));
+                    } else {
+                        ++iter;
+                    }
                 } else if (order->OrderNo < OrderNo) {
                     if (Volume > 0) {
                         DelOrderNoPrice(SecurityIDInt, order->OrderNo);
                         ModOrderPriceIndex(SecurityIDInt, priceIndex, Side);
+                        iter = mapOrder.at(SecurityIDInt).at(priceIndex).Orders.erase(iter);
                         m_pool.Free<stOrder>(order, sizeof(stOrder));
+                    } else {
+                        ++iter;
                     }
                 } else {
                     ++iter;
                 }
             }
-
         } else {
             break;
         }
