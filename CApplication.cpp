@@ -394,51 +394,51 @@ void CApplication::MDOnRtnNGTSTick(PROMD::CTORATstpLev2NGTSTickField &Tick) {
 }
 
 void CApplication::ShowOrderBook(PROMD::TTORATstpSecurityIDType SecurityID) {
-    //if (m_orderBuyV.find(SecurityID) == m_orderBuyV.end() &&
-    //    m_orderSellV.find(SecurityID) == m_orderSellV.end()) return;
+    int SecurityIDInt = atoi(SecurityID);
 
-    //std::stringstream stream;
-    //stream << "\n";
-    //stream << "-----------" << SecurityID << " " << GetTimeStr() << "-----------\n";
+    std::stringstream stream;
+    stream << "\n";
+    stream << "-----------" << SecurityID << " " << GetTimeStr() << "-----------\n";
 
-    //char buffer[512] = {0};
-    //{
-    //    std::vector<std::string> temp;
-    //    auto iter = m_orderSellV.find(SecurityID);
-    //    if (iter != m_orderSellV.end()) {
-    //        int i = 1;
-    //        for (auto iter1: iter->second) {
-    //            memset(buffer, 0, sizeof(buffer));
-    //            auto totalVolume = 0;
-    //            for (auto iter2 : iter1.Orders) totalVolume += iter2->Volume;
-    //            int Volume = (int)totalVolume / 100;
-    //            if (totalVolume % 100 >= 50) Volume++;
-    //            sprintf(buffer, "S%d\t%.2f\t%d\t\t%d\n", i, iter1.Price, Volume, (int)iter1.Orders.size());
-    //            temp.emplace_back(buffer);
-    //            if (i++ >= 5) break;
-    //        }
-    //        for (auto it = temp.rbegin(); it != temp.rend(); ++it) stream << (*it);
-    //    }
-    //}
-
-    //{
-    //    std::vector<std::string> temp;
-    //    auto iter = m_orderBuyV.find(SecurityID);
-    //    if (iter != m_orderBuyV.end()) {
-    //        int i = 1;
-    //        for (auto iter1: iter->second) {
-    //            memset(buffer, 0, sizeof(buffer));
-    //            auto totalVolume = 0;
-    //            for (auto iter2 : iter1.Orders) totalVolume += iter2->Volume;
-    //            int Volume = (int)totalVolume / 100;
-    //            if (totalVolume % 100 >= 50) Volume++;
-    //            sprintf(buffer, "B%d\t%.2f\t%d\t\t%d\n", i, iter1.Price, Volume, (int)iter1.Orders.size());
-    //            temp.emplace_back(buffer);
-    //            if (i++ >= 5) break;
-    //        }
-    //        for (auto it = temp.begin(); it != temp.end(); ++it) stream << (*it);
-    //    }
-    //}
-    //printf("%s\n", stream.str().c_str());
+    char buffer[512] = {0};
+    {
+        std::vector<std::string> temp;
+        int i = 1;
+        auto iter = m_buyPriceIndex.find(SecurityIDInt);
+        if (iter != m_buyPriceIndex.end()) {
+            for (auto it : iter->second) {
+                auto priceIndex = it.first;
+                auto buyOrders = m_orderBuyN.at(SecurityIDInt).at(priceIndex);
+                auto totalVolume = 0ll;
+                memset(buffer, 0, sizeof(buffer));
+                for (auto iter1 : buyOrders.Orders) {
+                    totalVolume += iter1->Volume;
+                }
+                sprintf(buffer, "S%d\t%.2f\t%lld\t\t%d\n", i, buyOrders.Price, totalVolume, (int)buyOrders.Orders.size());
+                temp.emplace_back(buffer);
+                if (i++ >= 5) break;
+                for (auto it = temp.rbegin(); it != temp.rend(); ++it) stream << (*it);
+            }
+        }
+        //{
+        //    std::vector<std::string> temp;
+        //    auto iter = m_orderBuyV.find(SecurityID);
+        //    if (iter != m_orderBuyV.end()) {
+        //        int i = 1;
+        //        for (auto iter1: iter->second) {
+        //            memset(buffer, 0, sizeof(buffer));
+        //            auto totalVolume = 0;
+        //            for (auto iter2 : iter1.Orders) totalVolume += iter2->Volume;
+        //            int Volume = (int)totalVolume / 100;
+        //            if (totalVolume % 100 >= 50) Volume++;
+        //            sprintf(buffer, "B%d\t%.2f\t%d\t\t%d\n", i, iter1.Price, Volume, (int)iter1.Orders.size());
+        //            temp.emplace_back(buffer);
+        //            if (i++ >= 5) break;
+        //        }
+        //        for (auto it = temp.begin(); it != temp.end(); ++it) stream << (*it);
+        //    }
+        //}
+    }
+    printf("%s\n", stream.str().c_str());
 }
 
