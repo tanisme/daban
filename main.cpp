@@ -6,7 +6,7 @@
 
 int main() {
     std::string cfgfile = "daban.ini";
-    bool istest = true, isshexchange = true, isshnewversion = false;
+    bool istest = true, isshexchange = true;
     std::string mdaddr = "", mdinterface = "";
     std::string tdaddr = "", tdaccount = "", tdpassword = "";
     std::string srcdatapath = "", watchsecurity = "";
@@ -14,7 +14,6 @@ int main() {
     cfgdesc.add_options()
             ("daban.istest", boost::program_options::value<bool>(&istest), "daban.istest")
             ("daban.isshexchange", boost::program_options::value<bool>(&isshexchange), "daban.isshexchange")
-            ("daban.isshnewversion", boost::program_options::value<bool>(&isshnewversion), "daban.isshnewversion")
             ("daban.tdaddr", boost::program_options::value<std::string>(&tdaddr), "daban.tdaddr")
             ("daban.tdaccount", boost::program_options::value<std::string>(&tdaccount), "daban.tdaccount")
             ("daban.tdpassword", boost::program_options::value<std::string>(&tdpassword), "daban.tdpassword")
@@ -39,7 +38,6 @@ int main() {
     CApplication app(io_context);
     app.m_isTest = istest;
     app.m_isSHExchange = isshexchange;
-    app.m_isSHNewversion = isshnewversion;
     app.m_TDAddr = tdaddr;
     app.m_TDAccount = tdaccount;
     app.m_TDPassword = tdpassword;

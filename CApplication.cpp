@@ -71,7 +71,7 @@ void CApplication::MDOnInitFinished(PROMD::TTORATstpExchangeIDType ExchangeID) {
             strncpy(SecurityID, iter.first.c_str(), sizeof(SecurityID));
             char *security_arr[1];
             security_arr[0] = SecurityID;
-            if (iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SSE && m_isSHNewversion) {
+            if (iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
                 m_MD->Api()->SubscribeNGTSTick(security_arr, 1, ExchangeID);
             } else {
                 m_MD->Api()->SubscribeOrderDetail(security_arr, 1, ExchangeID);
@@ -96,13 +96,13 @@ void CApplication::MDOnRtnOrderDetail(PROMD::CTORATstpLev2OrderDetailField &Orde
         }
         InsertOrder(OrderDetail.SecurityID, OrderDetail.OrderNO, OrderDetail.Price, OrderDetail.Volume, OrderDetail.Side);
     }
-    else if (OrderDetail.ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
-        if (OrderDetail.OrderStatus == PROMD::TORA_TSTP_LOS_Add) {
-            InsertOrder(OrderDetail.SecurityID, OrderDetail.OrderNO, OrderDetail.Price, OrderDetail.Volume, OrderDetail.Side);
-        } else if (OrderDetail.OrderStatus == PROMD::TORA_TSTP_LOS_Delete) {
-            ModifyOrder(OrderDetail.SecurityID, 0, OrderDetail.OrderNO, OrderDetail.Side);
-        }
-    }
+    //else if (OrderDetail.ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
+    //    if (OrderDetail.OrderStatus == PROMD::TORA_TSTP_LOS_Add) {
+    //        InsertOrder(OrderDetail.SecurityID, OrderDetail.OrderNO, OrderDetail.Price, OrderDetail.Volume, OrderDetail.Side);
+    //    } else if (OrderDetail.OrderStatus == PROMD::TORA_TSTP_LOS_Delete) {
+    //        ModifyOrder(OrderDetail.SecurityID, 0, OrderDetail.OrderNO, OrderDetail.Side);
+    //    }
+    //}
 }
 
 void CApplication::MDOnRtnTransaction(PROMD::CTORATstpLev2TransactionField &Transaction) {
@@ -142,10 +142,10 @@ void CApplication::MDOnRtnTransaction(PROMD::CTORATstpLev2TransactionField &Tran
             }
         }
     }
-    else if (Transaction.ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
-        ModifyOrder(Transaction.SecurityID, Transaction.TradeVolume, Transaction.BuyNo, PROMD::TORA_TSTP_LSD_Buy);
-        ModifyOrder(Transaction.SecurityID, Transaction.TradeVolume, Transaction.SellNo, PROMD::TORA_TSTP_LSD_Sell);
-    }
+    //else if (Transaction.ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
+    //    ModifyOrder(Transaction.SecurityID, Transaction.TradeVolume, Transaction.BuyNo, PROMD::TORA_TSTP_LSD_Buy);
+    //    ModifyOrder(Transaction.SecurityID, Transaction.TradeVolume, Transaction.SellNo, PROMD::TORA_TSTP_LSD_Sell);
+    //}
 }
 
 void CApplication::MDOnRtnNGTSTick(PROMD::CTORATstpLev2NGTSTickField &Tick) {
@@ -270,8 +270,8 @@ void CApplication::ModifyOrder(PROMD::TTORATstpSecurityIDType SecurityID, PROMD:
                             continue;
                         }
                     }
-                    ++iterOrder;
-                    //break; // 上海有序后直接break
+                    //++iterOrder;
+                    break; // 上海有序后直接break
                 }
             }
             if (iterVecOrder->Orders.empty()) {
