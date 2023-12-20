@@ -36,8 +36,8 @@ public:
     stHomebestOrder* GetHomebestOrder(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO);
     void DelHomebestOrder(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO);
 
-    void InitOrderMap();
-    int GetVecPriceIndex(int SecurityIDInt, PROMD::TTORATstpPriceType Price, PROMD::TTORATstpTradeBSFlagType Side);
+    void InitOrderMap(bool isPart = false);
+    int GetHTLPriceIndex(int SecurityIDInt, PROMD::TTORATstpPriceType Price, PROMD::TTORATstpTradeBSFlagType Side);
     void AddOrderPriceIndex(int SecutityIDInt, int idx, PROMD::TTORATstpTradeBSFlagType Side);
     void ModOrderPriceIndex(int SecurityIDInt, int idx, PROMD::TTORATstpTradeBSFlagType Side);
 
@@ -47,6 +47,7 @@ public:
 
     void InsertOrderN(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO, PROMD::TTORATstpPriceType Price, PROMD::TTORATstpLongVolumeType Volume, PROMD::TTORATstpLSideType Side);
     void ModifyOrderN(int SecurityIDInt, PROMD::TTORATstpLongVolumeType Volume, PROMD::TTORATstpLongSequenceType OrderNo, PROMD::TTORATstpTradeBSFlagType Side);
+    void DeleteOrderN(int SecurityIDInt, PROMD::TTORATstpLongVolumeType Volume, PROMD::TTORATstpLongSequenceType OrderNo, PROMD::TTORATstpTradeBSFlagType Side);
 
 public:
     boost::asio::io_context& m_ioc;
