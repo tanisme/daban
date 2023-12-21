@@ -301,15 +301,22 @@ void CApplication::ModifyOrderN(int SecurityIDInt, PROMD::TTORATstpLongVolumeTyp
 /***************************************TD***************************************/
 void CApplication::TDOnRspQrySecurity(PROTD::CTORATstpSecurityField &Security) {
     int SecurityIDInt = atoi(Security.SecurityID);
-    auto iter = m_marketSecurity.find(SecurityIDInt);
-    if (iter == m_marketSecurity.end()) {
+    auto it = m_marketSecurity.find(SecurityIDInt);
+    if (it == m_marketSecurity.end()) {
         auto security = m_pool.Malloc<stSecurity>(sizeof(stSecurity));
         if (security) {
             strcpy(security->SecurityID, Security.SecurityID);
             security->ExchangeID = Security.ExchangeID;
             security->UpperLimitPrice = Security.UpperLimitPrice;
             security->LowerLimitPrice = Security.LowerLimitPrice;
-            security->TotalIndex = int((security->UpperLimitPrice - security->LowerLimitPrice) / 0.01) + 1;
+
+            auto diffPrice = security->UpperLimitPrice - security->LowerLimitPrice;
+            auto tempIndex = diffPrice / 0.01;
+            auto totalIndex = int(tempIndex) + 1;
+            if (int(tempIndex * 10) % 10 >= 5) {
+                totalIndex += 1;
+            }
+            security->TotalIndex = totalIndex;
             m_marketSecurity[SecurityIDInt] = security;
         }
         if (m_watchSecurity.find(SecurityIDInt) != m_watchSecurity.end()) {
@@ -363,7 +370,7 @@ void CApplication::MDOnInitFinished(PROMD::TTORATstpExchangeIDType ExchangeID) {
             strncpy(SecurityID, iter.second->SecurityID, sizeof(SecurityID));
             char *security_arr[1];
             security_arr[0] = SecurityID;
-            if (iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SSE && m_isSHNewversion) {
+            if (iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
                 m_MD->Api()->SubscribeNGTSTick(security_arr, 1, ExchangeID);
             } else {
                 m_MD->Api()->SubscribeOrderDetail(security_arr, 1, ExchangeID);
