@@ -32,7 +32,6 @@ struct stSecurity {
     TORASTOCKAPI::TTORATstpExchangeIDType ExchangeID;
     TORASTOCKAPI::TTORATstpPriceType UpperLimitPrice;
     TORASTOCKAPI::TTORATstpPriceType LowerLimitPrice;
-    int TotalIndex = 0;
 };
 
 struct stHomebestOrder {
@@ -49,5 +48,6 @@ void trim(std::string &s);
 std::string GetThreadID();
 long long int GetUs();
 int FindOrderNo(std::vector<TORALEV2API::TTORATstpLongSequenceType>& vec, TORALEV2API::TTORATstpLongSequenceType OrderNo);
+int GetTotalIndex(TORASTOCKAPI::TTORATstpPriceType UpperLimitPrice, TORASTOCKAPI::TTORATstpPriceType LowerLimitPrice);
 
 #endif //DABAN_DEFINES_H

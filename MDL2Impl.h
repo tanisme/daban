@@ -19,6 +19,7 @@ namespace PROMD {
         bool IsInited() const { return m_isInited; }
         CTORATstpLev2MdApi *Api() const { return m_pApi; }
         static const char *GetExchangeName(TTORATstpExchangeIDType ExchangeID);
+        TTORATstpExchangeIDType GetExchangeID() const { return m_exchangeID; }
 
     public:
         void OnFrontConnected() override;

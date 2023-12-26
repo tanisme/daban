@@ -80,6 +80,7 @@ private:
     std::unordered_map<int, std::set<int>> m_sellPriceIndex;
 
     test::Imitate m_imitate;
+    std::unordered_map<int, int> m_notifyCount;
 };
 
 #endif //TEST_BALIBALI_H

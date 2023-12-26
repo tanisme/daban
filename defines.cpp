@@ -75,3 +75,13 @@ int FindOrderNo(std::vector<TORALEV2API::TTORATstpLongSequenceType>& vec, TORALE
     }
     return -1;
 }
+
+int GetTotalIndex(TORASTOCKAPI::TTORATstpPriceType UpperLimitPrice, TORASTOCKAPI::TTORATstpPriceType LowerLimitPrice) {
+    auto diffPrice = UpperLimitPrice - LowerLimitPrice;
+    auto tempIndex = diffPrice / 0.01;
+    auto totalIndex = int(tempIndex) + 1;
+    if (int(tempIndex * 10) % 10 >= 5) {
+        totalIndex += 1;
+    }
+    return totalIndex;
+}

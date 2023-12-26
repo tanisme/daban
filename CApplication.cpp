@@ -52,8 +52,12 @@ void CApplication::OnTime(const boost::system::error_code& error) {
         }
     }
 
-    for (auto& iter : m_watchSecurity) {
-        ShowOrderBook((char*)iter.second->SecurityID);
+    if (m_TD->IsInited() && m_MD->IsInited()) {
+        for (auto& iter : m_watchSecurity) {
+            if (iter.second->ExchangeID == m_MD->GetExchangeID()) {
+                ShowOrderBook((char*)iter.second->SecurityID);
+            }
+        }
     }
 
     m_timer.expires_from_now(boost::posix_time::milliseconds(6000));
@@ -147,7 +151,9 @@ int CApplication::GetHTLPriceIndex(int SecurityIDInt, PROMD::TTORATstpPriceType 
     if (value >= 0.5) {
         priceIndex++;
     }
-    if (priceIndex >= iter->second->TotalIndex || priceIndex < 0) {
+
+    auto TotalIndex = GetTotalIndex(iter->second->UpperLimitPrice, iter->second->LowerLimitPrice);
+    if (priceIndex >= TotalIndex || priceIndex < 0) {
         priceIndex = -1;
     }
     return priceIndex;
@@ -310,14 +316,6 @@ void CApplication::TDOnRspQrySecurity(PROTD::CTORATstpSecurityField &Security) {
             security->ExchangeID = Security.ExchangeID;
             security->UpperLimitPrice = Security.UpperLimitPrice;
             security->LowerLimitPrice = Security.LowerLimitPrice;
-
-            auto diffPrice = security->UpperLimitPrice - security->LowerLimitPrice;
-            auto tempIndex = diffPrice / 0.01;
-            auto totalIndex = int(tempIndex) + 1;
-            if (int(tempIndex * 10) % 10 >= 5) {
-                totalIndex += 1;
-            }
-            security->TotalIndex = totalIndex;
             m_marketSecurity[SecurityIDInt] = security;
         }
         if (m_watchSecurity.find(SecurityIDInt) != m_watchSecurity.end()) {
@@ -347,15 +345,15 @@ void CApplication::InitOrderMap(bool isPart) {
         for (auto& it : m_watchSecurity) {
             it.second->UpperLimitPrice = 40;
             it.second->LowerLimitPrice = 20;
-            it.second->TotalIndex = int((it.second->UpperLimitPrice - it.second->LowerLimitPrice) / 0.01) + 1;
         }
         initSecurity = m_watchSecurity;
     }
     for (auto& it : initSecurity) {
         auto SecurityIDInt = atoi(it.second->SecurityID);
-        m_orderBuyN.at(SecurityIDInt).resize(it.second->TotalIndex);
-        m_orderSellN.at(SecurityIDInt).resize(it.second->TotalIndex);
-        for (auto i = 0; i < it.second->TotalIndex; ++i) {
+        auto TotalIndex = GetTotalIndex(it.second->UpperLimitPrice, it.second->LowerLimitPrice);
+        m_orderBuyN.at(SecurityIDInt).resize(TotalIndex);
+        m_orderSellN.at(SecurityIDInt).resize(TotalIndex);
+        for (auto i = 0; i < TotalIndex; ++i) {
             m_orderBuyN.at(SecurityIDInt).at(i).Price = it.second->UpperLimitPrice - i * 0.01;
             m_orderSellN.at(SecurityIDInt).at(i).Price = it.second->LowerLimitPrice + i * 0.01;
         }
@@ -384,11 +382,12 @@ void CApplication::MDOnInitFinished(PROMD::TTORATstpExchangeIDType ExchangeID) {
 }
 
 void CApplication::MDOnRtnOrderDetail(PROMD::CTORATstpLev2OrderDetailField &OrderDetail) {
+    int SecurityIDInt = atoi(OrderDetail.SecurityID);
+    m_notifyCount[SecurityIDInt]++;
     if (OrderDetail.OrderType == PROMD::TORA_TSTP_LOT_Market) return;
     if (OrderDetail.ExchangeID != PROMD::TORA_TSTP_EXD_SZSE) return;
     if (OrderDetail.Side != PROMD::TORA_TSTP_LSD_Buy && OrderDetail.Side != PROMD::TORA_TSTP_LSD_Sell) return;
 
-    int SecurityIDInt = atoi(OrderDetail.SecurityID);
     if (OrderDetail.OrderType == PROMD::TORA_TSTP_LOT_HomeBest) {
         AddHomebestOrder(SecurityIDInt, OrderDetail.OrderNO, OrderDetail.Volume, OrderDetail.Side);
         return;
@@ -397,8 +396,9 @@ void CApplication::MDOnRtnOrderDetail(PROMD::CTORATstpLev2OrderDetailField &Orde
 }
 
 void CApplication::MDOnRtnTransaction(PROMD::CTORATstpLev2TransactionField &Transaction) {
-    if (Transaction.ExchangeID != PROMD::TORA_TSTP_EXD_SZSE) return;
     int SecurityIDInt = atoi(Transaction.SecurityID);
+    m_notifyCount[SecurityIDInt]++;
+    if (Transaction.ExchangeID != PROMD::TORA_TSTP_EXD_SZSE) return;
     if (Transaction.ExecType == PROMD::TORA_TSTP_ECT_Fill) {
         auto homeBestBuyOrder = GetHomebestOrder(SecurityIDInt, Transaction.BuyNo);
         if (homeBestBuyOrder) {
@@ -432,10 +432,11 @@ void CApplication::MDOnRtnTransaction(PROMD::CTORATstpLev2TransactionField &Tran
 }
 
 void CApplication::MDOnRtnNGTSTick(PROMD::CTORATstpLev2NGTSTickField &Tick) {
+    int SecurityIDInt = atoi(Tick.SecurityID);
+    m_notifyCount[SecurityIDInt]++;
+
     if (Tick.ExchangeID != PROMD::TORA_TSTP_EXD_SSE) return;
     if (Tick.Side != PROMD::TORA_TSTP_LSD_Buy && Tick.Side != PROMD::TORA_TSTP_LSD_Sell) return;
-
-    int SecurityIDInt = atoi(Tick.SecurityID);
     if (Tick.TickType == PROMD::TORA_TSTP_LTT_Add) {
         InsertOrderN(SecurityIDInt, Tick.Side==PROMD::TORA_TSTP_LSD_Buy?Tick.BuyNo:Tick.SellNo, Tick.Price, Tick.Volume, Tick.Side);
     } else if (Tick.TickType == PROMD::TORA_TSTP_LTT_Delete) {
@@ -454,10 +455,15 @@ void CApplication::MDOnRtnNGTSTick(PROMD::CTORATstpLev2NGTSTickField &Tick) {
 
 void CApplication::ShowOrderBook(PROMD::TTORATstpSecurityIDType SecurityID) {
     int SecurityIDInt = atoi(SecurityID);
+    int count = 0;
+    {
+        auto iter = m_notifyCount.find(SecurityIDInt);
+        if (iter != m_notifyCount.end()) count = m_notifyCount[SecurityIDInt];
+    }
 
     std::stringstream stream;
     stream << "\n";
-    stream << "-----------" << SecurityID << " " << GetTimeStr() << "-----------\n";
+    stream << "-----------" << SecurityID << " " << count << " " << GetTimeStr() << "-----------\n";
 
     char buffer[512] = {0};
     {
