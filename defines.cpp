@@ -70,7 +70,7 @@ int FindOrderNo(std::vector<TORALEV2API::TTORATstpLongSequenceType>& vec, TORALE
         } else if (vec.at(mid) < OrderNo) {
             min = mid;
         } else {
-            max = min;
+            max = mid;
         }
     }
     return -1;
