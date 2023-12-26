@@ -307,20 +307,23 @@ void CApplication::DeleteOrderN(int SecurityIDInt, int priceIndex,
 
 /***************************************TD***************************************/
 void CApplication::TDOnRspQrySecurity(PROTD::CTORATstpSecurityField &Security) {
-    int SecurityIDInt = atoi(Security.SecurityID);
-    auto it = m_marketSecurity.find(SecurityIDInt);
-    if (it == m_marketSecurity.end()) {
-        auto security = m_pool.Malloc<stSecurity>(sizeof(stSecurity));
-        if (security) {
-            strcpy(security->SecurityID, Security.SecurityID);
-            security->ExchangeID = Security.ExchangeID;
-            security->UpperLimitPrice = Security.UpperLimitPrice;
-            security->LowerLimitPrice = Security.LowerLimitPrice;
-            m_marketSecurity[SecurityIDInt] = security;
-        }
-        if (m_watchSecurity.find(SecurityIDInt) != m_watchSecurity.end()) {
-            strcpy(m_watchSecurity[SecurityIDInt]->SecurityID, Security.SecurityID);
-            m_watchSecurity[SecurityIDInt]->ExchangeID = Security.ExchangeID;
+    if ((m_isSHExchange && Security.ExchangeID == PROMD::TORA_TSTP_EXD_SSE) ||
+            (!m_isSHExchange && Security.ExchangeID == PROMD::TORA_TSTP_EXD_SZSE)) {
+        int SecurityIDInt = atoi(Security.SecurityID);
+        auto it = m_marketSecurity.find(SecurityIDInt);
+        if (it == m_marketSecurity.end()) {
+            auto security = m_pool.Malloc<stSecurity>(sizeof(stSecurity));
+            if (security) {
+                strcpy(security->SecurityID, Security.SecurityID);
+                security->ExchangeID = Security.ExchangeID;
+                security->UpperLimitPrice = Security.UpperLimitPrice;
+                security->LowerLimitPrice = Security.LowerLimitPrice;
+                m_marketSecurity[SecurityIDInt] = security;
+            }
+            if (m_watchSecurity.find(SecurityIDInt) != m_watchSecurity.end()) {
+                strcpy(m_watchSecurity[SecurityIDInt]->SecurityID, Security.SecurityID);
+                m_watchSecurity[SecurityIDInt]->ExchangeID = Security.ExchangeID;
+            }
         }
     }
 }
