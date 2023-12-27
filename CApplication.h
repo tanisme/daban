@@ -36,7 +36,7 @@ public:
     stHomebestOrder* GetHomebestOrder(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO);
     void DelHomebestOrder(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO);
 
-    void InitOrderMap(bool isPart = false);
+    void InitOrderMap();
     int GetHTLPriceIndex(int SecurityIDInt, PROMD::TTORATstpPriceType Price, PROMD::TTORATstpTradeBSFlagType Side);
     void AddOrderPriceIndex(int SecutityIDInt, int idx, PROMD::TTORATstpTradeBSFlagType Side);
     void DelOrderPriceIndex(int SecurityIDInt, int idx, PROMD::TTORATstpTradeBSFlagType Side);

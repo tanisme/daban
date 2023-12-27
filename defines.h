@@ -35,7 +35,6 @@ struct stSecurity {
 };
 
 struct stHomebestOrder {
-    TORALEV2API::TTORATstpLongSequenceType OrderNO;
     TORALEV2API::TTORATstpLongVolumeType Volume;
     TORALEV2API::TTORATstpLSideType Side;
 };
