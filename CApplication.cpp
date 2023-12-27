@@ -141,11 +141,7 @@ int CApplication::GetHTLPriceIndex(int SecurityIDInt, PROMD::TTORATstpPriceType 
     }
 
     auto priceIndex = int(tempIndex);
-    auto value = tempIndex - priceIndex;
-    if (value >= 0.5) {
-        priceIndex++;
-    }
-
+    if (tempIndex - priceIndex >= 0.5) priceIndex++;
     auto TotalIndex = GetTotalIndex(iter->second->UpperLimitPrice, iter->second->LowerLimitPrice);
     if (priceIndex >= TotalIndex || priceIndex < 0) {
         priceIndex = -1;
@@ -174,7 +170,9 @@ void CApplication::InsertOrderN(int SecurityIDInt, PROMD::TTORATstpLongSequenceT
                                 PROMD::TTORATstpLongVolumeType Volume, PROMD::TTORATstpLSideType Side) {
     auto priceIndex = GetHTLPriceIndex(SecurityIDInt, Price, Side);
     if (priceIndex < 0) {
-        //printf("Insert GetHTLPriceIndex SecurityID:%d Price:%.2f Side:%c\n", SecurityIDInt, Price, Side);
+        if (!m_isTest) {
+            printf("Insert GetHTLPriceIndex SecurityID:%d Price:%.2f Side:%c\n", SecurityIDInt, Price, Side);
+        }
         return;
     }
 
@@ -192,44 +190,52 @@ int CApplication::ModifyOrderN(int SecurityIDInt, PROMD::TTORATstpLongVolumeType
                                PROMD::TTORATstpLongSequenceType OrderNo, PROMD::TTORATstpTradeBSFlagType Side) {
     auto Price = GetOrderNoToPrice(SecurityIDInt, OrderNo);
     if (Price < 0.000001) {
-        //printf("Modify GetOrderNoToPrice SecurityID:%d OrderNO:%lld\n", SecurityIDInt, OrderNo);
-        return -1;
-    }
-    auto priceIndex = GetHTLPriceIndex(SecurityIDInt, Price, Side);
-    if (priceIndex < 0) {
-        printf("Modify GetHTLPriceIndex SecurityID:%d Price:%.2f Side:%c\n", SecurityIDInt, Price, Side);
+        if (!m_isTest) {
+            printf("Modify GetOrderNoToPrice SecurityID:%d OrderNO:%lld\n", SecurityIDInt, OrderNo);
+        }
         return -1;
     }
 
-    auto& curPriceIndex = Side==PROMD::TORA_TSTP_LSD_Buy?m_buyPriceIndex:m_sellPriceIndex;
-    auto priceIndexIter = curPriceIndex.find(SecurityIDInt);
-    if (priceIndexIter == curPriceIndex.end()) {
-        printf("Modify 111\n");
+    auto priceIndex = GetHTLPriceIndex(SecurityIDInt, Price, Side);
+    if (priceIndex < 0) {
+        if (!m_isTest) {
+            printf("Modify GetHTLPriceIndex SecurityID:%d Price:%.2f Side:%c\n", SecurityIDInt, Price, Side);
+        }
+        return -1;
+    }
+
+    auto& sidePriceIndex = Side==PROMD::TORA_TSTP_LSD_Buy?m_buyPriceIndex:m_sellPriceIndex;
+    auto priceIndexIter = sidePriceIndex.find(SecurityIDInt);
+    if (priceIndexIter == sidePriceIndex.end()) {
+        if (!m_isTest) {
+            printf("Modify sidePriceIndex SecurityID:%d Price:%.2f Side:%c\n", SecurityIDInt, Price, Side);
+        }
         return priceIndex;
     }
 
     if (priceIndexIter->second.find(priceIndex) == priceIndexIter->second.end()) {
-        printf("Modify 222 priceIndex = %d OrderNO:%lld\n", priceIndex, OrderNo);
+        if (!m_isTest) {
+            printf("Modify priceIndex SecurityID:%d Price:%.2f Side:%c\n", SecurityIDInt, Price, Side);
+        }
         return priceIndex;
     }
 
     auto& mapOrder = Side==PROMD::TORA_TSTP_LSD_Buy?m_orderBuyN:m_orderSellN;
-    std::vector<stOrder*>::iterator iter;
-    auto erfen = true;
-    if (!erfen){
-        iter = std::find_if(mapOrder.at(SecurityIDInt).at(priceIndex).Orders.begin(),
-                            mapOrder.at(SecurityIDInt).at(priceIndex).Orders.end(), [&](stOrder* order) {
-                    return order && order->OrderNo == OrderNo;
-                } );
-    } else {
-        std::vector<PROMD::TTORATstpLongSequenceType> OrderNoVec;
-        for (auto& it : mapOrder.at(SecurityIDInt).at(priceIndex).Orders) OrderNoVec.push_back(it->OrderNo);
-        auto idx = FindOrderNo(OrderNoVec, OrderNo);
-        if (idx < 0) return priceIndex;
-        iter = mapOrder.at(SecurityIDInt).at(priceIndex).Orders.begin() + idx;
+    std::vector<PROMD::TTORATstpLongSequenceType> OrderNoVec;
+    for (const auto& it : mapOrder.at(SecurityIDInt).at(priceIndex).Orders) OrderNoVec.push_back(it->OrderNo);
+    auto idx = FindOrderNo(OrderNoVec, OrderNo);
+    if (idx < 0) {
+        if (!m_isTest) {
+            printf("Modify FindOrderNo SecurityID:%d Price:%.2f Side:%c\n", SecurityIDInt, Price, Side);
+        }
+        return priceIndex;
     }
 
+    auto iter = mapOrder.at(SecurityIDInt).at(priceIndex).Orders.begin() + idx;
     if (iter == mapOrder.at(SecurityIDInt).at(priceIndex).Orders.end()) {
+        if (!m_isTest) {
+            printf("Modify mapOrder SecurityID:%d Price:%.2f Side:%c\n", SecurityIDInt, Price, Side);
+        }
         return priceIndex;
     }
 
@@ -255,27 +261,27 @@ int CApplication::ModifyOrderN(int SecurityIDInt, PROMD::TTORATstpLongVolumeType
 void CApplication::DeleteOrderN(int SecurityIDInt, int priceIndex,
                                 PROMD::TTORATstpLongSequenceType OrderNo, PROMD::TTORATstpTradeBSFlagType Side) {
     if (priceIndex < 0) return;
-    auto& curPriceIndex = Side==PROMD::TORA_TSTP_LSD_Buy?m_buyPriceIndex:m_sellPriceIndex;
-    auto priceIndexIter = curPriceIndex.find(SecurityIDInt);
-    if (priceIndexIter == curPriceIndex.end()) return;
+    auto& sidePriceIndex = Side==PROMD::TORA_TSTP_LSD_Buy?m_buyPriceIndex:m_sellPriceIndex;
+    auto priceIndexIter = sidePriceIndex.find(SecurityIDInt);
+    if (priceIndexIter == sidePriceIndex.end()) return;
 
     std::vector<int> toRemovePriceIndex;
     auto& mapOrder = Side==PROMD::TORA_TSTP_LSD_Buy?m_orderBuyN:m_orderSellN;
     for (auto it = priceIndexIter->second.begin(); it != priceIndexIter->second.end(); ++it) {
         auto curPriceIndex = *it;
         if (curPriceIndex == priceIndex) {
-            auto iter = mapOrder.at(SecurityIDInt).at((curPriceIndex)).Orders.begin();
-            for (;iter != mapOrder.at(SecurityIDInt).at((curPriceIndex)).Orders.end();) {
+            auto iter = mapOrder.at(SecurityIDInt).at(curPriceIndex).Orders.begin();
+            for (;iter != mapOrder.at(SecurityIDInt).at(curPriceIndex).Orders.end();) {
                 auto order = (*iter);
                 if (order->OrderNo < OrderNo) {
                     DelOrderNoPrice(SecurityIDInt, order->OrderNo);
-                    iter = mapOrder.at(SecurityIDInt).at((curPriceIndex)).Orders.erase(iter);
+                    iter = mapOrder.at(SecurityIDInt).at(curPriceIndex).Orders.erase(iter);
                     m_pool.Free<stOrder>(order, sizeof(stOrder));
                 } else {
                     break;
                 }
             }
-            if (mapOrder.at(SecurityIDInt).at((curPriceIndex)).Orders.empty()) {
+            if (mapOrder.at(SecurityIDInt).at(curPriceIndex).Orders.empty()) {
                 toRemovePriceIndex.push_back(curPriceIndex);
             }
         } else {
@@ -286,7 +292,7 @@ void CApplication::DeleteOrderN(int SecurityIDInt, int priceIndex,
                     DelOrderNoPrice(SecurityIDInt, order->OrderNo);
                     m_pool.Free<stOrder>(order, sizeof(stOrder));
                 }
-                mapOrder.at(SecurityIDInt).at(priceIndex).Orders.clear();
+                mapOrder.at(SecurityIDInt).at(curPriceIndex).Orders.clear();
                 toRemovePriceIndex.push_back(curPriceIndex);
             } else {
                 break;
@@ -368,12 +374,11 @@ void CApplication::MDOnInitFinished(PROMD::TTORATstpExchangeIDType ExchangeID) {
         strncpy(SecurityID, iter.second->SecurityID, sizeof(SecurityID));
         char *security_arr[1];
         security_arr[0] = SecurityID;
-        auto rt = -1;
         if (iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SSE) {
-            rt = m_MD->Api()->SubscribeNGTSTick(security_arr, 1, ExchangeID);
+            m_MD->Api()->SubscribeNGTSTick(security_arr, 1, ExchangeID);
         } else {
-            rt = m_MD->Api()->SubscribeOrderDetail(security_arr, 1, ExchangeID);
-            rt = m_MD->Api()->SubscribeTransaction(security_arr, 1, ExchangeID);
+            m_MD->Api()->SubscribeOrderDetail(security_arr, 1, ExchangeID);
+            m_MD->Api()->SubscribeTransaction(security_arr, 1, ExchangeID);
         }
         cnt++;
     }
