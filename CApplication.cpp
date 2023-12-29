@@ -141,6 +141,7 @@ int CApplication::GetHTLPriceIndex(int SecurityIDInt, PROMD::TTORATstpPriceType 
     }
 
     auto priceIndex = int(tempIndex);
+    if (priceIndex < 0) return -1;
     if (tempIndex - priceIndex >= 0.5) priceIndex++;
     auto TotalIndex = GetTotalIndex(iter->second->UpperLimitPrice, iter->second->LowerLimitPrice);
     if (priceIndex >= TotalIndex || priceIndex < 0) {

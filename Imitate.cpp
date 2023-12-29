@@ -20,7 +20,7 @@ namespace test {
                   << std::put_time(std::localtime(&now_c), "%F %T") << '\n';
 
         m_pApp = pApp;
-        auto useAllDataFile = true;
+        auto useAllDataFile = false;
         if (useAllDataFile) {
             auto createfile = false;
             std::string dstDataDir = srcDataDir + "/result/";
