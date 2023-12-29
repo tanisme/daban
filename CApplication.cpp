@@ -35,9 +35,37 @@ void CApplication::Init(std::string& watchSecurity) {
 }
 
 void CApplication::Start() {
-    if (!m_TD) {
-        m_TD = new PROTD::TDImpl(this);
-        m_TD->Start();
+    if (m_dataDir.length() > 0) {
+        std::string limitFile = "LimitFile.txt";
+        std::ifstream ifs(limitFile, std::ios::in);
+        if (!ifs.is_open()) {
+            printf("LimitFile open falied!!!\n");
+            return;
+        }
+
+        std::string line = "";
+        std::vector<std::string> res;
+        while (std::getline(ifs, line)) {
+            res.clear();
+            Stringsplit(line, ',', res);
+            PROTD::CTORATstpSecurityField Security = {0};
+            strcpy(Security.SecurityID, res.at(0).c_str());
+            Security.ExchangeID = res.at(1).c_str()[0];
+            Security.SecurityType = res.at(2).c_str()[0];
+            Security.bPriceLimit = atoi(res.at(3).c_str());
+            Security.UpperLimitPrice = atof(res.at(4).c_str());
+            Security.LowerLimitPrice = atof(res.at(5).c_str());
+            TDOnRspQrySecurity(Security);
+        }
+        ifs.close();
+
+        InitOrderMap();
+        m_imitate.TestOrderBook(this, m_dataDir);
+    } else {
+        if (!m_TD) {
+            m_TD = new PROTD::TDImpl(this);
+            m_TD->Start();
+        }
     }
     m_timer.expires_from_now(boost::posix_time::milliseconds(5000));
     m_timer.async_wait(boost::bind(&CApplication::OnTime, this, boost::asio::placeholders::error));
@@ -171,7 +199,7 @@ void CApplication::DelOrderPriceIndex(int SecurityIDInt, int priceIndex, PROMD::
 }
 
 void CApplication::InsertOrderN(int SecurityIDInt, PROMD::TTORATstpLongSequenceType OrderNO, PROMD::TTORATstpPriceType Price,
-                                PROMD::TTORATstpLongVolumeType Volume, PROMD::TTORATstpLSideType Side) {
+                                PROMD::TTORATstpLongVolumeType Volume, PROMD::TTORATstpLSideType Side, bool findPos) {
     auto priceIndex = GetHTLPriceIndex(SecurityIDInt, Price, Side);
     if (priceIndex < 0) {
         //if (!m_isTest) {
@@ -187,7 +215,24 @@ void CApplication::InsertOrderN(int SecurityIDInt, PROMD::TTORATstpLongSequenceT
     order->OrderNo = OrderNO;
     order->Volume = Volume;
     auto& mapOrder = Side==PROMD::TORA_TSTP_LSD_Buy?m_orderBuyN:m_orderSellN;
-    mapOrder.at(SecurityIDInt).at(priceIndex).Orders.emplace_back(order);
+    if (!findPos) {
+        mapOrder.at(SecurityIDInt).at(priceIndex).Orders.emplace_back(order);
+        return;
+    }
+
+    auto size = (int)mapOrder.at(SecurityIDInt).at(priceIndex).Orders.size();
+    if (size == 0) {
+        mapOrder.at(SecurityIDInt).at(priceIndex).Orders.emplace_back(order);
+        return;
+    }
+
+    for (auto i = 0 ; i < size; ++i) {
+        auto curOrder = mapOrder.at(SecurityIDInt).at(priceIndex).Orders.at(i);
+        if (curOrder->OrderNo > OrderNO) {
+            mapOrder.at(SecurityIDInt).at(priceIndex).Orders.insert(mapOrder.at(SecurityIDInt).at(priceIndex).Orders.begin() + i, order);
+            break;
+        }
+    }
 }
 
 int CApplication::ModifyOrderN(int SecurityIDInt, PROMD::TTORATstpLongVolumeType Volume,
@@ -329,6 +374,20 @@ void CApplication::TDOnRspQrySecurity(PROTD::CTORATstpSecurityField &Security) {
             }
             iter->second->UpperLimitPrice = Security.UpperLimitPrice;
             iter->second->LowerLimitPrice = Security.LowerLimitPrice;
+
+            auto createLimitFile = false;
+            if (createLimitFile) {
+                char buffer[256] = {0};
+                sprintf(buffer, "%s,%c,%c,%d,%.5f,%.5f", Security.SecurityID, Security.ExchangeID, Security.SecurityType, Security.bPriceLimit, Security.UpperLimitPrice, Security.LowerLimitPrice);
+
+                std::string limitFile = "LimitFile.txt";
+                FILE* fp = fopen(limitFile.c_str(), "a+");
+                if (fp) {
+                    fputs(buffer, fp);
+                    fputs("\n", fp);
+                    fclose(fp);
+                }
+            }
         }
         auto it = m_watchSecurity.find(SecurityIDInt);
         if (it != m_watchSecurity.end()) {
@@ -343,17 +402,12 @@ void CApplication::TDOnRspQrySecurity(PROTD::CTORATstpSecurityField &Security) {
 void CApplication::TDOnInitFinished() {
     printf("CApplication::TDOnInitFinished\n");
 
-    if (m_dataDir.length() > 0) {
-        InitOrderMap();
-        m_imitate.TestOrderBook(this, m_dataDir);
-    } else {
-        if (m_MD) return;
-        InitOrderMap();
-        PROMD::TTORATstpExchangeIDType ExchangeID = PROMD::TORA_TSTP_EXD_SZSE;
-        if (m_isSHExchange) ExchangeID = PROMD::TORA_TSTP_EXD_SSE;
-        m_MD = new PROMD::MDL2Impl(this, ExchangeID);
-        m_MD->Start(m_isTest);
-    }
+    if (m_MD) return;
+    InitOrderMap();
+    PROMD::TTORATstpExchangeIDType ExchangeID = PROMD::TORA_TSTP_EXD_SZSE;
+    if (m_isSHExchange) ExchangeID = PROMD::TORA_TSTP_EXD_SSE;
+    m_MD = new PROMD::MDL2Impl(this, ExchangeID);
+    m_MD->Start(m_isTest);
 }
 
 /***************************************MD***************************************/
@@ -394,9 +448,7 @@ void CApplication::MDOnInitFinished(PROMD::TTORATstpExchangeIDType ExchangeID) {
 }
 
 void CApplication::MDOnRtnOrderDetail(PROMD::CTORATstpLev2OrderDetailField &OrderDetail) {
-	if (OrderDetailCnt++ % 1000000 == 0) {
-		printf("OrderDetailCnt %d\n", OrderDetailCnt);
-	}
+	OrderDetailCnt++;
     int SecurityIDInt = atoi(OrderDetail.SecurityID);
     m_notifyCount[SecurityIDInt]++;
 
@@ -411,9 +463,7 @@ void CApplication::MDOnRtnOrderDetail(PROMD::CTORATstpLev2OrderDetailField &Orde
 }
 
 void CApplication::MDOnRtnTransaction(PROMD::CTORATstpLev2TransactionField &Transaction) {
-	if (TransactionCnt++ % 1000000 == 0) {
-		printf("TransactionCnt %d\n", TransactionCnt);
-	}
+	TransactionCnt++;
     int SecurityIDInt = atoi(Transaction.SecurityID);
     m_notifyCount[SecurityIDInt]++;
 
@@ -423,7 +473,7 @@ void CApplication::MDOnRtnTransaction(PROMD::CTORATstpLev2TransactionField &Tran
         if (homeBestBuyOrder) {
             homeBestBuyOrder->Volume -= Transaction.TradeVolume;
             if (homeBestBuyOrder->Volume > 0) {
-                InsertOrderN(SecurityIDInt, Transaction.BuyNo, Transaction.TradePrice, homeBestBuyOrder->Volume, homeBestBuyOrder->Side);
+                InsertOrderN(SecurityIDInt, Transaction.BuyNo, Transaction.TradePrice, homeBestBuyOrder->Volume, homeBestBuyOrder->Side, true);
             }
             DelHomebestOrder(SecurityIDInt, Transaction.BuyNo);
         } else {
@@ -434,7 +484,7 @@ void CApplication::MDOnRtnTransaction(PROMD::CTORATstpLev2TransactionField &Tran
         if (homeBestSellOrder) {
             homeBestSellOrder->Volume -= Transaction.TradeVolume;
             if (homeBestSellOrder->Volume > 0) {
-                InsertOrderN(SecurityIDInt, Transaction.SellNo, Transaction.TradePrice, homeBestSellOrder->Volume, homeBestSellOrder->Side);
+                InsertOrderN(SecurityIDInt, Transaction.SellNo, Transaction.TradePrice, homeBestSellOrder->Volume, homeBestSellOrder->Side, true);
             }
             DelHomebestOrder(SecurityIDInt, Transaction.SellNo);
         } else {

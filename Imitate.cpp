@@ -101,10 +101,20 @@ namespace test {
                 trim(line);
                 Stringsplit(line, ',', res);
                 std::string SecurityID = res.at(2);
-                if (++i % 1000000 == 0) {
-                    printf("已经读取行数:%d\n", i);
-                }
+                //if (++i % 1000000 == 0) {
+                    i++;
+                    //printf("已经读取行数:%d %s\n", i, line.c_str());
+                    //for (auto it : pApp->m_watchSecurity) {
+                    //    if (it.second->ExchangeID == PROMD::TORA_TSTP_EXD_SZSE) {
+                    //        pApp->ShowOrderBook((char*)it.second->SecurityID);
+                    //    }
+                    //}
+                //}
+                //if (i >= 65000000) {
+                //    printf("%d %s\n", i, line.c_str());
+                //}
                 int SecurityIDInt = atoi(SecurityID.c_str());
+                //if (SecurityIDInt != 2129) continue;
                 if (pApp->m_watchSecurity.find(SecurityIDInt) == pApp->m_watchSecurity.end()) continue;
                 if (create_file) {
                     auto it = file_fps.find(SecurityID);
@@ -113,8 +123,9 @@ namespace test {
                     fputs("\n", fp);
                 }
                 std::string ExchangeID = res.at(3);
+                if (ExchangeID.c_str()[0] == PROMD::TORA_TSTP_EXD_SSE) continue;
                 std::string Time = res.at(1);
-                if (strncmp(Time.c_str(), "145700000", 9) >= 0) continue;
+                //if (strncmp(Time.c_str(), "145700000", 9) >= 0) continue;
                 if (res.at(0) == "O") {
                     std::string Price = res.at(4);
                     std::string Volume = res.at(5);
