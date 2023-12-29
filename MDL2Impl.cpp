@@ -62,6 +62,7 @@ namespace PROMD {
             return;
         }
         m_isInited = true;
+        printf("%s MD::OnRspUserLogin Sussess!!!\n", GetExchangeName(m_exchangeID));
         m_pApp->m_ioc.post(boost::bind(&CApplication::MDOnInitFinished, m_pApp, m_exchangeID));
     }
 
