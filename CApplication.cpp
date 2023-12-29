@@ -1,5 +1,8 @@
 ﻿#include "CApplication.h"
 
+static int TransactionCnt = 0;
+static int OrderDetailCnt = 0;
+
 CApplication::CApplication(boost::asio::io_context& ioc)
         : m_ioc(ioc)
         , m_timer(m_ioc, boost::posix_time::milliseconds(1000)) {
@@ -47,6 +50,7 @@ void CApplication::OnTime(const boost::system::error_code& error) {
         }
     }
 
+	printf("CApplication::OnTime...!!!Order:%d Trade:%d\n", OrderDetailCnt, TransactionCnt);
     for (auto& iter : m_watchSecurity) {
         if ((m_isSHExchange && iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SSE) ||
             (!m_isSHExchange && iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SZSE)) {
@@ -389,6 +393,9 @@ void CApplication::MDOnInitFinished(PROMD::TTORATstpExchangeIDType ExchangeID) {
 }
 
 void CApplication::MDOnRtnOrderDetail(PROMD::CTORATstpLev2OrderDetailField &OrderDetail) {
+	if (OrderDetailCnt++ % 1000000 == 0) {
+		printf("OrderDetailCnt %d\n", OrderDetailCnt);
+	}
     int SecurityIDInt = atoi(OrderDetail.SecurityID);
     m_notifyCount[SecurityIDInt]++;
 
@@ -403,6 +410,9 @@ void CApplication::MDOnRtnOrderDetail(PROMD::CTORATstpLev2OrderDetailField &Orde
 }
 
 void CApplication::MDOnRtnTransaction(PROMD::CTORATstpLev2TransactionField &Transaction) {
+	if (TransactionCnt++ % 1000000 == 0) {
+		printf("TransactionCnt %d\n", TransactionCnt);
+	}
     int SecurityIDInt = atoi(Transaction.SecurityID);
     m_notifyCount[SecurityIDInt]++;
 
