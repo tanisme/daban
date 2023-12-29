@@ -50,14 +50,8 @@ namespace PROTD {
     }
 
     void TDImpl::OnRspQrySecurity(CTORATstpSecurityField *pSecurity, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
-        if (pSecurity && pSecurity->bPriceLimit > 0) {
-            if (pSecurity->SecurityType == PROTD::TORA_TSTP_STP_SHAShares ||
-                pSecurity->SecurityType == PROTD::TORA_TSTP_STP_SHKC ||
-                pSecurity->SecurityType == PROTD::TORA_TSTP_STP_SZCDR ||
-                pSecurity->SecurityType == PROTD::TORA_TSTP_STP_SZGEM ||
-                pSecurity->SecurityType == PROTD::TORA_TSTP_STP_SZMainAShares) {
-                m_pApp->m_ioc.post(boost::bind(&CApplication::TDOnRspQrySecurity, m_pApp, *pSecurity));
-            }
+        if (pSecurity) {
+            m_pApp->m_ioc.post(boost::bind(&CApplication::TDOnRspQrySecurity, m_pApp, *pSecurity));
         }
 
         if (bIsLast) {

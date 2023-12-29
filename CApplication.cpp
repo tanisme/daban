@@ -47,11 +47,10 @@ void CApplication::OnTime(const boost::system::error_code& error) {
         }
     }
 
-    if (m_TD->IsInited() && m_MD->IsInited()) {
-        for (auto& iter : m_watchSecurity) {
-            if (iter.second->ExchangeID == m_MD->GetExchangeID()) {
-                ShowOrderBook((char*)iter.second->SecurityID);
-            }
+    for (auto& iter : m_watchSecurity) {
+        if ((m_isSHExchange && iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SSE) ||
+            (!m_isSHExchange && iter.second->ExchangeID == PROMD::TORA_TSTP_EXD_SZSE)) {
+            ShowOrderBook((char*)iter.second->SecurityID);
         }
     }
 
@@ -171,9 +170,9 @@ void CApplication::InsertOrderN(int SecurityIDInt, PROMD::TTORATstpLongSequenceT
                                 PROMD::TTORATstpLongVolumeType Volume, PROMD::TTORATstpLSideType Side) {
     auto priceIndex = GetHTLPriceIndex(SecurityIDInt, Price, Side);
     if (priceIndex < 0) {
-        if (!m_isTest) {
-            printf("Insert GetHTLPriceIndex SecurityID:%d Price:%.2f Side:%c\n", SecurityIDInt, Price, Side);
-        }
+        //if (!m_isTest) {
+        //    printf("Insert GetHTLPriceIndex SecurityID:%d Price:%.2f Side:%c\n", SecurityIDInt, Price, Side);
+        //}
         return;
     }
 
@@ -191,33 +190,33 @@ int CApplication::ModifyOrderN(int SecurityIDInt, PROMD::TTORATstpLongVolumeType
                                PROMD::TTORATstpLongSequenceType OrderNo, PROMD::TTORATstpTradeBSFlagType Side) {
     auto Price = GetOrderNoToPrice(SecurityIDInt, OrderNo);
     if (Price < 0.000001) {
-        if (!m_isTest) {
-            printf("Modify GetOrderNoToPrice SecurityID:%d OrderNO:%lld\n", SecurityIDInt, OrderNo);
-        }
+        //if (!m_isTest) {
+        //    printf("Modify GetOrderNoToPrice SecurityID:%d OrderNO:%lld\n", SecurityIDInt, OrderNo);
+        //}
         return -1;
     }
 
     auto priceIndex = GetHTLPriceIndex(SecurityIDInt, Price, Side);
     if (priceIndex < 0) {
-        if (!m_isTest) {
-            printf("Modify GetHTLPriceIndex SecurityID:%d Price:%.2f Side:%c\n", SecurityIDInt, Price, Side);
-        }
+        //if (!m_isTest) {
+        //    printf("Modify GetHTLPriceIndex SecurityID:%d Price:%.2f Side:%c\n", SecurityIDInt, Price, Side);
+        //}
         return -1;
     }
 
     auto& sidePriceIndex = Side==PROMD::TORA_TSTP_LSD_Buy?m_buyPriceIndex:m_sellPriceIndex;
     auto priceIndexIter = sidePriceIndex.find(SecurityIDInt);
     if (priceIndexIter == sidePriceIndex.end()) {
-        if (!m_isTest) {
-            printf("Modify sidePriceIndex SecurityID:%d Price:%.2f Side:%c\n", SecurityIDInt, Price, Side);
-        }
+        //if (!m_isTest) {
+        //    printf("Modify sidePriceIndex SecurityID:%d Price:%.2f Side:%c\n", SecurityIDInt, Price, Side);
+        //}
         return priceIndex;
     }
 
     if (priceIndexIter->second.find(priceIndex) == priceIndexIter->second.end()) {
-        if (!m_isTest) {
-            printf("Modify priceIndex SecurityID:%d Price:%.2f Side:%c\n", SecurityIDInt, Price, Side);
-        }
+        //if (!m_isTest) {
+        //    printf("Modify priceIndex SecurityID:%d Price:%.2f Side:%c\n", SecurityIDInt, Price, Side);
+        //}
         return priceIndex;
     }
 
@@ -226,17 +225,17 @@ int CApplication::ModifyOrderN(int SecurityIDInt, PROMD::TTORATstpLongVolumeType
     for (const auto& it : mapOrder.at(SecurityIDInt).at(priceIndex).Orders) OrderNoVec.push_back(it->OrderNo);
     auto idx = FindOrderNo(OrderNoVec, OrderNo);
     if (idx < 0) {
-        if (!m_isTest) {
-            printf("Modify FindOrderNo SecurityID:%d Price:%.2f Side:%c\n", SecurityIDInt, Price, Side);
-        }
+        //if (!m_isTest) {
+        //    printf("Modify FindOrderNo SecurityID:%d Price:%.2f Side:%c\n", SecurityIDInt, Price, Side);
+        //}
         return priceIndex;
     }
 
     auto iter = mapOrder.at(SecurityIDInt).at(priceIndex).Orders.begin() + idx;
     if (iter == mapOrder.at(SecurityIDInt).at(priceIndex).Orders.end()) {
-        if (!m_isTest) {
-            printf("Modify mapOrder SecurityID:%d Price:%.2f Side:%c\n", SecurityIDInt, Price, Side);
-        }
+        //if (!m_isTest) {
+        //    printf("Modify mapOrder SecurityID:%d Price:%.2f Side:%c\n", SecurityIDInt, Price, Side);
+        //}
         return priceIndex;
     }
 
@@ -308,28 +307,31 @@ void CApplication::DeleteOrderN(int SecurityIDInt, int priceIndex,
 
 /***************************************TD***************************************/
 void CApplication::TDOnRspQrySecurity(PROTD::CTORATstpSecurityField &Security) {
-    if ((!m_isSHExchange && Security.ExchangeID == PROMD::TORA_TSTP_EXD_SSE) ||
-            (m_isSHExchange && Security.ExchangeID == PROMD::TORA_TSTP_EXD_SZSE)) {
-        return;
-    }
+    if (Security.bPriceLimit > 0) {
+        int SecurityIDInt = atoi(Security.SecurityID);
+        if (Security.SecurityType == PROTD::TORA_TSTP_STP_SHAShares ||
+            Security.SecurityType == PROTD::TORA_TSTP_STP_SHKC ||
+            Security.SecurityType == PROTD::TORA_TSTP_STP_SZCDR ||
+            Security.SecurityType == PROTD::TORA_TSTP_STP_SZGEM ||
+            Security.SecurityType == PROTD::TORA_TSTP_STP_SZMainAShares) {
 
-    int SecurityIDInt = atoi(Security.SecurityID);
-    auto iter = m_marketSecurity.find(SecurityIDInt);
-    if (iter == m_marketSecurity.end()) {
-        auto security = m_pool.Malloc<stSecurity>(sizeof(stSecurity));
-        strcpy(security->SecurityID, Security.SecurityID);
-        security->ExchangeID = Security.ExchangeID;
-        m_marketSecurity[SecurityIDInt] = security;
-        iter = m_marketSecurity.find(SecurityIDInt);
-    }
-    iter->second->UpperLimitPrice = Security.UpperLimitPrice;
-    iter->second->LowerLimitPrice = Security.LowerLimitPrice;
-
-    auto it = m_watchSecurity.find(SecurityIDInt);
-    if (it != m_watchSecurity.end()) {
-        it->second->ExchangeID = Security.ExchangeID;
-        it->second->UpperLimitPrice = Security.UpperLimitPrice;
-        it->second->LowerLimitPrice = Security.LowerLimitPrice;
+            auto iter = m_marketSecurity.find(SecurityIDInt);
+            if (iter == m_marketSecurity.end()) {
+                auto security = m_pool.Malloc<stSecurity>(sizeof(stSecurity));
+                strcpy(security->SecurityID, Security.SecurityID);
+                security->ExchangeID = Security.ExchangeID;
+                m_marketSecurity[SecurityIDInt] = security;
+                iter = m_marketSecurity.find(SecurityIDInt);
+            }
+            iter->second->UpperLimitPrice = Security.UpperLimitPrice;
+            iter->second->LowerLimitPrice = Security.LowerLimitPrice;
+        }
+        auto it = m_watchSecurity.find(SecurityIDInt);
+        if (it != m_watchSecurity.end()) {
+            it->second->ExchangeID = Security.ExchangeID;
+            it->second->UpperLimitPrice = Security.UpperLimitPrice;
+            it->second->LowerLimitPrice = Security.LowerLimitPrice;
+        }
     }
     //printf("%s Up:%.3f Low:%.3f\n", Security.SecurityID, Security.UpperLimitPrice, Security.LowerLimitPrice);
 }

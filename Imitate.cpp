@@ -113,6 +113,8 @@ namespace test {
                     fputs("\n", fp);
                 }
                 std::string ExchangeID = res.at(3);
+                std::string Time = res.at(1);
+                if (strncmp(Time.c_str(), "145700000", 9) >= 0) continue;
                 if (res.at(0) == "O") {
                     std::string Price = res.at(4);
                     std::string Volume = res.at(5);
