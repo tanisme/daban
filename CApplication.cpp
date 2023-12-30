@@ -50,6 +50,7 @@ void CApplication::Start() {
             Stringsplit(line, ',', res);
             PROTD::CTORATstpSecurityField Security = {0};
             strcpy(Security.SecurityID, res.at(0).c_str());
+            int SecurityIDInt = atoi(Security.SecurityID);
             Security.ExchangeID = res.at(1).c_str()[0];
             Security.SecurityType = res.at(2).c_str()[0];
             Security.bPriceLimit = atoi(res.at(3).c_str());
@@ -358,11 +359,11 @@ void CApplication::DeleteOrderN(int SecurityIDInt, int priceIndex,
 void CApplication::TDOnRspQrySecurity(PROTD::CTORATstpSecurityField &Security) {
     if (Security.bPriceLimit > 0) {
         int SecurityIDInt = atoi(Security.SecurityID);
-        if (Security.SecurityType == PROTD::TORA_TSTP_STP_SHAShares ||
-            Security.SecurityType == PROTD::TORA_TSTP_STP_SHKC ||
-            Security.SecurityType == PROTD::TORA_TSTP_STP_SZCDR ||
-            Security.SecurityType == PROTD::TORA_TSTP_STP_SZGEM ||
-            Security.SecurityType == PROTD::TORA_TSTP_STP_SZMainAShares) {
+        //if (Security.SecurityType == PROTD::TORA_TSTP_STP_SHAShares ||
+        //    Security.SecurityType == PROTD::TORA_TSTP_STP_SHKC ||
+        //    Security.SecurityType == PROTD::TORA_TSTP_STP_SZCDR ||
+        //    Security.SecurityType == PROTD::TORA_TSTP_STP_SZGEM ||
+        //    Security.SecurityType == PROTD::TORA_TSTP_STP_SZMainAShares) {
 
             auto iter = m_marketSecurity.find(SecurityIDInt);
             if (iter == m_marketSecurity.end()) {
@@ -388,7 +389,7 @@ void CApplication::TDOnRspQrySecurity(PROTD::CTORATstpSecurityField &Security) {
                     fclose(fp);
                 }
             }
-        }
+        //}
         auto it = m_watchSecurity.find(SecurityIDInt);
         if (it != m_watchSecurity.end()) {
             it->second->ExchangeID = Security.ExchangeID;
