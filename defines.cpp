@@ -62,15 +62,16 @@ long long int GetUs() {
 }
 
 int FindOrderNo(std::vector<TORALEV2API::TTORATstpLongSequenceType>& vec, TORALEV2API::TTORATstpLongSequenceType OrderNo) {
-    int min = 0, max = vec.size();
-    while (min <= max) {
-        int mid = (min + max) / 2;
-        if (vec.at(mid) == OrderNo) {
-            return mid;
-        } else if (vec.at(mid) < OrderNo) {
-            min = mid;
-        } else {
-            max = mid;
+    int left = 0;
+    int right = (int)vec.size() - 1;	// 定义了target在左闭右闭的区间内，[left, right]
+    while (left <= right) {	//当left == right时，区间[left, right]仍然有效
+        int middle = left + ((right - left) / 2);//等同于 (left + right) / 2，防止溢出
+        if (vec.at(middle) > OrderNo) {
+            right = middle - 1;	//target在左区间，所以[left, middle - 1]
+        } else if (vec.at(middle) < OrderNo) {
+            left = middle + 1;	//target在右区间，所以[middle + 1, right]
+        } else {	//既不在左边，也不在右边，那就是找到答案了
+            return middle;
         }
     }
     return -1;
