@@ -9,11 +9,15 @@
 #include <vector>
 #include <list>
 #include <thread>
-#include <atomic>
 
 #include <boost/bind/bind.hpp>
+#include <boost/locale/encoding.hpp>
 #include "TORA/TORATstpLev2MdApi.h"
 #include "TORA/TORATstpTraderApi.h"
+
+#define EXCHANGEID_SH "SSE"
+#define EXCHANGEID_SZ "SZSE"
+#define EXCHANGEID_UN "UNKNOW"
 
 struct stOrder {
     TORALEV2API::TTORATstpLongSequenceType OrderNo;
@@ -29,14 +33,14 @@ typedef std::vector<std::vector<stPriceOrders>> MapOrderN;
 
 struct stSecurity {
     TORASTOCKAPI::TTORATstpSecurityIDType SecurityID;
+    TORASTOCKAPI::TTORATstpSecurityNameType SecurityName;
     TORASTOCKAPI::TTORATstpExchangeIDType ExchangeID;
+    TORASTOCKAPI::TTORATstpSecurityTypeType SecurityType;
     TORASTOCKAPI::TTORATstpPriceType UpperLimitPrice;
     TORASTOCKAPI::TTORATstpPriceType LowerLimitPrice;
-    int TotalIndex = 0;
 };
 
 struct stHomebestOrder {
-    TORALEV2API::TTORATstpLongSequenceType OrderNO;
     TORALEV2API::TTORATstpLongVolumeType Volume;
     TORALEV2API::TTORATstpLSideType Side;
 };
@@ -45,9 +49,9 @@ void Stringsplit(const std::string &str, const char split, std::vector<std::stri
 std::string GetTimeStr();
 int GetNowTick();
 int GetClockTick();
-void trim(std::string &s);
-std::string GetThreadID();
 long long int GetUs();
-int FindOrderNo(std::vector<TORALEV2API::TTORATstpLongSequenceType>& vec, TORALEV2API::TTORATstpLongSequenceType OrderNo);
+int GetTotalIndex(TORASTOCKAPI::TTORATstpPriceType UpperLimitPrice, TORASTOCKAPI::TTORATstpPriceType LowerLimitPrice);
+std::string toUTF8(std::string str);
+std::string GetThisThreadID();
 
 #endif //DABAN_DEFINES_H

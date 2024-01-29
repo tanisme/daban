@@ -38,22 +38,6 @@ int GetClockTick() {
     return atoi(time);
 }
 
-void trim(std::string &s) {
-    int index = 0;
-    if(!s.empty()) {
-        while( (index = s.find(' ',index)) != std::string::npos) {
-            s.erase(index,1);
-        }
-    }
-}
-
-std::string GetThreadID() {
-    auto tid = std::this_thread::get_id();
-    std::stringstream ss;
-    ss << tid;
-    return ss.str();
-}
-
 long long int GetUs() {
     auto now = std::chrono::high_resolution_clock::now();
     auto duration = now.time_since_epoch();
@@ -61,17 +45,24 @@ long long int GetUs() {
     return microseconds.count();
 }
 
-int FindOrderNo(std::vector<TORALEV2API::TTORATstpLongSequenceType>& vec, TORALEV2API::TTORATstpLongSequenceType OrderNo) {
-    int min = 0, max = vec.size();
-    while (min <= max) {
-        int mid = (min + max) / 2;
-        if (vec.at(mid) == OrderNo) {
-            return mid;
-        } else if (vec.at(mid) < OrderNo) {
-            min = mid;
-        } else {
-            max = min;
-        }
+int GetTotalIndex(TORASTOCKAPI::TTORATstpPriceType UpperLimitPrice, TORASTOCKAPI::TTORATstpPriceType LowerLimitPrice) {
+    auto diffPrice = UpperLimitPrice - LowerLimitPrice;
+    auto tempIndex = diffPrice / 0.01;
+    auto totalIndex = int(tempIndex) + 1;
+    if (int(tempIndex * 10) % 10 >= 5) {
+        totalIndex += 1;
     }
-    return -1;
+    return totalIndex;
+}
+
+std::string toUTF8(std::string str)
+{
+    return boost::locale::conv::between(str, "UTF-8", "GBK");
+}
+
+std::string GetThisThreadID() {
+    auto tid = std::this_thread::get_id();
+    std::stringstream ss;
+    ss << tid;
+    return ss.str();
 }

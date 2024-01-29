@@ -1,6 +1,6 @@
 ﻿cmake_minimum_required(VERSION 3.17)
 
-project(daban)
+project(balibali_hft)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -10,8 +10,8 @@ set(Boost_USE_STATIC_LIBS ON)
 
 if (WIN32)
     message(STATUS "windows system")
-    #SET(BOOST_ROOT I:/tanisme/workspace/cpplib/boost_1_73_0)
-    SET(BOOST_ROOT E:/tangang/workspace/cpplib/boost_1_73_0_142_64)
+    message("Boost Path: $ENV{INCLUDE}")
+    SET(BOOST_ROOT $ENV{INCLUDE})
     SET(BOOST_INCLUDEDIR ${BOOST_ROOT})
     SET(BOOST_LIBRARYDIR ${BOOST_ROOT}/lib64-msvc-14.2)
 elseif(UNIX)
@@ -21,7 +21,7 @@ elseif(UNIX)
     SET(BOOST_LIBRARYDIR ${BOOST_ROOT}/lib)
 endif()
 
-find_package(Boost REQUIRED COMPONENTS program_options filesystem)
+find_package(Boost REQUIRED COMPONENTS program_options filesystem locale)
 if (Boost_FOUND)
     message( STATUS "Boost_INCLUDE_DIRS = ${Boost_INCLUDE_DIRS}")
     message( STATUS "Boost_LIBRARY_DIRS = ${Boost_LIBRARY_DIRS}")
@@ -31,26 +31,28 @@ if (Boost_FOUND)
     link_directories(${Boost_LIBRARY_DIRS})
 endif ()
 
-include_directories(. include soci4.0/include)
-link_directories(lib soci4.0/lib)
+include_directories(. include)
+link_directories(lib)
 
-add_executable(daban
-        main.cpp
-        CApplication.cpp
-        MDL2Impl.cpp
-        TDImpl.cpp
-        Imitate.cpp
+add_executable(balibali_hft
+        balibali.cpp
+        TickTradingFramework.cpp
+        L2Impl.cpp
+        TdImpl.cpp
         defines.cpp
         MemoryPool.cpp
+        Strategy.cpp
+        websocket_server_async.cpp
+        EntryStrategy.cpp
+        ExitStrategy.cpp
 )
 
 if (WIN32)
 if (CMAKE_BUILD_TYPE STREQUAL Debug)
-    target_link_libraries(daban PUBLIC lev2mdapi fasttraderapi jsoncppd sqlite3d clickhouse-cpp-libd.lib lz4d absl_int128d cityhashd soci_core_4_0d soci_sqlite3_4_0d soci_empty_4_0d)
+    target_link_libraries(balibali_hft PUBLIC lev2mdapi fasttraderapi soci_core_4_0d.lib soci_sqlite3_4_0d.lib)
 else ()
-    target_link_libraries(daban PUBLIC lev2mdapi fasttraderapi jsoncpp sqlite3 clickhouse-cpp-lib.lib lz4 absl_int128 cityhash soci_core_4_0 soci_sqlite3_4_0 soci_empty_4_0)
+    target_link_libraries(balibali_hft PUBLIC lev2mdapi fasttraderapi soci_core_4_0.lib soci_sqlite3_4_0.lib)
 endif ()
 elseif (UNIX)
-    #target_link_libraries(daban PUBLIC lev2mdapi fasttraderapi jsoncpp sqlite3 pthread ${CMAKE_DL_LIBS} ${Boost_LIBRARIES} soci_core soci_sqlite3 soci_empty)
-    target_link_libraries(daban PUBLIC lev2mdapi fasttraderapi jsoncpp sqlite3 pthread ${CMAKE_DL_LIBS} ${Boost_LIBRARIES})
+    target_link_libraries(balibali_hft PUBLIC lev2mdapi fasttraderapi soci_core soci_sqlite3 pthread iconv ${CMAKE_DL_LIBS} ${Boost_LIBRARIES})
 endif ()
