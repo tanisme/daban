@@ -1,20 +1,20 @@
-﻿#include "MDL2Impl.h"
+﻿#include "MDImpl.h"
 #include "CApplication.h"
 
 namespace PROMD {
 
-    MDL2Impl::MDL2Impl(CApplication *pApp, TTORATstpExchangeIDType ExchangeID)
+    MDImpl::MDImpl(CApplication *pApp, TTORATstpExchangeIDType ExchangeID)
             : m_pApp(pApp), m_exchangeID(ExchangeID) {
     }
 
-    MDL2Impl::~MDL2Impl() {
+    MDImpl::~MDImpl() {
         if (m_pApi) {
             m_pApi->Join();
             m_pApi->Release();
         }
     }
 
-    void MDL2Impl::Start(bool isTest) {
+    void MDImpl::Start(bool isTest) {
         if (isTest) { // tcp
             m_pApi = CTORATstpLev2MdApi::CreateTstpLev2MdApi();
             m_pApi->RegisterSpi(this);
@@ -34,7 +34,7 @@ namespace PROMD {
         }
     }
 
-    const char *MDL2Impl::GetExchangeName(TTORATstpExchangeIDType ExchangeID) {
+    const char *MDImpl::GetExchangeName(TTORATstpExchangeIDType ExchangeID) {
         switch (ExchangeID) {
             case TORA_TSTP_EXD_SSE: return "SH";
             case TORA_TSTP_EXD_SZSE: return "SZ";
@@ -44,18 +44,18 @@ namespace PROMD {
         return "UNKNOW";
     }
 
-    void MDL2Impl::OnFrontConnected() {
+    void MDImpl::OnFrontConnected() {
         printf("%s MD::OnFrontConnected!!!\n", GetExchangeName(m_exchangeID));
         CTORATstpReqUserLoginField Req = {0};
         m_pApi->ReqUserLogin(&Req, ++m_reqID);
     }
 
-    void MDL2Impl::OnFrontDisconnected(int nReason) {
+    void MDImpl::OnFrontDisconnected(int nReason) {
         printf("%s MD::OnFrontDisconnected!!! Reason:%d\n", GetExchangeName(m_exchangeID), nReason);
         m_isInited = false;
     }
 
-    void MDL2Impl::OnRspUserLogin(CTORATstpRspUserLoginField *pRspUserLogin, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
+    void MDImpl::OnRspUserLogin(CTORATstpRspUserLoginField *pRspUserLogin, CTORATstpRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
         if (!pRspUserLogin || !pRspInfo) return;
         if (pRspInfo->ErrorID > 0) {
             printf("%s MD::OnRspUserLogin Failed!!! ErrMsg:%s\n", GetExchangeName(m_exchangeID), pRspInfo->ErrorMsg);
@@ -65,17 +65,17 @@ namespace PROMD {
         m_pApp->m_ioc.post(boost::bind(&CApplication::MDOnInitFinished, m_pApp, m_exchangeID));
     }
 
-    void MDL2Impl::OnRtnOrderDetail(CTORATstpLev2OrderDetailField *pOrderDetail) {
+    void MDImpl::OnRtnOrderDetail(CTORATstpLev2OrderDetailField *pOrderDetail) {
         if (!pOrderDetail) return;
         m_pApp->m_ioc.post(boost::bind(&CApplication::MDOnRtnOrderDetail, m_pApp, *pOrderDetail));
     }
 
-    void MDL2Impl::OnRtnTransaction(CTORATstpLev2TransactionField *pTransaction) {
+    void MDImpl::OnRtnTransaction(CTORATstpLev2TransactionField *pTransaction) {
         if (!pTransaction) return;
         m_pApp->m_ioc.post(boost::bind(&CApplication::MDOnRtnTransaction, m_pApp, *pTransaction));
     }
 
-    void MDL2Impl::OnRtnNGTSTick(CTORATstpLev2NGTSTickField *pTick) {
+    void MDImpl::OnRtnNGTSTick(CTORATstpLev2NGTSTickField *pTick) {
         if (!pTick) return;
         m_pApp->m_ioc.post(boost::bind(&CApplication::MDOnRtnNGTSTick, m_pApp, *pTick));
     }

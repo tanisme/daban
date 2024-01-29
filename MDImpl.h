@@ -10,10 +10,10 @@ class CApplication;
 namespace PROMD {
     using namespace TORALEV2API;
 
-    class MDL2Impl : public CTORATstpLev2MdSpi {
+    class MDImpl : public CTORATstpLev2MdSpi {
     public:
-        explicit MDL2Impl(CApplication *pApp, TTORATstpExchangeIDType ExchangeID);
-        ~MDL2Impl();
+        explicit MDImpl(CApplication *pApp, TTORATstpExchangeIDType ExchangeID);
+        ~MDImpl();
 
         void Start(bool isTest);
         bool IsInited() const { return m_isInited; }
