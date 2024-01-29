@@ -3,9 +3,9 @@
 
 #include <thread>
 #include <vector>
-#include "concurrentqueue/concurrentqueue.h"
 #include "defines.h"
 #include "balibali.h"
+#include "MatchThread.h"
 
 using namespace TORALEV2API;
 
@@ -21,6 +21,7 @@ public:
     void Start();
     bool IsInited() const { return m_isInited; }
     CTORATstpLev2MdApi* GetApi() const { return m_pApi; }
+    CTickTradingFramework* GetFrame() const { return m_pFramework; }
 
 public:
     void OnFrontConnected() override;
@@ -29,6 +30,8 @@ public:
     void OnRtnOrderDetail(CTORATstpLev2OrderDetailField* pOrderDetail) override;
     void OnRtnTransaction(CTORATstpLev2TransactionField* pTransaction) override;
     void OnRtnNGTSTick(CTORATstpLev2NGTSTickField* pTick) override;
+
+    TTF_Message_t* MessageAllocate();
 
 private:
     std::string m_hostAddr = "";
@@ -39,9 +42,10 @@ private:
     bool m_isInited = false;
     CTORATstpLev2MdApi* m_pApi = nullptr;
     CTickTradingFramework* m_pFramework = nullptr;
-    std::vector<std::thread*> m_pvThreads;
-    std::vector<moodycamel::ConcurrentQueue<TTF_Message_t*>*> m_pvQueues;
+    std::vector<MatchThread*> m_matchThreads;
     int m_nThreadCount;
+    TTF_Message_t *m_MessageArray;
+    size_t m_MessageCursor = 0;
 };
 
 #endif //TEST_CMDL2Impl_H

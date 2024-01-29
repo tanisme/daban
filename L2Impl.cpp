@@ -20,16 +20,10 @@ CMDL2Impl::~CMDL2Impl() {
     }
 }
 
-void CMDL2Impl::ThreadRun(int index)
-{
-    ProcessMessages(index);
-}
-
 void CMDL2Impl::InitThreads()
 {
     for (int i = 0; i < m_nThreadCount; i++) {
-        m_pvQueues.push_back(new moodycamel::ConcurrentQueue<TTF_Message_t*>);
-        m_pvThreads.push_back(new std::thread(std::bind(&CMDL2Impl::ThreadRun,this,i)));
+        m_matchThreads.push_back(new MatchThread(this, i));
     }
 }
 
@@ -51,8 +45,7 @@ void CMDL2Impl::Start() {
 }
 
 void CMDL2Impl::OnFrontConnected() {
-    //m_pFramework->m_io_service.post(boost::bind(&CTickTradingFramework::MDOnFrontConnected, m_pFramework));
-    TTF_Message_t* Message = m_pFramework->MessageAllocate();
+    TTF_Message_t* Message = MessageAllocate();
     Message->MsgType = MsgTypeMdFrontConnected;
     m_pFramework->m_queue.enqueue(Message);
 
@@ -62,9 +55,8 @@ void CMDL2Impl::OnFrontConnected() {
 
 void CMDL2Impl::OnFrontDisconnected(int nReason) {
     m_isInited = false;
-    //m_pFramework->m_io_service.post(boost::bind(&CTickTradingFramework::MDOnFrontDisconnected, m_pFramework, nReason));
 
-    TTF_Message_t* Message = m_pFramework->MessageAllocate();
+    TTF_Message_t* Message = MessageAllocate();
     Message->MsgType = MsgTypeMdFrontDisconnected;
     auto pMessage = (MsgMdFrontDisconnected_t *)&Message->Message;
     pMessage->nReason = nReason;
@@ -78,9 +70,8 @@ void CMDL2Impl::OnRspUserLogin(CTORATstpRspUserLoginField* pRspUserLogin, CTORAT
         return;
     }
     m_isInited = true;
-    //m_pFramework->m_io_service.post(boost::bind(&CTickTradingFramework::MDOnRspUserLogin, m_pFramework, *pRspUserLogin));
 
-    TTF_Message_t* Message = m_pFramework->MessageAllocate();
+    TTF_Message_t* Message = MessageAllocate();
     Message->MsgType = MsgTypeRspMdUserLogin;
     auto pMessage = (MsgRspMdUserLogin_t *)&Message->Message;
     pMessage->nRequestID = nRequestID;
@@ -90,83 +81,57 @@ void CMDL2Impl::OnRspUserLogin(CTORATstpRspUserLoginField* pRspUserLogin, CTORAT
 }
 
 void CMDL2Impl::OnRtnOrderDetail(CTORATstpLev2OrderDetailField* pOrderDetail) {
-    //m_pFramework->m_io_service.post(boost::bind(&CTickTradingFramework::MDOnRtnOrderDetail, m_pFramework, *pOrderDetail));
 
 #ifndef _WIN32
     struct timeval tv;
     gettimeofday(&tv, NULL);
     pOrderDetail->MainSeq = tv.tv_usec;
 #endif
-    TTF_Message_t* Message = m_pFramework->MessageAllocate();
+    TTF_Message_t* Message = MessageAllocate();
     Message->MsgType = MsgTypeRtnOrderDetail;
     auto pMessage = (MsgRtnOrderDetail_t *)&Message->Message;
     memcpy(&pMessage->OrderDetail, pOrderDetail, sizeof(pMessage->OrderDetail));
     int index = atol(pOrderDetail->SecurityID) % m_nThreadCount;
-    m_pvQueues[index]->enqueue(Message);
+    //m_pvQueues[index]->enqueue(Message);
 }
 
 void CMDL2Impl::OnRtnTransaction(CTORATstpLev2TransactionField* pTransaction) {
-    //m_pFramework->m_io_service.post(boost::bind(&CTickTradingFramework::MDOnRtnTransaction, m_pFramework, *pTransaction));
 
 #ifndef _WIN32
     struct timeval tv;
     gettimeofday(&tv, NULL);
     pTransaction->MainSeq = tv.tv_usec;
 #endif
-    TTF_Message_t* Message = m_pFramework->MessageAllocate();
+    TTF_Message_t* Message = MessageAllocate();
     Message->MsgType = MsgTypeRtnTransaction;
     auto pMessage = (MsgRtnTransaction_t *)&Message->Message;
     memcpy(&pMessage->Transaction, pTransaction, sizeof(pMessage->Transaction));
     int index = atol(pTransaction->SecurityID) % m_nThreadCount;
-    m_pvQueues[index]->enqueue(Message);
+    //m_pvQueues[index]->enqueue(Message);
 }
 
 void CMDL2Impl::OnRtnNGTSTick(CTORATstpLev2NGTSTickField* pTick) {
-    //m_pFramework->m_io_service.post(boost::bind(&CTickTradingFramework::MDOnRtnNGTSTick, m_pFramework, *pTick));
 #ifndef _WIN32
     struct timeval tv;
     gettimeofday(&tv, NULL);
     pTick->MainSeq = tv.tv_usec;
 #endif
 
-    TTF_Message_t* Message = m_pFramework->MessageAllocate();
+    TTF_Message_t* Message = MessageAllocate();
     Message->MsgType = MsgTypeRtnNGTSTick;
     auto pMessage = (MsgRtnNGTSTick_t *)&Message->Message;
     memcpy(&pMessage->NGTSTick, pTick, sizeof(pMessage->NGTSTick));
     int index = atol(pTick->SecurityID) % m_nThreadCount;
-    m_pvQueues[index]->enqueue(Message);
+    //m_pvQueues[index]->enqueue(Message);
 }
 
-void CMDL2Impl::ProcessMessages(int index)
+TTF_Message_t* CMDL2Impl::MessageAllocate()
 {
-    // 从队列中获取消息（消息指针）
-    TTF_Message_t* pMessage = nullptr;
-    while (true)
-    {
-        if (!m_pvQueues[index]->try_dequeue(pMessage))
-            continue;
-        switch (pMessage->MsgType)
-        {
-        case MsgTypeRtnOrderDetail:
-        {
-            auto pMsgRtnOrderDetail = (MsgRtnOrderDetail_t*)&pMessage->Message;
-            //MDOnRtnOrderDetail(pMsgRtnOrderDetail->OrderDetail);
-        }
-        break;
-        case MsgTypeRtnTransaction:
-        {
-            auto pMsgRtnTransaction = (MsgRtnTransaction_t*)&pMessage->Message;
-            //MDOnRtnTransaction(pMsgRtnTransaction->Transaction);
-        }
-        break;
-        case MsgTypeRtnNGTSTick:
-        {
-            auto pMsgRtnNGTSTick = (MsgRtnNGTSTick_t*)&pMessage->Message;
-            //MDOnRtnNGTSTick(pMsgRtnNGTSTick->NGTSTick);
-        }
-        break;
-        default:
-            break;
-        };
-    }
+    TTF_Message_t* Message = (TTF_Message_t*)(m_MessageArray + m_MessageCursor);
+    if (m_MessageCursor == TTF_MESSAGE_ARRAY_SIZE - 1)
+        m_MessageCursor = 0;
+    else
+        m_MessageCursor++;
+
+    return Message;
 }

@@ -103,7 +103,7 @@ public:
 
 public:
 
-    listener(tcp::endpoint endpoint, CTickTradingFramework* pFramework, std::string& WsCore);
+    listener(tcp::endpoint endpoint, CTickTradingFramework* pFramework);
 
     // Start accepting incoming connections
     void run();
@@ -113,7 +113,6 @@ private:
 
     void on_accept(beast::error_code ec, tcp::socket socket);
 
-    std::string m_WsCore = "";
     CTickTradingFramework* m_pFramework;
 };
 

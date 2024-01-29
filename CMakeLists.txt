@@ -45,6 +45,8 @@ add_executable(balibali_hft
         websocket_server_async.cpp
         EntryStrategy.cpp
         ExitStrategy.cpp
+        MatchThread.cpp
+        MatchThread.h
 )
 
 if (WIN32)

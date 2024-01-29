@@ -2,27 +2,14 @@
 
 #include <string>
 #include "TORA/TORATstpTraderApi.h"
+#include "balibali.h"
 
 class CTickTradingFramework;
 class CTdImpl : public TORASTOCKAPI::CTORATstpTraderSpi
 {
 public:
-	CTdImpl(CTickTradingFramework* pFramework, std::string Host, std::string User, std::string Password, std::string UserProductInfo, const std::string LIP, const std::string MAC, const std::string HD) :
-		m_pFramework(pFramework),
-		m_Server(Host),
-		m_UserID(User),
-		m_Password(Password)
-	{
-		m_LIP = LIP;
-		m_MAC = MAC;
-		m_HD = HD;
-		m_pTdApi = TORASTOCKAPI::CTORATstpTraderApi::CreateTstpTraderApi();
-		m_pTdApi->RegisterSpi(this);
-	}
-
-	~CTdImpl()
-	{
-	}
+	CTdImpl(CTickTradingFramework* pFramework, std::string Host, std::string User, std::string Password, std::string UserProductInfo, const std::string LIP, const std::string MAC, const std::string HD);
+	~CTdImpl();
 
 	void Run();
 
@@ -70,6 +57,7 @@ public:
 	///撤单错误回报
 	void OnErrRtnOrderAction(TORASTOCKAPI::CTORATstpInputOrderActionField* pInputOrderActionField, TORASTOCKAPI::CTORATstpRspInfoField* pRspInfoField, int nRequestID);
 
+    TTF_Message_t* MessageAllocate();
 public:
 	std::string m_Server;
 	std::string m_UserID;
@@ -79,4 +67,6 @@ public:
 
 	TORASTOCKAPI::CTORATstpTraderApi* m_pTdApi;
 	CTickTradingFramework* m_pFramework;
+    TTF_Message_t *m_MessageArray;
+    size_t m_MessageCursor = 0;
 };

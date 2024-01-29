@@ -84,30 +84,30 @@ void session::on_run()
 
 void session::SendConnectedEvent()
 {
-    TTF_Message_t* Message = m_pFramework->MessageAllocate();
-    Message->MsgType = MsgTypeClientConnected;
-    MsgClientConnected_t* pMsgClientConnected = (MsgClientConnected_t*)&Message->Message;
-    pMsgClientConnected->s = this;
-    m_pFramework->m_queue.enqueue(Message);
+    //TTF_Message_t* Message = m_pFramework->MessageAllocate();
+    //Message->MsgType = MsgTypeClientConnected;
+    //MsgClientConnected_t* pMsgClientConnected = (MsgClientConnected_t*)&Message->Message;
+    //pMsgClientConnected->s = this;
+    //m_pFramework->m_queue.enqueue(Message);
 }
 
 void session::SendDisconnectedEvent()
 {
-    TTF_Message_t* Message = m_pFramework->MessageAllocate();
-    Message->MsgType = MsgTypeClientDisconnected;
-    MsgClientDisconnected_t* pMsgClientDisconnected = (MsgClientDisconnected_t*)&Message->Message;
-    pMsgClientDisconnected->s = this;
-    m_pFramework->m_queue.enqueue(Message);
+    //TTF_Message_t* Message = m_pFramework->MessageAllocate();
+    //Message->MsgType = MsgTypeClientDisconnected;
+    //MsgClientDisconnected_t* pMsgClientDisconnected = (MsgClientDisconnected_t*)&Message->Message;
+    //pMsgClientDisconnected->s = this;
+    //m_pFramework->m_queue.enqueue(Message);
 }
 
 void session::SendRequestEvent(std::string& msg)
 {
-    TTF_Message_t* Message = m_pFramework->MessageAllocate();
-    Message->MsgType = MsgTypeClientRequest;
-    MsgClientRequest_t* pMsgClientRequest = (MsgClientRequest_t*)&Message->Message;
-    pMsgClientRequest->s = this;
-    strncpy(pMsgClientRequest->request, msg.c_str(), sizeof(pMsgClientRequest->request) - 1);
-    m_pFramework->m_queue.enqueue(Message);
+    //TTF_Message_t* Message = m_pFramework->MessageAllocate();
+    //Message->MsgType = MsgTypeClientRequest;
+    //MsgClientRequest_t* pMsgClientRequest = (MsgClientRequest_t*)&Message->Message;
+    //pMsgClientRequest->s = this;
+    //strncpy(pMsgClientRequest->request, msg.c_str(), sizeof(pMsgClientRequest->request) - 1);
+    //m_pFramework->m_queue.enqueue(Message);
 }
 
 void session::SendResponseEvent(std::string& msg)
@@ -300,7 +300,7 @@ void session::OnHeartbeatSendTimeout(const boost::system::error_code& error)
         }
     }
 
-    // ·¢ËÍÐÄÌø
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     send_message("{\"MsgType\": \"ping\"}");
 
     if (m_pSendTimer) {
@@ -340,9 +340,8 @@ void session::OnHeartbeatRecvTimeout(const boost::system::error_code& error)
 
 // Accepts incoming connections and launches the sessions
 
-listener::listener(tcp::endpoint endpoint, CTickTradingFramework* pFramework, std::string& wsCore)
+listener::listener(tcp::endpoint endpoint, CTickTradingFramework* pFramework)
     :acceptor_(ioc_)
-    , m_WsCore(wsCore)
     , m_pFramework(pFramework)
 {
     beast::error_code ec;
@@ -386,18 +385,18 @@ void listener::run()
 {
     do_accept();
     std::thread *t = new std::thread(boost::bind(&net::io_context::run, &ioc_));
-#ifndef _WIN32
-    auto bindcore = atoi(webbindcore.c_str());
-    cpu_set_t cpuset;
-    CPU_ZERO(&cpuset);
-    CPU_SET(bindcore, &cpuset);
-    int rc = pthread_setaffinity_np(t->native_handle(), sizeof(cpu_set_t), &cpuset);
-    if (rc != 0) {
-        printf("websocket thread bind failed[%d]\n", bindcore);
-    } else {
-        printf("websocket thread bind success[%d]\n", bindcore);
-    }
-#endif
+//#ifndef _WIN32
+//    auto bindcore = atoi(webbindcore.c_str());
+//    cpu_set_t cpuset;
+//    CPU_ZERO(&cpuset);
+//    CPU_SET(bindcore, &cpuset);
+//    int rc = pthread_setaffinity_np(t->native_handle(), sizeof(cpu_set_t), &cpuset);
+//    if (rc != 0) {
+//        printf("websocket thread bind failed[%d]\n", bindcore);
+//    } else {
+//        printf("websocket thread bind success[%d]\n", bindcore);
+//    }
+//#endif
 }
 
 void listener::do_accept()

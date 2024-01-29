@@ -54,7 +54,7 @@ int main(int argc, char** argv)
     std::string Admin = "admin";
     std::string AdminPassword;
     std::string log_level = "debug";
-    std::string WsCore = "", TdCore = "", MdCore = "";
+    std::string FrameCore = "", TdCore = "", MdCore = "";
     std::string Exchanges = "SSE,SZSE";
 
     using namespace boost::program_options;
@@ -68,7 +68,7 @@ int main(int argc, char** argv)
     options_description cfgdesc("Config file options");
     cfgdesc.add_options()
         ("balibali.Exchanges", value<std::string>(&Exchanges), "balibali.Exchanges")
-        ("balibali.WsCore", value<std::string>(&WsCore), "balibali.WsCore")
+        ("balibali.FrameCore", value<std::string>(&FrameCore), "balibali.FrameCore")
         ("balibali.TdCore", value<std::string>(&TdCore), "balibali.TdCore")
         ("balibali.MdCore", value<std::string>(&MdCore), "balibali.MdCore")
         ("balibali.WebServer", value<std::string>(&WebServer), "balibali.WebServer")
@@ -122,7 +122,7 @@ int main(int argc, char** argv)
 
     log_init(log_level);
 
-    CTickTradingFramework Framework(WebServer, Admin, AdminPassword, TdHost, MdHost, User, Password, UserProductInfo, LIP, MAC, HD, L2InterfaceAddress, Exchanges, WsCore, TdCore, MdCore);
+    CTickTradingFramework Framework(WebServer, Admin, AdminPassword, TdHost, MdHost, User, Password, UserProductInfo, LIP, MAC, HD, L2InterfaceAddress, Exchanges, FrameCore, TdCore, MdCore);
 
 	// 运行
 	Framework.Run();

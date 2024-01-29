@@ -41,7 +41,7 @@ class session;
 class CTickTradingFramework
 {
 public:
-	CTickTradingFramework(std::string WebServer, std::string Admin, std::string AdminPassword, std::string TdHost, std::string MdHost, std::string User, std::string Password, std::string UserProductInfo, const std::string LIP, const std::string MAC, const std::string HD, std::string level2_interface_address, std::string Exchanges, std::string WsCore, std::string TdCore, std::string MdCore);
+	CTickTradingFramework(std::string WebServer, std::string Admin, std::string AdminPassword, std::string TdHost, std::string MdHost, std::string User, std::string Password, std::string UserProductInfo, const std::string LIP, const std::string MAC, const std::string HD, std::string level2_interface_address, std::string Exchanges, std::string FrameCore, std::string TdCore, std::string MdCore);
 	~CTickTradingFramework();
 
 	void SetParameters(const std::string& LIP, const std::string& MAC, const std::string& HD);
@@ -79,9 +79,6 @@ public:
 	void MDOnFrontConnected();
 	void MDOnFrontDisconnected(int nReason);
 	void MDOnRspUserLogin(CTORATstpRspUserLoginField& RspUserLoginField);
-	void MDOnRtnOrderDetail(CTORATstpLev2OrderDetailField& OrderDetail);
-	void MDOnRtnTransaction(CTORATstpLev2TransactionField& Transaction);
-	void MDOnRtnNGTSTick(CTORATstpLev2NGTSTickField& Tick);
 
     void OnRtnMarketData(TORALEV1API::CTORATstpMarketDataField& MarketDataField);
 
@@ -115,23 +112,17 @@ public:
 	void DelStrategy(std::string StrategyID, std::string InstrumentIDs);
 	bool StrategyExists(const std::string StrategyID, const std::string InstrumentID);
 
-	// 数据存储管理（0拷贝，空间分配要足够大，以免消息处理不够快，队列中的数据被覆盖）
-	TTF_Message_t* MessageAllocate();
-
 public:
-	//boost::asio::deadline_timer m_timer;
 	CTdImpl* m_pTdImpl;
 	CMDL2Impl* m_pMdL2Impl;
 	std::shared_ptr<listener> m_pWebServer;
 	std::string m_Admin;
 	std::string m_AdminPassword;
-	//session* m_pClient;
 	soci::session* m_db; // soci session
 
 	std::map<std::string, size_t> m_mSubscribeRef; // 行情订阅引用计数，Key: InstrumentID
 	std::map<std::string, CStrategy*> m_mStrategies; // 策略列表，Key：StrategyID.InstrumentID
 	std::map<std::string, std::vector<CStrategy*> > m_mRelatedStrategies; // 与合约关联的策略列表, Key: InstrumentID
-	//std::map<std::string, std::vector<session*> > m_mClients; // 订阅了相关合约的客户端列表，Key：InstrumentID
 	TORASTOCKAPI::CTORATstpSecurityField* m_pInstruments; // 合约表，Key: InstrumentID
 	std::map<std::string, TORASTOCKAPI::CTORATstpOrderField> m_mOrders; // 订单表，Key: ExchangeID.OrderSysID
 	std::map<std::string, TORASTOCKAPI::CTORATstpTradeField> m_mTrades; // 成交表，key: ExchangeID.TradeID.OrderSysID
@@ -146,8 +137,6 @@ public:
 	TORASTOCKAPI::TTORATstpShareholderIDType m_ShareholderID_SSE;
 	TORASTOCKAPI::TTORATstpShareholderIDType m_ShareholderID_SZSE;
 	std::string m_LIP, m_MAC, m_HD, m_UserProductInfo;
-	TTF_Message_t *m_MessageArray;
-	size_t m_MessageCursor = 0;
 	moodycamel::ConcurrentQueue<TTF_Message_t*> m_queue;
 	std::unordered_map<std::string, double> m_securityid_lastprice;
 //#ifndef _WIN32
@@ -160,39 +149,7 @@ public:
 
 private:
     void HandleQueueMessage();
-
-    void InitOrderMap();
-
-    int GetHTLPriceIndex(int SecurityIDInt, TTORATstpPriceType Price, TTORATstpTradeBSFlagType Side);
-    void AddOrderPriceIndex(int SecutityIDInt, int idx, TTORATstpTradeBSFlagType Side);
-    void DelOrderPriceIndex(int SecurityIDInt, int idx, TTORATstpTradeBSFlagType Side);
-
-    double GetOrderNoToPrice(int SecurityIDInt, TTORATstpLongSequenceType OrderNO);
-    void AddOrderNoToPrice(int SecurityIDInt, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price);
-    void DelOrderNoPrice(int SecurityIDInt, TTORATstpLongSequenceType OrderNO);
-
-    void InsertOrderN(int SecurityIDInt, TTORATstpLongSequenceType OrderNO, TTORATstpPriceType Price, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side, bool findPos = false);
-    int ModifyOrderN(int SecurityIDInt, TTORATstpLongVolumeType Volume, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side);
-    void DeleteOrderN(int SecurityIDInt, int priceIndex, TTORATstpLongSequenceType OrderNo, TTORATstpTradeBSFlagType Side);
-
-    void AddHomebestOrder(int SecurityIDInt, TTORATstpLongSequenceType OrderNO, TTORATstpLongVolumeType Volume, TTORATstpLSideType Side);
-    stHomebestOrder* GetHomebestOrder(int SecurityIDInt, TTORATstpLongSequenceType OrderNO);
-    void DelHomebestOrder(int SecurityIDInt, TTORATstpLongSequenceType OrderNO);
-
-    int FindPriceIndexOrderNo(std::vector<stOrder*>& orderNOs, TTORATstpLongSequenceType OrderNo);
-    void ShowOrderBook(TTORATstpSecurityIDType SecurityID);
-    void PostPrice(TTORATstpSecurityIDType SecurityID, TTORATstpExchangeIDType ExchangeID);
-
-    std::unordered_map<int, int> m_notifyCount;
-    MapOrderN m_orderBuyN;
-    MapOrderN m_orderSellN;
     MemoryPool m_pool;
     std::vector<std::string> m_vExchanges;
-
 	bool IsTradingExchange(TTORATstpExchangeIDType ExchangeID);
-
-    std::unordered_map<int, std::set<int>> m_buyPriceIndex;
-    std::unordered_map<int, std::set<int>> m_sellPriceIndex;
-    std::unordered_map<int, std::unordered_map<TTORATstpLongSequenceType, TTORATstpPriceType>> m_orderNoToPrice;
-    std::unordered_map<int, std::unordered_map<TTORATstpLongSequenceType, stHomebestOrder*>> m_homeBaseOrder;
 };
